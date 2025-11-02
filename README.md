@@ -1,14 +1,31 @@
-# Participium — Schematic summary
+# Software Engineering || - group-2
+
+team members:
+ - s323141 Pochettino Alberto
+ - s334072 Torrengo Andrea
+ - s338520 Benevento Mattia
+ - s338714 Uslu Sebnem
+ - s339153 Hemmati Fateme
+
+code documentation:
+ - docs folder
+ - [database - README_DB](./database/README_DB.md)
+ - [back-end - README_BE](./back-end/README_BE.md)
+ - [front-end - README_FE](./front-end/README_FE.md)
+
+
+
+## Participium — Schematic summary
 
 ---
 
-## 1. System goal
+### 1. System goal
 
 * Web application for citizen participation in the management of urban environments.
 * Let citizens report local inconveniences/malfunctions to Public Administration (PA).
 * Example: Iris platform (Venice).
 
-## 2. Actors / roles
+### 2. Actors / roles
 
 * **Citizen (registered user)**
 * **Municipality Organization Office** (preliminary verification / acceptance/rejection)
@@ -16,12 +33,12 @@
 * **Municipal operators / technical staff** (work on reports, send messages, update status)
 * **Administrators** (view private statistics, manage system)
 
-## 3. Registration / User profile
+### 3. Registration / User profile
 
 * Required fields to register: `username`, `first name`, `last name`.
 * In user configuration panel: can upload personal photo, set Telegram username, enable/disable email notifications.
 
-## 4. Creating a report
+### 4. Creating a report
 
 * Mandatory steps/fields:
 
@@ -32,7 +49,7 @@
   * Attach one or more **photos** (mandatory; up to **3** per report)
 * Final option: mark the report **anonymous** (reporter name hidden in public list)
 
-## 5. Problem categories (predefined)
+### 5. Problem categories (predefined)
 
 1. Water Supply – Drinking Water
 2. Architectural Barriers
@@ -44,7 +61,7 @@
 8. Public Green Areas and Playgrounds
 9. Other
 
-## 6. Report lifecycle / statuses
+### 6. Report lifecycle / statuses
 
 * **Pending Approval** — initial state after submission; Municipality Organization Office checks and either accepts or rejects.
 * **Assigned** — after approval, report routed to competent technical office.
@@ -58,13 +75,13 @@
 * Technical office staff can add comments to a report.
 * If rejected, Organization Office must provide an explanatory reason.
 
-## 7. Notifications & citizen updates
+### 7. Notifications & citizen updates
 
 * At each status change the citizen receives an **in-platform notification**.
 * Each platform notification optionally triggers an **email** (unless disabled in user settings).
 * Municipal operators can send messages to citizens within the platform; citizens can reply.
 
-## 8. Public presentation & data export
+### 8. Public presentation & data export
 
 * After approval, accepted reports become public and visible in two ways:
 
@@ -73,7 +90,7 @@
 * Table data (filtered) can be **downloaded as CSV**.
 * In both views, reporter name is shown (or `anonymous`) and the report title; clicking title opens full description with pictures.
 
-## 9. Statistics
+### 9. Statistics
 
 * **Public statistics** (visible on site and to unregistered users):
 
@@ -91,7 +108,7 @@
   * Number of reports by the top 1% of reporters, by type
   * Number of reports by the top 5% of reporters, by type
 
-## 10. Telegram Bot Integration
+### 10. Telegram Bot Integration
 
 * Citizens who provide a Telegram username can use a Telegram bot to:
 
@@ -100,7 +117,7 @@
   * **Receive real-time push notifications** when report status changes.
   * Get quick assistance: commands for system usage info and useful contacts.
 
-## 11. Misc / Implementation notes
+### 11. Misc / Implementation notes
 
 * Map: OpenStreetMap (standard layer) used for geolocation selection.
 * Photos: mandatory attachments, max 3 per report.
