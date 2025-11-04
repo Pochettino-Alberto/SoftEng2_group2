@@ -6,20 +6,20 @@ const DATE_ERROR = "Input date is not compatible with the current date"
  */
 class Utility {
     /**
-     * Checks if a user is a manager.
+     * Checks if a user is a municipality.
      * @param {User} user - The user to check.
-     * @returns True if the user is a manager, false otherwise.
+     * @returns True if the user is a municipality, false otherwise.
      */
-    static isManager(user: User): boolean {
-        return user.role === Role.MANAGER
+    static isMunicipality(user: User): boolean {
+        return user.role === Role.MUNICIPALITY
     }
     /**
-     * Checks if a user is a customer.
+     * Checks if a user is a citizen.
      * @param {User} user - The user to check.
-     * @returns True if the user is a customer, false otherwise.
+     * @returns True if the user is a citizen, false otherwise.
      */
-    static isCustomer(user: User): boolean {
-        return user.role === Role.CUSTOMER
+    static isCitizen(user: User): boolean {
+        return user.role === Role.CITIZEN
     }
 
     static isAdmin(user: User): boolean {
@@ -27,15 +27,15 @@ class Utility {
     }
 
     /**
-     * @param roleString - The role string stored in the database ('Customer', 'Manager' or 'Admin')
+     * @param roleString - The role string stored in the database ('citizen', 'municipality' or 'admin')
      * @returns Corresponding Role entry inside Role enum
      */
     static getRole(roleString: string): Role {
         try {
             switch(roleString) {
-                case 'Customer' : return Role.CUSTOMER;
-                case 'Manager'  : return Role.MANAGER;
-                case 'Admin'    : return Role.ADMIN;
+                case 'citizen' : return Role.CITIZEN;
+                case 'municipality'  : return Role.MUNICIPALITY;
+                case 'admin'    : return Role.ADMIN;
                 default         : throw Error;
             }
         } catch {

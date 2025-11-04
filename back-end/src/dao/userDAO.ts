@@ -22,7 +22,7 @@ class UserDAO {
              * Example of how to retrieve user information from a table that stores username, encrypted password and salt (encrypted set of 16 random bytes that ensures additional protection against dictionary attacks).
              * Using the salt is not mandatory (while it is a good practice for security), however passwords MUST be hashed using a secure algorithm (e.g. scrypt, bcrypt, argon2).
              */
-            const sql = "SELECT username, password, salt FROM users WHERE username = ?"
+            const sql = "SELECT username, password_hash, salt FROM users WHERE username = ?"
             db.get(sql, [username], (err: Error | null, row: any) => {
                 if (err) reject(err)
                 //If there is no user with the given username, or the user salt is not saved in the database, the user is not authenticated.
@@ -31,7 +31,7 @@ class UserDAO {
                 } else {
                     //Hashes the plain password using the salt and then compares it with the hashed password stored in the database
                     const hashedPassword = crypto.scryptSync(plainPassword, row.salt, 16)
-                    const passwordHex = Buffer.from(row.password, "hex")
+                    const passwordHex = Buffer.from(row.password_hash, "hex")
                     if (!crypto.timingSafeEqual(passwordHex, hashedPassword)) resolve(false)
                     resolve(true)
                 }
@@ -46,18 +46,19 @@ class UserDAO {
      * @param username The username of the user. It must be unique.
      * @param name The name of the user
      * @param surname The surname of the user
+     * @param email The email of the user
      * @param password The password of the user. It must be encrypted using a secure algorithm (e.g. scrypt, bcrypt, argon2)
      * @param role The role of the user. It must be one of the three allowed types ("Manager", "Customer", "Admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
-    createUser(username: string, name: string, surname: string, password: string, role: string): Promise<boolean> {
+    createUser(username: string, name: string, surname: string, email: string, password: string, role: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             const salt = crypto.randomBytes(16)
             // scryptSync is a syncronous functions that generates a password-based key in hexadecimal, 
             // designed to be computationally expensive. It takes a plain password, unique salt string at least 16 bytes long and KeyLength
             const hashedPassword = crypto.scryptSync(password, salt, 16)
-            const sql = "INSERT INTO users(username, name, surname, role, password, salt) VALUES(?, ?, ?, ?, ?, ?)"
-            db.run(sql, [username, name, surname, role, hashedPassword, salt], (err: Error | null) => {
+            const sql = "INSERT INTO users(username, first_name, last_name, email, user_type, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
+            db.run(sql, [username, name, surname, email, role, hashedPassword, salt], (err: Error | null) => {
                 if (err) {
                     if (err.message.includes("UNIQUE constraint failed: users.username")) reject(new UserAlreadyExistsError)
                     reject(err)
@@ -85,8 +86,8 @@ class UserDAO {
                     reject(new UserNotFoundError)
                     return
                 }
-                const user: User = new User(row.username, row.name, row.surname, row.role, row.address, row.birthdate)
-                resolve(user)
+                const user: User = this.mapDBrowToUserObject(row);
+                resolve(user);
             });
 
         })
@@ -99,7 +100,7 @@ class UserDAO {
      * @returns User Object
      */
     mapDBrowToUserObject(dbRow: any): User {
-        return new User(dbRow.username, dbRow.name, dbRow.surname, Utility.getRole(dbRow.role), dbRow.address, dbRow.birthdate);
+        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, Utility.getRole(dbRow.user_type));
     }
 
     /**

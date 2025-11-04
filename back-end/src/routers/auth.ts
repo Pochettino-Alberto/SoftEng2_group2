@@ -29,7 +29,7 @@ class Authenticator {
      */
     initAuth() {
         this.app.use(session({
-            secret: "ezelectronicssecretse2324",
+            secret: "participiumsecretse2526",
             resave: false,
             saveUninitialized: false,
             maxAge: 7 * 24 * 60 * 60 * 1000
@@ -134,29 +134,29 @@ class Authenticator {
     }
 
     /**
-     * Middleware function to check if the user is a customer.
+     * Middleware function to check if the user is a citizen.
      * 
      * @param req - The request object.
      * @param res - The response object.
      * @param next - The next middleware function.
      * If the user is authenticated and is a customer, it calls the next middleware function. Otherwise, it returns a 401 error response.
      */
-    isCustomer(req: any, res: any, next: any) {
-        if (req.isAuthenticated() && Utility.isCustomer(req.user)) return next()
-        return res.status(401).json({ error: "User is not a customer", status: 401 })
+    isCitizen(req: any, res: any, next: any) {
+        if (req.isAuthenticated() && Utility.isCitizen(req.user)) return next()
+        return res.status(401).json({ error: "User is not a citizen", status: 401 })
     }
 
     /**
-     * Middleware function to check if the user is a manager.
+     * Middleware function to check if the user is a municipality officer.
      * 
      * @param req - The request object.
      * @param res - The response object.
      * @param next - The next middleware function.
-     * If the user is a manager, it calls the next middleware function. Otherwise, it returns a 401 error response.
+     * If the user is a municipality officer, it calls the next middleware function. Otherwise, it returns a 401 error response.
      */
-    isManager(req: any, res: any, next: any) {
-        if (req.isAuthenticated() && Utility.isManager(req.user)) return next()
-        return res.status(401).json({ error: "User is not a manager", status: 401 })
+    isMunicipality(req: any, res: any, next: any) {
+        if (req.isAuthenticated() && Utility.isMunicipality(req.user)) return next()
+        return res.status(401).json({ error: "User is not a municipality officer", status: 401 })
     }
 
     isAdmin(req: any, res: any, next: any) {
@@ -164,9 +164,9 @@ class Authenticator {
         return res.status(401).json({ error: "User is not an admin", status: 401 })
     }
 
-    isAdminOrManager(req: any, res: any, next: any) {
-        if (req.isAuthenticated() && (Utility.isAdmin(req.user) || Utility.isManager(req.user))) return next()
-        return res.status(401).json({ error: "User is not an admin or manager", status: 401 })
+    isAdminOrMunicipality(req: any, res: any, next: any) {
+        if (req.isAuthenticated() && (Utility.isAdmin(req.user) || Utility.isMunicipality(req.user))) return next()
+        return res.status(401).json({ error: "User is not an admin or municipality officer", status: 401 })
     }
 
 }

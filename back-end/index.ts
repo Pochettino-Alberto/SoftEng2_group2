@@ -7,8 +7,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 const app: express.Application = express();
 // middleware
-app.use(express.json()); // it converts json body to req.body
-app.use(morgan('dev')); // it shows log for http requests
+app.use(morgan("dev")) // Log requests to the console
+app.use(express.json({ limit: "25mb" }))
+app.use(express.urlencoded({ limit: '25mb', extended: true }))
 
 const port: number = 3001;
 

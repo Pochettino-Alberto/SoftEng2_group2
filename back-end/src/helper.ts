@@ -18,7 +18,7 @@ class ErrorHandler {
         if (!errors.isEmpty()) {
             let error = "The parameters are not formatted properly\n\n"
             errors.array().forEach((e: any) => {
-                error += "- Parameter: **" + e.param + "** - Reason: *" + e.msg + "* - Location: *" + e.location + "*\n\n"
+                error += "- Parameter: **" + e.value + "** - Reason: *" + e.msg + "* - Location: *" + e.location + "*\n\n"
             })
             return res.status(422).json({ error: error })
         }
