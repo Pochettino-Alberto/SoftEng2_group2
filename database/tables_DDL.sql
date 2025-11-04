@@ -2,9 +2,9 @@
 
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -12,8 +12,8 @@ DROP TABLE IF EXISTS user_roles;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    salt TEXT NOT NULL,
+    password_hash BLOB NOT NULL,
+    salt BLOB NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL,

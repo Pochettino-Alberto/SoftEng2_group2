@@ -1,5 +1,5 @@
 import db from "./db"
-import { Role, User } from "../components/user"
+import { User } from "../components/user"
 import crypto from "crypto"
 import { UserAlreadyExistsError, UserNotFoundError, UnauthorizedUserError } from "../errors/userError";
 

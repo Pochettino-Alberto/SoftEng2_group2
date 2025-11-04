@@ -1,5 +1,5 @@
 import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError } from "../errors/userError"
-import { Role, User } from "../components/user"
+import { User } from "../components/user"
 import UserDAO from "../dao/userDAO"
 import { DateError, Utility } from "../utilities"
 

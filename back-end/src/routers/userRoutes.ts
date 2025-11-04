@@ -1,7 +1,7 @@
 import express, { Router } from "express"
 import Authenticator from "./auth"
 import { body, param } from "express-validator"
-import { Role, User } from "../components/user"
+import { UserType, User } from "../components/user"
 import ErrorHandler from "../helper"
 import UserController from "../controllers/userController"
 
@@ -65,7 +65,7 @@ class UserRoutes {
                 if(userExists) throw new UserAlreadyExistsError();
             }),*/
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.createUser(req.body.username, req.body.name, req.body.surname, req.body.email, req.body.password, Role.CITIZEN)
+            (req: any, res: any, next: any) => this.controller.createUser(req.body.username, req.body.name, req.body.surname, req.body.email, req.body.password, UserType.CITIZEN)
                 .then(() => res.status(200).end())
                 .catch((err) => {
                     next(err)
@@ -91,7 +91,7 @@ class UserRoutes {
             body('surname').isString().notEmpty(),
             body('email').isString().notEmpty(),
             body('password').isString().notEmpty(),
-            body('role').isIn(Object.values(Role)),
+            body('role').isIn(Object.values(UserType)),
             /*body('username').custom(async (username) => {
                 const userExists = await this.controller.usernameAlreadyInUse(username);
                 if(userExists) throw new UserAlreadyExistsError();
