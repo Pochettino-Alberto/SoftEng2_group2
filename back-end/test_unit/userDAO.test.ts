@@ -1,5 +1,5 @@
 import UserDAO from '../src/dao/userDAO'
-import { UserNotFoundError } from '../src/errors/userError'
+import { UserNotFoundError, UserAlreadyExistsError } from '../src/errors/userError'
 
 // Mock the db module used by UserDAO
 jest.mock('../src/dao/db', () => ({
@@ -7,7 +7,15 @@ jest.mock('../src/dao/db', () => ({
   run: jest.fn(),
 }))
 
+// Mock crypto where needed for authentication tests
+jest.mock('crypto', () => ({
+  scryptSync: jest.fn(),
+  randomBytes: jest.fn(),
+  timingSafeEqual: jest.fn(),
+}))
+
 const db = require('../src/dao/db')
+const crypto = require('crypto')
 
 describe('UserDAO', () => {
   afterEach(() => {
@@ -21,7 +29,7 @@ describe('UserDAO', () => {
       first_name: 'John',
       last_name: 'Doe',
       email: 'john@example.com',
-      user_type: 'Customer'
+      user_type: 'citizen'
     }
 
     // Make db.get call the callback with (null, row)
@@ -43,5 +51,68 @@ describe('UserDAO', () => {
 
     const dao = new UserDAO()
     await expect(dao.getUserByUsername('nonexistent')).rejects.toBeInstanceOf(UserNotFoundError)
+  })
+
+  test('createUser resolves true when insert succeeds', async () => {
+    // simulate successful db.run (no error passed to callback)
+    db.run.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(null)
+    })
+
+    const dao = new UserDAO()
+    await expect(dao.createUser('alice', 'Alice', 'Smith', 'alice@example.com', 'pass', 'Customer')).resolves.toBe(true)
+    expect(db.run).toHaveBeenCalled()
+  })
+
+  test('createUser rejects with UserAlreadyExistsError on UNIQUE constraint', async () => {
+    const uniqueErr = new Error('UNIQUE constraint failed: users.username')
+    db.run.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(uniqueErr)
+    })
+
+    const dao = new UserDAO()
+    await expect(dao.createUser('alice', 'Alice', 'Smith', 'alice@example.com', 'pass', 'Customer')).rejects.toBeInstanceOf(UserAlreadyExistsError)
+  })
+
+  test('getIsUserAuthenticated returns true when password matches', async () => {
+    const hex = '0102030405060708090a0b0c0d0e0f10'
+    const sampleRow = {
+      username: 'bob',
+      password_hash: hex, // hex string as stored in DB
+      salt: 'somesalt'
+    }
+
+    // mock db.get to return the row
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(null, sampleRow)
+    })
+
+    // mock scryptSync to return the same buffer as Buffer.from(hex, 'hex')
+    const expectedBuffer = Buffer.from(hex, 'hex')
+    crypto.scryptSync.mockReturnValue(expectedBuffer)
+    crypto.timingSafeEqual.mockReturnValue(true)
+
+    const dao = new UserDAO()
+    await expect(dao.getIsUserAuthenticated('bob', 'plaintext')).resolves.toBe(true)
+  })
+
+  test('getIsUserAuthenticated returns false when password does not match', async () => {
+    const hex = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    const sampleRow = {
+      username: 'eve',
+      password_hash: hex,
+      salt: 'somesalt'
+    }
+
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(null, sampleRow)
+    })
+
+    const expectedBuffer = Buffer.from(hex, 'hex')
+    crypto.scryptSync.mockReturnValue(Buffer.from('0000', 'hex'))
+    crypto.timingSafeEqual.mockReturnValue(false)
+
+    const dao = new UserDAO()
+    await expect(dao.getIsUserAuthenticated('eve', 'wrongpass')).resolves.toBe(false)
   })
 })
