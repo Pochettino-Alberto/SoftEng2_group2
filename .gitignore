@@ -9,3 +9,4 @@ Thumbs.db
 database/*.db
 database/*.sqlite
 database/*.db-journal
+database/database.db

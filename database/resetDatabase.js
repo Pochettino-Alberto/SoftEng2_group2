@@ -1,61 +1,63 @@
-import sqlite3 from 'sqlite3';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+// database/resetDatabase.js
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
-
-// npm run reset-database  -> "reset-database": "node ../database/resetDatabase.ts"
-
-// Needed because we’re using ES modules (import syntax)
+// ---- Fixes ESM paths ----
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
-// Absolute paths to all files
-const dbPath = resolve(__dirname, 'database.db');
-const ddlPath = resolve(__dirname, 'tables_DDL.sql');
-const defaultValuesPath = resolve(__dirname, 'tables_default_values.sql');
+// ---- Resolve absolute paths ----
+const backendPath = path.resolve(__dirname, "../back-end");
 
-// Connect to the SQLite database
+// ---- Add backend/node_modules to module search path ----
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+process.env.NODE_PATH = path.join(backendPath, "node_modules");
+require("module").Module._initPaths();
+
+// ---- Now we can require sqlite3 from back-end ----
+const sqlite3 = require("sqlite3").verbose();
+
+// ---- Database + SQL paths ----
+const dbPath = path.resolve(__dirname, "database.db");
+const ddlPath = path.resolve(__dirname, "tables_DDL.sql");
+const defaultValuesPath = path.resolve(__dirname, "tables_default_values.sql");
+
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('❌ Error opening database:', err.message);
+    console.error("❌ Error opening database:", err.message);
     process.exit(1);
-  } else {
-    console.log('✅ Connected to database:', dbPath);
-    runSQLFiles();
   }
+  console.log("✅ Connected to database:", dbPath);
+  runSQLFiles();
 });
 
 function runSQLFiles() {
   try {
-    const ddlSQL = readFileSync(ddlPath, 'utf8');
-    const defaultSQL = readFileSync(defaultValuesPath, 'utf8');
+    const ddlSQL = fs.readFileSync(ddlPath, "utf8");
+    const defaultSQL = fs.readFileSync(defaultValuesPath, "utf8");
 
-    console.log('🚧 Running DDL script...');
+    console.log("🚧 Running DDL script...");
     db.exec(ddlSQL, (err) => {
       if (err) {
-        console.error('❌ Error executing DDL script:', err.message);
+        console.error("❌ Error executing DDL script:", err.message);
         process.exit(1);
-      } else {
-        console.log('✅ Tables created successfully.');
-
-        console.log('🚧 Running default values script...');
-        db.exec(defaultSQL, (err) => {
-          if (err) {
-            console.error('❌ Error executing default values script:', err.message);
-            process.exit(1);
-          } else {
-            console.log('✅ Default values inserted successfully.');
-            db.close((err) => {
-              if (err) console.error('⚠️ Error closing database:', err.message);
-              else console.log('🏁 Database connection closed.');
-            });
-          }
-        });
       }
+      console.log("✅ Tables created successfully.");
+
+      console.log("🚧 Running default values script...");
+      db.exec(defaultSQL, (err) => {
+        if (err) {
+          console.error("❌ Error executing default values script:", err.message);
+          process.exit(1);
+        }
+        console.log("✅ Default values inserted successfully.");
+        db.close();
+      });
     });
   } catch (err) {
-    console.error('❌ Failed to read SQL files:', err.message);
+    console.error("❌ Failed to read SQL files:", err.message);
     process.exit(1);
   }
 }
