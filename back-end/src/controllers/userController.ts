@@ -15,7 +15,7 @@ class UserController {
     }
 
     /**
-     * Creates a new user.
+     * Creates a new user
      * @param username - The username of the new user. It must not be null and it must not be already taken.
      * @param name - The name of the new user. It must not be null.
      * @param surname - The surname of the new user. It must not be null.
@@ -28,12 +28,10 @@ class UserController {
         //return this.dao.createUser(username, name, surname, password, role)
         return new Promise<Boolean>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
-            if(userExists) {
+            if(userExists)
                 reject(new UserAlreadyExistsError());
-                return;
-            }
-            
-            resolve(await this.dao.createUser(username, name, surname, email, password, role))
+            else
+                resolve(await this.dao.createUser(username, name, surname, email, password, role));
         });
     }
 
@@ -41,16 +39,16 @@ class UserController {
      * Returns all users.
      * @returns A Promise that resolves to an array of users.
      */
-    async getUsers() /**:Promise<User[]> */ {
+    /*async getUsers() {
         return this.dao.getUsers()
-    }
+    }*/
 
     /**
      * Returns all users with a specific role.
      * @param role - The role of the users to retrieve. It can only be one of the three allowed types ("Manager", "Customer", "Admin")
      * @returns A Promise that resolves to an array of users with the specified role.
      */
-    async getUsersByRole(role: string) /**:Promise<User[]> */ {
+    /*async getUsersByRole(role: string) {
         return new Promise<User[]>((resolve, reject) => {
             this.dao.getUsers().then(userArray => {
                 const userFiltered = [...userArray].filter(user => user.role == Utility.getRole(role))
@@ -62,7 +60,7 @@ class UserController {
                 reject(error)
             })
         });
-    }
+    }*/
 
     /**
      * Returns a specific user.
@@ -109,7 +107,7 @@ class UserController {
      * @param username - The username of the user to delete. The user must exist.
      * @returns A Promise that resolves to true if the user has been deleted.
      */
-    async deleteUser(user: User, username: string) /**:Promise<Boolean> */ {
+    /*async deleteUser(user: User, username: string) {
         return new Promise<Boolean>((resolve, reject) => {
             // User is admin || User wants to delete himself
             if( Utility.isAdmin(user) || user.username == username )
@@ -117,13 +115,13 @@ class UserController {
                     .then(user => user.role != Role.ADMIN ? resolve(this.dao.deleteUser(username)) : reject(new UnauthorizedUserError)).catch(err => reject(err));
             else reject(new UserNotAdminError);
         });
-    }
+    }*/
 
     /**
      * Deletes all non-Admin users
      * @returns A Promise that resolves to true if all non-Admin users have been deleted.
      */
-    async deleteAll() {
+    /*async deleteAll() {
         //return this.dao.deleteAll();
         
         return new Promise<Boolean>(async (resolve, reject) => {
@@ -138,7 +136,7 @@ class UserController {
             }
         });
         
-    }
+    }*/
 
     /**
      * Updates the personal information of one user. The user can only update their own information.
@@ -151,7 +149,7 @@ class UserController {
      * @param username The username of the user to update. It must be equal to the username of the user parameter.
      * @returns A Promise that resolves to the updated user
      */
-    async updateUserInfo(user: User, name: string, surname: string, address: string, birthdate: string, username: string) /**:Promise<User> */ {
+    /*async updateUserInfo(user: User, name: string, surname: string, address: string, birthdate: string, username: string) {
         return new Promise<User>((resolve, reject) => {
             if(Utility.isAdmin(user) || user.username == username) {    // todo: I should implement this checks in userRoutes.ts and not inside this controller
                 if(birthdate > Utility.now()) {
@@ -161,7 +159,7 @@ class UserController {
             }
             else reject(new UnauthorizedUserError);
         });
-    }
+    }*/
 }
 
 export default UserController

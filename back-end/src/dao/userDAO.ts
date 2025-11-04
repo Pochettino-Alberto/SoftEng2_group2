@@ -2,13 +2,20 @@ import db from "./db"
 import { Role, User } from "../components/user"
 import crypto from "crypto"
 import { UserAlreadyExistsError, UserNotFoundError, UnauthorizedUserError } from "../errors/userError";
-import { Utility } from "../utilities";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
  * You are free to implement any method you need here, as long as the requirements are satisfied.
  */
 class UserDAO {
+    /**
+     * Builds a User object from a Database Row Object
+     * @param dbRow Row Object containing the user data read from the database
+     * @returns User Object
+     */
+    mapDBrowToUserObject(dbRow: any): User {
+        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getRole(dbRow.user_type));
+    }
 
     /**
      * Checks whether the information provided during login (username and password) is correct.
@@ -48,7 +55,7 @@ class UserDAO {
      * @param surname The surname of the user
      * @param email The email of the user
      * @param password The password of the user. It must be encrypted using a secure algorithm (e.g. scrypt, bcrypt, argon2)
-     * @param role The role of the user. It must be one of the three allowed types ("Manager", "Customer", "Admin")
+     * @param role The role of the user. It must be one of the three allowed types ("citizen", "municipality", "admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
     createUser(username: string, name: string, surname: string, email: string, password: string, role: string): Promise<boolean> {
@@ -95,19 +102,10 @@ class UserDAO {
 
 
     /**
-     * Builds a User object from a Database Row Object
-     * @param dbRow Row Object containing the user data read from the database
-     * @returns User Object
-     */
-    mapDBrowToUserObject(dbRow: any): User {
-        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, Utility.getRole(dbRow.user_type));
-    }
-
-    /**
      * [Admin reserved function] Returns all users data from the database.
      * @returns A Promise that resolves the information of the requested user
      */
-    getUsers(): Promise<User[]> {
+    /*getUsers(): Promise<User[]> {
         return new Promise<User[]>((resolve, reject) => {
             const sql = 'SELECT * FROM users';
             db.all(sql, [], (err: Error | null, rows: any) => {
@@ -124,13 +122,13 @@ class UserDAO {
                 resolve(userArray);
             });
         });
-    }
+    }*/
 
     /**
      * Delete a user in the database, given its username
      * @returns A Promise that resolves to true if the user is deleted or false if it does not exists
      */
-    deleteUser(username: string): Promise<Boolean> {
+    /*deleteUser(username: string): Promise<Boolean> {
         return new Promise<Boolean>((resolve, reject) => {
             const sql = 'DELETE FROM users WHERE username=?';
             db.run(sql, [username], function(err) {
@@ -145,13 +143,13 @@ class UserDAO {
                 resolve(true);
             });
         });
-    }
+    }*/
 
     /**
      * Delete every non-admin users
      * @returns A Promise that resolves to true if at least one user is deleted, otherwise resolves to false
      */
-    deleteAll(): Promise<Boolean> {
+    /*deleteAll(): Promise<Boolean> {
         return new Promise<Boolean>((resolve, reject) => {
             const sql = "DELETE FROM users WHERE role != 'Admin'";
             db.run(sql, [], function(err) {
@@ -166,7 +164,7 @@ class UserDAO {
                 resolve(true);
             });
         });
-    }
+    }*/
 
     /**
      * Updates the personal information of one user. The user can only update their own information.
@@ -177,7 +175,7 @@ class UserDAO {
      * @param username The username of the user to update.
      * @returns A Promise that resolves to the updated user
      */
-    updateUserInfo(name: string, surname: string, address: string, birthdate: string, username: string) {
+    /*updateUserInfo(name: string, surname: string, address: string, birthdate: string, username: string) {
         return new Promise<User>( (resolve, reject) => {
             const sql = "UPDATE users SET name=?, surname=?, address=?, birthdate=? WHERE username=?";
 
@@ -190,6 +188,6 @@ class UserDAO {
                 this.getUserByUsername(username).then((user) => resolve(user)).catch((err) => reject(err))
             });
         });
-    }
+    }*/
 }
 export default UserDAO

@@ -26,24 +26,6 @@ class Utility {
         return user.role === Role.ADMIN
     }
 
-    /**
-     * @param roleString - The role string stored in the database ('citizen', 'municipality' or 'admin')
-     * @returns Corresponding Role entry inside Role enum
-     */
-    static getRole(roleString: string): Role {
-        try {
-            switch(roleString) {
-                case 'citizen' : return Role.CITIZEN;
-                case 'municipality'  : return Role.MUNICIPALITY;
-                case 'admin'    : return Role.ADMIN;
-                default         : throw Error;
-            }
-        } catch {
-            console.error(`Could not parse the role-string '${roleString}' into Role enum`);
-            return null;
-        }
-    }
-
     static now(): string {
         return new Date().toISOString().split("T")[0];
     };

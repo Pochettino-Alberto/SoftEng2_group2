@@ -21,18 +21,21 @@ TODO: add here description of folder structure
 
 ### auth routes
 
-| Method & Path           | Description / Business Logic                                               |
-| ----------------------- | -------------------------------------------------------------------------- |
-| **POST /auth/register** | Registers a new citizen user                                               |
-| **POST /auth/login**    | Authenticates a user (citizen or municipality user) and issues a JWT token |
-| **POST /auth/logout**   | Invalidates user session/token                                             |
+| Method & Path                    | Description / Business Logic                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| **POST /users/register-citizen** | Registers a new citizen user (does not require authentication)               |
+| **POST /auth/login**             | Authenticates a user (citizen / municipality / admin) and issues a JWT token |
+| **POST /auth/current**           | Route for retrieving the currently logged in user data                       |
+| **POST /auth/logout**            | Invalidates user session/token                                               |
 
 ### admin routes
 
 | Method & Path                     | Description / Business Logic                           |
 | --------------------------------- | ------------------------------------------------------ |
+| **POST /users/register-user**     | Registers a new user for a given role                  |
+
+
 | **GET /admin/search-users**       | Lists users                                            |
-| **POST /admin/user**              | Registers a new municipality user                      |
 | **DELETE /admin/user**            | Deletes a municipality user account                    |
 | **GET /admin/municipality-roles** | Returns a list of Turin municipality technical offices |
 | **POST /admin/user/role**         | Assigns a role to a municipality user                  |

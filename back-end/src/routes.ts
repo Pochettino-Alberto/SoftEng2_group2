@@ -1,10 +1,8 @@
 import express from "express"
 import ErrorHandler from "./helper"
 import Authenticator from "./routers/auth"
-import { UserRoutes, AuthRoutes } from "./routers/userRoutes"
-/*import ProductRoutes from "./routers/productRoutes"
-import CartRoutes from "./routers/cartRoutes"
-import ReviewRoutes from "./routers/reviewRoutes"*/
+import { UserRoutes } from "./routers/userRoutes"
+import { AuthRoutes } from "./routers/authRoutes"
 const prefix = ""
 
 /**
@@ -26,18 +24,14 @@ function initRoutes(app: express.Application) {
     const authenticator = new Authenticator(app)
     const userRoutes = new UserRoutes(authenticator)
     const authRoutes = new AuthRoutes(authenticator)
-    //const productRoutes = new ProductRoutes(authenticator)
-    //const cartRoutes = new CartRoutes(authenticator)
-    //const reviewRoutes = new ReviewRoutes(authenticator)
+    // Declare new routes here...
 
     /**
      * The routes for the user, authentication, product, proposal, and cart resources are defined here.
      */
     app.use(`${prefix}/users`, userRoutes.getRouter())
     app.use(`${prefix}/auth`, authRoutes.getRouter())
-    //app.use(`${prefix}/products`, productRoutes.getRouter())
-    //app.use(`${prefix}/carts`, cartRoutes.getRouter())
-    //app.use(`${prefix}/reviews`, reviewRoutes.getRouter())
+    // Add new routers here...
 
     ErrorHandler.registerErrorHandler(app)
 }

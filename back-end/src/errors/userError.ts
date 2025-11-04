@@ -48,6 +48,17 @@ class UserNotCitizenError extends Error {
     }
 }
 
+class UserNotAdminError extends Error {
+    customMessage: String;
+    customCode: Number;
+
+    constructor() {
+        super()
+        this.customMessage = USER_NOT_ADMIN
+        this.customCode = 401
+    }
+}
+
 
 
 /**
@@ -61,17 +72,6 @@ class UserAlreadyExistsError extends Error {
         super()
         this.customMessage = USER_ALREADY_EXISTS
         this.customCode = 409
-    }
-}
-
-class UserNotAdminError extends Error {
-    customMessage: String;
-    customCode: Number;
-
-    constructor() {
-        super()
-        this.customMessage = USER_NOT_ADMIN
-        this.customCode = 401
     }
 }
 
