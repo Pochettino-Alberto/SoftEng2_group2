@@ -15,6 +15,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    email TEXT NOT NULL,
     user_type TEXT CHECK (user_type IN ('citizen', 'municipality', 'admin')) DEFAULT 'citizen',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
