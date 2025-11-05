@@ -4,8 +4,10 @@ import path from 'path'
 export function resetTestDB(): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      const backendDir = path.resolve(__dirname, '..') // back-end/test_integration/.. -> back-end
-      const databaseDir = path.resolve(backendDir, '..', 'database')
+  // __dirname = back-end/test_integration/helpers
+  // repository root is three levels up from __dirname
+  const projectRoot = path.resolve(__dirname, '..', '..', '..')
+  const databaseDir = path.resolve(projectRoot, 'database')
       const ddlPath = path.resolve(databaseDir, 'tables_DDL.sql')
       const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
       const testDbPath = path.resolve(databaseDir, 'testdb.db')

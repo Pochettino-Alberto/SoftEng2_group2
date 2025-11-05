@@ -115,4 +115,35 @@ describe('UserDAO', () => {
     const dao = new UserDAO()
     await expect(dao.getIsUserAuthenticated('eve', 'wrongpass')).resolves.toBe(false)
   })
+
+  test('getIsUserAuthenticated rejects when db.get returns error', async () => {
+    const dbErr = new Error('db failure')
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(dbErr)
+    })
+
+    const dao = new UserDAO()
+    await expect(dao.getIsUserAuthenticated('someone', 'pw')).rejects.toBe(dbErr)
+  })
+
+  test('getIsUserAuthenticated resolves false when row has no salt', async () => {
+  const sampleRow: any = { username: 'nosalt', password_hash: 'deadbeef', salt: null }
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, sampleRow) })
+    const dao = new UserDAO()
+    await expect(dao.getIsUserAuthenticated('nosalt', 'irrelevant')).resolves.toBe(false)
+  })
+
+  test('createUser rejects with generic DB error when run errors (non-UNIQUE)', async () => {
+    const someErr = new Error('some db error')
+    db.run.mockImplementation((sql: string, params: any[], cb: Function) => { cb(someErr) })
+    const dao = new UserDAO()
+    await expect(dao.createUser('bob', 'B', 'Ob', 'b@e.t', 'pw', 'citizen')).rejects.toBe(someErr)
+  })
+
+  test('getUserByUsername rejects when db.get returns error', async () => {
+    const err = new Error('read fail')
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
+    const dao = new UserDAO()
+    await expect(dao.getUserByUsername('x')).rejects.toBe(err)
+  })
 })
