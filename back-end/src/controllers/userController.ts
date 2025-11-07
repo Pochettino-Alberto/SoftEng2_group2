@@ -28,10 +28,45 @@ class UserController {
         //return this.dao.createUser(username, name, surname, password, role)
         return new Promise<Boolean>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
-            if(userExists)
+            if (userExists)
                 reject(new UserAlreadyExistsError());
             else
                 resolve(await this.dao.createUser(username, name, surname, email, password, role));
+        });
+    }
+
+    /**
+     * Updates the personal information of one user. The user can only update their own information.
+     * The admin can edit EVERY user
+     * @param user The user who is performing the update (gotten from Authenticator)
+     * @param id The ID of the user to update
+     * @param username The username of the user to update. It must be equal to the username of the user parameter or have admin privileges.
+     * @param name The new name of the user
+     * @param surname The new surname of the user
+     * @param email The new email of the user
+     * @param user_type The new user_type of the user (will be empty for /edit-me route)
+     * @returns A Promise that resolves to the updated user
+     */
+    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string) {
+        return new Promise<User>(async (resolve, reject) => {
+            try {
+                let userToUpdate = await this.dao.getUserById(id);
+                const fetchedUsername = userToUpdate.username;
+
+                if (Utility.isAdmin(user) || user.username == fetchedUsername) {
+
+                    if (username) userToUpdate.username = username;
+                    if (name) userToUpdate.first_name = name;
+                    if (surname) userToUpdate.last_name = surname;
+                    if (email) userToUpdate.email = email;
+                    if (user_type) userToUpdate.user_type = User.getRole(user_type);
+
+                    resolve(this.dao.updateUserInfo(id, userToUpdate));
+                }
+                else reject(new UnauthorizedUserError);
+            } catch (err) {
+                reject(err);
+            }
         });
     }
 
@@ -73,7 +108,7 @@ class UserController {
     async getUserByUsername(user: User, username: string) /**:Promise<User> */ {
         return new Promise<User>((resolve, reject) => {
             // User is admin || User wants to see his personal information
-            if( Utility.isAdmin(user) || user.username == username )
+            if (Utility.isAdmin(user) || user.username == username)
                 resolve(this.dao.getUserByUsername(username));
             else reject(new UserNotAdminError)
         });
@@ -89,8 +124,8 @@ class UserController {
             try {
                 await this.dao.getUserByUsername(username);
                 resolve(true);
-            } catch(error) {
-                if (error instanceof UserNotFoundError){
+            } catch (error) {
+                if (error instanceof UserNotFoundError) {
                     resolve(false);
                 } else {
                     reject(error);
@@ -136,29 +171,6 @@ class UserController {
             }
         });
         
-    }*/
-
-    /**
-     * Updates the personal information of one user. The user can only update their own information.
-     * The admin can edit EVERY user
-     * @param user The user who wants to update their information
-     * @param name The new name of the user
-     * @param surname The new surname of the user
-     * @param address The new address of the user
-     * @param birthdate The new birthdate of the user
-     * @param username The username of the user to update. It must be equal to the username of the user parameter.
-     * @returns A Promise that resolves to the updated user
-     */
-    /*async updateUserInfo(user: User, name: string, surname: string, address: string, birthdate: string, username: string) {
-        return new Promise<User>((resolve, reject) => {
-            if(Utility.isAdmin(user) || user.username == username) {    // todo: I should implement this checks in userRoutes.ts and not inside this controller
-                if(birthdate > Utility.now()) {
-                    reject(new DateError);
-                }
-                resolve(this.dao.updateUserInfo(name, surname, address, birthdate, username));
-            }
-            else reject(new UnauthorizedUserError);
-        });
     }*/
 }
 
