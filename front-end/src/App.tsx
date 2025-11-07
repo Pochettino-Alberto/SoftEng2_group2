@@ -1,0 +1,87 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './routes/ProtectedRoute';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import { UserType } from './types/user';
+
+// Pages
+import Home from './pages/Home';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Reports from './pages/Reports';
+import Statistics from './pages/Statistics';
+import CitizenDashboard from './pages/citizen/CitizenDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
+
+console.log('App.tsx loaded');
+
+function App() {
+  console.log('App component rendering...');
+  
+  return (
+    <Router>
+      <AuthProvider>
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+
+              {/* Protected Routes - Citizen */}
+              <Route
+                path="/citizen/*"
+                element={
+                  <ProtectedRoute allowedRoles={[UserType.CITIZEN]}>
+                    <Routes>
+                      <Route path="/" element={<CitizenDashboard />} />
+                      {/* Add more citizen routes here */}
+                    </Routes>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Municipality */}
+              <Route
+                path="/municipality/*"
+                element={
+                  <ProtectedRoute allowedRoles={[UserType.MUNICIPALITY]}>
+                    <Routes>
+                      <Route path="/" element={<MunicipalityDashboard />} />
+                      {/* Add more municipality routes here */}
+                    </Routes>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Admin */}
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute allowedRoles={[UserType.ADMIN]}>
+                    <Routes>
+                      <Route path="/" element={<AdminDashboard />} />
+                      {/* Add more admin routes here */}
+                    </Routes>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Fallback Route */}
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;
