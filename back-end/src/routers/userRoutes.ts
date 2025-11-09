@@ -163,6 +163,11 @@ class UserRoutes {
          * It requires the user to be authenticated: users with an Admin role can retrieve data of any user, users with a different role can only retrieve their own data.
          * It expects the userId of the user in the request parameters: the userId must represent an existing user.
          * It returns the user.
+         * 
+         * Possible errors: 
+         * 401 - Unauthorized
+         * 404 - Not Found
+         * 500 - Internal Server Error
          */
         this.router.get(
             "/users/:userId",

@@ -172,6 +172,28 @@ class UserController {
         });
         
     }*/
+
+    /**
+     * Returns a user with a specific id.
+     * This function should be called only by an admin, or by the same user (authenticated) that corresponds to that specific id
+     * @param requester - the user who called this service
+     * @param id - the id of the user
+     * @returns A Promise that resolves to a user object.
+     */
+    async getUserById(requester: User, id: number){
+        return new Promise<User>(async (resolve, reject) => {
+            try{
+                // Only the Admin can see any user infos, normal users can see only infos about themselves
+                if (!Utility.isAdmin(requester) && requester.id !== id){
+                    return reject(new UserNotAdminError);
+                }
+                const user = await this.dao.getUserById(id);
+                resolve(user);
+            }catch(err){
+                reject(err);
+            }
+        });
+    }
 }
 
 export default UserController
