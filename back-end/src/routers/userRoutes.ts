@@ -158,7 +158,21 @@ class UserRoutes {
 
 
 
-
+        /**
+         * Route for retrieving a user by its userId.
+         * It requires the user to be authenticated: users with an Admin role can retrieve data of any user, users with a different role can only retrieve their own data.
+         * It expects the userId of the user in the request parameters: the userId must represent an existing user.
+         * It returns the user.
+         */
+        this.router.get(
+            "/users/:userId",
+            this.authService.isLoggedIn,
+            param('userId').isInt({min: 1}).toInt(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.getUserById(req.user, req.params.userId)
+                .then((user: any) => res.status(200).json(user))
+                .catch((err: any) => next(err))
+        )
 
         // To be checked for next tasks //
 
