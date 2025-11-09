@@ -1,5 +1,5 @@
-import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError } from "../errors/userError"
-import { User } from "../components/user"
+import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError, UserIsAdminError } from "../errors/userError"
+import { User, UserType } from "../components/user"
 import UserDAO from "../dao/userDAO"
 import { DateError, Utility } from "../utilities"
 
@@ -188,6 +188,39 @@ class UserController {
 
         // Delegate to DAO; any errors will propagate to the route error handler
         return this.dao.getUserById(id);
+    }
+
+    /**
+     * Deletes a specific user
+     * The function has different behavior depending on the role of the user calling it:
+     * - Admins can delete any non-Admin user
+     * - Other roles can only delete their own account
+     * Admin accounts cannot be deleted at all, not even by the possessor of the admin account
+     * @param userId - The user's id of the user to delete. The user must exist.
+     * @returns A Promise that resolves to true if the user has been deleted.
+     */
+    async deleteUser(requester: User, id: number) {
+        // Admins can delete any non-Admin user; other users can delete only their own account
+        // First, if the requester is not admin, ensure they are deleting their own account
+        if (!Utility.isAdmin(requester)) {
+            if (requester.id !== id) {
+                throw new UserNotAdminError();
+            }
+
+            const deleted = await this.dao.deleteUserById(id);
+            if (!deleted) throw new UserNotFoundError();
+            return true;
+        }
+
+        // Requester is admin: ensure the target exists and isn't an admin
+        const userToDelete = await this.dao.getUserById(id); // may throw UserNotFoundError
+        if (userToDelete.user_type === UserType.ADMIN) {
+            throw new UserIsAdminError();
+        }
+
+        const deleted = await this.dao.deleteUserById(id);
+        if (!deleted) throw new UserNotFoundError();
+        return true;
     }
 }
 
