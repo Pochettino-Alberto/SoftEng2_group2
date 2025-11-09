@@ -179,7 +179,25 @@ class UserRoutes {
                 .catch((err: any) => next(err))
         )
 
-        // To be checked for next tasks //
+        /**
+         * Route for deleting a user by userId.
+         * It requires the user to be authenticated: users with an Admin role can delete the data of any user (except other Admins), users with a different role can only delete their own data.
+         * It expects the username of the user in the request parameters: the username must represent an existing user.
+         * It returns a 200 status code.
+         * Possible error codes:
+         * 401 - Unauthorized
+         * 404 - Not Found
+         * 500 - Internal Server Error
+         */
+        this.router.delete(
+            "/users/:userId",
+            this.authService.isLoggedIn,
+            param('userId').isInt({min: 1}).toInt(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.deleteUser(req.user, req.params.userId)
+                .then(() => res.status(200).end())
+                .catch((err: any) => next(err))
+        )
 
 
         /**
