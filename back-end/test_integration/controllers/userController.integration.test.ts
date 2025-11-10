@@ -66,4 +66,111 @@ describe('UserController integration - getUserById', () => {
 
     await expect(ctrl.getUserById(requester, b.id)).rejects.toBeInstanceOf(UserNotAdminError);
   })
+
+  test('createUser via controller creates a user in the real DB', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    const username = 'new_user';
+    const created = await ctrl.createUser(username, 'New', 'User', 'new.user@int.test', 'pwd', 'citizen');
+    expect(created).toBe(true);
+
+    const stored = await dao.getUserByUsername(username);
+    expect(stored).toBeDefined();
+    expect(stored.username).toBe(username);
+    expect(stored.email).toBe('new.user@int.test');
+  })
+
+  test('getUserByUsername: admin and self access, non-admin forbidden (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+    const { UserNotAdminError } = require('../../src/errors/userError');
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    // create a target user
+    const username = 'new_user2';
+    await dao.createUser(username, 'U', 'Name', 'u.name@int.test', 'pwd', 'citizen');
+    const target = await dao.getUserByUsername(username);
+
+    const admin = { id: 1, username: 'superadmin', user_type: 'admin' } as any;
+    const fetchedByAdmin = await ctrl.getUserByUsername(admin, username);
+    expect(fetchedByAdmin.username).toBe(username);
+
+    const selfRequester = { id: target.id, username: target.username, user_type: target.user_type } as any;
+    const fetchedSelf = await ctrl.getUserByUsername(selfRequester, username);
+    expect(fetchedSelf.username).toBe(username);
+
+    const other = { id: target.id + 1, username: 'other', user_type: 'citizen' } as any;
+    await expect(ctrl.getUserByUsername(other, username)).rejects.toBeInstanceOf(UserNotAdminError);
+  })
+
+  test('deleteUser: non-admin deletes own account; admin deletes another; admin cannot delete admin (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+    const { UserIsAdminError, UserNotFoundError } = require('../../src/errors/userError');
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    // non-admin deletes own account
+    const username = 'to_delete_self';
+    await dao.createUser(username, 'Self', 'Delete', 's.del@int.test', 'pwd', 'citizen');
+    const stored = await dao.getUserByUsername(username);
+    const caller = { id: stored.id, username: stored.username, user_type: stored.user_type } as any;
+
+    const deleted = await ctrl.deleteUser(caller, stored.id);
+    expect(deleted).toBe(true);
+    await expect(dao.getUserById(stored.id)).rejects.toBeInstanceOf(UserNotFoundError);
+
+    // admin deletes non-admin
+    const targetName = 'admin_deletes_target';
+    await dao.createUser(targetName, 'T', 'User', 't.user@int.test', 'pwd', 'citizen');
+    const target = await dao.getUserByUsername(targetName);
+    const admin = { id: 1, username: 'superadmin', user_type: 'admin' } as any;
+    const adminDeleted = await ctrl.deleteUser(admin, target.id);
+    expect(adminDeleted).toBe(true);
+
+    // admin cannot delete admin
+    const adminName = 'there_can_be_only_one_admin';
+    await dao.createUser(adminName, 'A', 'Admin', 'a.admin@int.test', 'pwd', 'admin');
+    const adminTarget = await dao.getUserByUsername(adminName);
+    await expect(ctrl.deleteUser(admin, adminTarget.id)).rejects.toBeInstanceOf(UserIsAdminError);
+  })
+
+  test('updateUserInfo: user updates own info and admin updates another; unauthorized rejected (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+    const { UnauthorizedUserError } = require('../../src/errors/userError');
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    // user updates own info
+    const uname = 'update_self';
+    await dao.createUser(uname, 'Old', 'Name', 'old@int.test', 'pwd', 'citizen');
+    const stored = await dao.getUserByUsername(uname);
+    const caller = { id: stored.id, username: stored.username, user_type: stored.user_type } as any;
+
+    const updated = await ctrl.updateUserInfo(caller, stored.id, 'update_self_new', 'NewFirst', undefined, 'new@int.test');
+    expect((await dao.getUserById(stored.id)).username).toBe('update_self_new');
+    expect((await dao.getUserById(stored.id)).email).toBe('new@int.test');
+
+    // admin updates another
+    const tname = 'update_target';
+    await dao.createUser(tname, 'T', 'Old', 't.old@int.test', 'pwd', 'citizen');
+    const target = await dao.getUserByUsername(tname);
+    const admin = { id: 1, username: 'superadmin', user_type: 'admin' } as any;
+    const updatedByAdmin = await ctrl.updateUserInfo(admin, target.id, undefined, 'UpdatedFirst');
+    expect((await dao.getUserById(target.id)).first_name).toBe('UpdatedFirst');
+
+    // non-admin cannot update another
+    const a = await dao.getUserByUsername(tname);
+    const other = { id: a.id + 1000, username: 'not_owner', user_type: 'citizen' } as any;
+    await expect(ctrl.updateUserInfo(other, a.id, 'hacker')).rejects.toBeInstanceOf(UnauthorizedUserError);
+  })
 })
