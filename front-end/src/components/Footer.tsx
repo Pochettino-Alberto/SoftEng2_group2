@@ -24,14 +24,14 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/reports" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <button disabled className="text-gray-600 cursor-not-allowed text-sm" title="Coming Soon">
                   View Reports
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/statistics" className="text-gray-400 hover:text-white text-sm transition-colors">
+                <button disabled className="text-gray-600 cursor-not-allowed text-sm" title="Coming Soon">
                   Statistics
-                </Link>
+                </button>
               </li>
             </ul>
           </div>

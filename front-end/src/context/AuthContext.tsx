@@ -5,9 +5,9 @@ import type { User, LoginData, RegisterData } from '../types/user';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginData) => Promise<void>;
+  login: (credentials: LoginData) => Promise<User>;
   logout: () => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+  register: (userData: RegisterData) => Promise<User>;
   isAuthenticated: boolean;
 }
 
@@ -33,9 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (credentials: LoginData) => {
+  const login = async (credentials: LoginData): Promise<User> => {
     const loggedInUser = await authAPI.login(credentials);
     setUser(loggedInUser);
+    return loggedInUser;
   };
 
   const logout = async () => {
@@ -43,9 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const register = async (userData: RegisterData) => {
+  const register = async (userData: RegisterData): Promise<User> => {
     const newUser = await authAPI.registerCitizen(userData);
     setUser(newUser);
+    return newUser;
   };
 
   const value: AuthContextType = {

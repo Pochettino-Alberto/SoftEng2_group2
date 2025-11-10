@@ -76,7 +76,9 @@ const Register: React.FC = () => {
     try {
       const { confirmPassword, ...registerData } = formData;
       await register(registerData);
-      navigate('/citizen'); // Redirect to citizen dashboard
+      
+      // Citizens always go to citizen dashboard (they can only register as citizens)
+      navigate('/citizen');
     } catch (err: unknown) {
       setErrors({
         ...errors,
@@ -184,7 +186,7 @@ const Register: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link to="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link to="/auth/login/citizen" className="font-medium hover:underline" style={{ color: '#5199CD' }}>
                 Sign in here
               </Link>
             </p>
@@ -192,8 +194,8 @@ const Register: React.FC = () => {
         </Card>
 
         <div className="mt-6 text-center">
-          <Link to="/" className="text-gray-600 hover:text-gray-900">
-            ← Back to Home
+          <Link to="/auth/account" className="text-gray-600 hover:text-gray-900">
+            ← Back to Account Selection
           </Link>
         </div>
       </div>

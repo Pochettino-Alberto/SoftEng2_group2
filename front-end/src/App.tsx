@@ -9,6 +9,7 @@ import { UserType } from './types/user';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import Account from './pages/auth/Account';
 import Reports from './pages/Reports';
 import Statistics from './pages/Statistics';
 import CitizenDashboard from './pages/citizen/CitizenDashboard';
@@ -31,7 +32,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/statistics" element={<Statistics />} />
-              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/account" element={<Account />} />
+              <Route path="/auth/login/:userType" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
 
               {/* Protected Routes - Citizen */}
