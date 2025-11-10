@@ -146,4 +146,45 @@ describe('UserDAO', () => {
     const dao = new UserDAO()
     await expect(dao.getUserByUsername('x')).rejects.toBe(err)
   })
+
+  // Tests for getUserById
+  test('getUserById resolves with a User when row exists', async () => {
+    const sampleRow = {
+      id: 42,
+      username: 'sam',
+      first_name: 'Sam',
+      last_name: 'Smith',
+      email: 'sam@example.com',
+      user_type: 'municipality'
+    }
+
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(null, sampleRow)
+    })
+
+    const dao = new UserDAO()
+    const user = await dao.getUserById(42)
+
+    expect(user.id).toBe(42)
+    expect(user.username).toBe('sam')
+    expect(user.user_type).toBeDefined()
+    expect(user.email).toBe('sam@example.com')
+  })
+
+  test('getUserById rejects with UserNotFoundError when row is not found', async () => {
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => {
+      cb(null, undefined)
+    })
+
+    const dao = new UserDAO()
+    // rejects unwrap the a rejected promise
+    await expect(dao.getUserById(999)).rejects.toBeInstanceOf(UserNotFoundError)
+  })
+
+  test('getUserById rejects when db.get returns an error', async () => {
+    const err = new Error('db read failure')
+    db.get.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
+    const dao = new UserDAO()
+    await expect(dao.getUserById(7)).rejects.toBe(err)
+  })
 })

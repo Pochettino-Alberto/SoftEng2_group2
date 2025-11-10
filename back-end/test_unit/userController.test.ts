@@ -75,4 +75,41 @@ describe('UserController', () => {
     const ctrl = new UserController()
     await expect(ctrl.usernameAlreadyInUse('err')).rejects.toBeInstanceOf(Error)
   })
+
+  // Tests for getUserById
+  test('getUserById resolves when caller is admin', async () => {
+    const returned = { id: 11, username: 'targetA', first_name: 'A', last_name: 'User', email: 'a@example.com', user_type: 'admin' }
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(returned as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(true)
+
+    const ctrl = new UserController()
+    const caller = { id: 2, username: 'caller', user_type: 'admin' } as any
+    await expect(ctrl.getUserById(caller, 11)).resolves.toEqual(returned)
+  })
+
+  test('getUserById resolves when caller requests own data', async () => {
+    const returned = { id: 5, username: 'selfy', first_name: 'S', last_name: 'Elf', email: 's@example.com', user_type: 'citizen' }
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(returned as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
+
+    const ctrl = new UserController()
+    const caller = { id: 5, username: 'selfy', user_type: 'citizen' } as any
+    await expect(ctrl.getUserById(caller, 5)).resolves.toEqual(returned)
+  })
+
+  test('getUserById rejects with UserNotAdminError when unauthorized', async () => {
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
+    const ctrl = new UserController()
+    const caller = { id: 8, username: 'other', user_type: 'citizen' } as any
+    await expect(ctrl.getUserById(caller, 9)).rejects.toBeInstanceOf(UserNotAdminError)
+  })
+
+  test('getUserById propagates DAO errors', async () => {
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockRejectedValue(new UserNotFoundError())
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(true)
+
+    const ctrl = new UserController()
+    const caller = { id: 1, username: 'admin', user_type: 'admin' } as any
+    await expect(ctrl.getUserById(caller, 123)).rejects.toBeInstanceOf(UserNotFoundError)
+  })
 })
