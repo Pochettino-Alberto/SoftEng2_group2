@@ -15,6 +15,19 @@ code documentation:
 - [back-end - README_BE](./back-end/README_BE.md)
 - [front-end - README_FE](./front-end/README_FE.md)
 
+## Notes and quick developers tips
+
+### Reset database data
+
+<code> node ../database/resetDatabase.ts </code>
+
+### Default sample users credentials
+
+| Username | Password          | User Type |
+| -------- | ----------------- | --------- |
+| johndoe  | securePassword123 | citizen   |
+| admin    | securePassword123 | admin     |
+
 ## Participium — Schematic summary
 
 ---

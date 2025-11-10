@@ -99,6 +99,72 @@ class UserDAO {
 
         })
     }
+    /**
+     * Returns a user object from the database based on the ID.
+     * @param ID The ID of the user to retrieve
+     * @returns A Promise that resolves the information of the requested user
+     */
+    getUserById(ID: number): Promise<User> {
+        return new Promise<User>((resolve, reject) => {
+            const sql = "SELECT * FROM users WHERE id = ?"
+            db.get(sql, [ID], (err: Error | null, row: any) => {
+                if (err) {
+                    reject(err);
+                    return
+                }
+                if (!row) {
+                    reject(new UserNotFoundError);
+                    return
+                }
+                const user: User = this.mapDBrowToUserObject(row);
+                resolve(user);
+            });
+
+        })
+    }
+
+    /**
+     * Delete a user in the database, given its id
+     * @returns A Promise that resolves to true if the user is deleted or false if it does not exists
+     */
+    deleteUserById(ID: number): Promise<Boolean> {
+        return new Promise<Boolean>((resolve, reject) => {
+            const sql = 'DELETE FROM users WHERE id = ?';
+            db.run(sql, [ID], function(err: Error | null) {
+                if(err) {
+                    reject(err);
+                    return;
+                }
+                if(!this.changes) {
+                    resolve(false);
+                    return;
+                }
+                resolve(true);
+            });
+        });
+    }
+
+    /**
+     * Updates the personal information of one user. The user can only update their own information (except for the admin, which can also update other accounts).
+     * @param id The immutable ID of the user
+     * @param user The updated user object
+     * @returns A Promise that resolves to the updated user
+     */
+    updateUserInfo(id: number, user: User) {
+        return new Promise<User>( (resolve, reject) => {
+            const sql = "UPDATE users SET username=?, first_name=?, last_name=?, email=?, user_type=? WHERE id=?";
+
+            db.run(sql, [user.username, user.first_name, user.last_name, user.email, user.user_type, id], (err: Error | null, row: any) => {
+                if(err) {
+                    reject(err);
+                    return;
+                }
+                //resolve(await this.getUserByUsername(username));
+                //this.getUserByUsername(username).then((user) => resolve(user)).catch((err) => reject(err))
+                resolve(user);
+            });
+        });
+    }
 
 
     /**
@@ -162,30 +228,6 @@ class UserDAO {
                     return;
                 }
                 resolve(true);
-            });
-        });
-    }*/
-
-    /**
-     * Updates the personal information of one user. The user can only update their own information.
-     * @param name The new name of the user
-     * @param surname The new surname of the user
-     * @param address The new address of the user
-     * @param birthdate The new birthdate of the user
-     * @param username The username of the user to update.
-     * @returns A Promise that resolves to the updated user
-     */
-    /*updateUserInfo(name: string, surname: string, address: string, birthdate: string, username: string) {
-        return new Promise<User>( (resolve, reject) => {
-            const sql = "UPDATE users SET name=?, surname=?, address=?, birthdate=? WHERE username=?";
-
-            db.run(sql, [name, surname, address, birthdate, username], (err: Error | null, row: any) => {
-                if(err) {
-                    reject(err);
-                    return;
-                }
-                //resolve(await this.getUserByUsername(username));
-                this.getUserByUsername(username).then((user) => resolve(user)).catch((err) => reject(err))
             });
         });
     }*/

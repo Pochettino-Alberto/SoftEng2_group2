@@ -1,5 +1,5 @@
-import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError } from "../errors/userError"
-import { User } from "../components/user"
+import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError, UserIsAdminError } from "../errors/userError"
+import { User, UserType } from "../components/user"
 import UserDAO from "../dao/userDAO"
 import { DateError, Utility } from "../utilities"
 
@@ -28,10 +28,45 @@ class UserController {
         //return this.dao.createUser(username, name, surname, password, role)
         return new Promise<Boolean>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
-            if(userExists)
+            if (userExists)
                 reject(new UserAlreadyExistsError());
             else
                 resolve(await this.dao.createUser(username, name, surname, email, password, role));
+        });
+    }
+
+    /**
+     * Updates the personal information of one user. The user can only update their own information.
+     * The admin can edit EVERY user
+     * @param user The user who is performing the update (gotten from Authenticator)
+     * @param id The ID of the user to update
+     * @param username The username of the user to update. It must be equal to the username of the user parameter or have admin privileges.
+     * @param name The new name of the user
+     * @param surname The new surname of the user
+     * @param email The new email of the user
+     * @param user_type The new user_type of the user (will be empty for /edit-me route)
+     * @returns A Promise that resolves to the updated user
+     */
+    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string) {
+        return new Promise<User>(async (resolve, reject) => {
+            try {
+                let userToUpdate = await this.dao.getUserById(id);
+                const fetchedUsername = userToUpdate.username;
+
+                if (Utility.isAdmin(user) || user.username == fetchedUsername) {
+
+                    if (username) userToUpdate.username = username;
+                    if (name) userToUpdate.first_name = name;
+                    if (surname) userToUpdate.last_name = surname;
+                    if (email) userToUpdate.email = email;
+                    if (user_type) userToUpdate.user_type = User.getRole(user_type);
+
+                    resolve(this.dao.updateUserInfo(id, userToUpdate));
+                }
+                else reject(new UnauthorizedUserError);
+            } catch (err) {
+                reject(err);
+            }
         });
     }
 
@@ -73,7 +108,7 @@ class UserController {
     async getUserByUsername(user: User, username: string) /**:Promise<User> */ {
         return new Promise<User>((resolve, reject) => {
             // User is admin || User wants to see his personal information
-            if( Utility.isAdmin(user) || user.username == username )
+            if (Utility.isAdmin(user) || user.username == username)
                 resolve(this.dao.getUserByUsername(username));
             else reject(new UserNotAdminError)
         });
@@ -89,8 +124,8 @@ class UserController {
             try {
                 await this.dao.getUserByUsername(username);
                 resolve(true);
-            } catch(error) {
-                if (error instanceof UserNotFoundError){
+            } catch (error) {
+                if (error instanceof UserNotFoundError) {
                     resolve(false);
                 } else {
                     reject(error);
@@ -139,27 +174,54 @@ class UserController {
     }*/
 
     /**
-     * Updates the personal information of one user. The user can only update their own information.
-     * The admin can edit EVERY user
-     * @param user The user who wants to update their information
-     * @param name The new name of the user
-     * @param surname The new surname of the user
-     * @param address The new address of the user
-     * @param birthdate The new birthdate of the user
-     * @param username The username of the user to update. It must be equal to the username of the user parameter.
-     * @returns A Promise that resolves to the updated user
+     * Returns a user with a specific id.
+     * This function should be called only by an admin, or by the same user (authenticated) that corresponds to that specific id
+     * @param requester - the user who called this service
+     * @param id - the id of the user
+     * @returns A Promise that resolves to a user object.
      */
-    /*async updateUserInfo(user: User, name: string, surname: string, address: string, birthdate: string, username: string) {
-        return new Promise<User>((resolve, reject) => {
-            if(Utility.isAdmin(user) || user.username == username) {    // todo: I should implement this checks in userRoutes.ts and not inside this controller
-                if(birthdate > Utility.now()) {
-                    reject(new DateError);
-                }
-                resolve(this.dao.updateUserInfo(name, surname, address, birthdate, username));
+    async getUserById(requester: User, id: number){
+        // Only the Admin can see any user infos; normal users can see only infos about themselves
+        if (!Utility.isAdmin(requester) && requester.id !== id) {
+            throw new UserNotAdminError();
+        }
+
+        // Delegate to DAO; any errors will propagate to the route error handler
+        return this.dao.getUserById(id);
+    }
+
+    /**
+     * Deletes a specific user
+     * The function has different behavior depending on the role of the user calling it:
+     * - Admins can delete any non-Admin user
+     * - Other roles can only delete their own account
+     * Admin accounts cannot be deleted at all, not even by the possessor of the admin account
+     * @param userId - The user's id of the user to delete. The user must exist.
+     * @returns A Promise that resolves to true if the user has been deleted.
+     */
+    async deleteUser(requester: User, id: number) {
+        // Admins can delete any non-Admin user; other users can delete only their own account
+        // First, if the requester is not admin, ensure they are deleting their own account
+        if (!Utility.isAdmin(requester)) {
+            if (requester.id !== id) {
+                throw new UserNotAdminError();
             }
-            else reject(new UnauthorizedUserError);
-        });
-    }*/
+
+            const deleted = await this.dao.deleteUserById(id);
+            if (!deleted) throw new UserNotFoundError();
+            return true;
+        }
+
+        // Requester is admin: ensure the target exists and isn't an admin
+        const userToDelete = await this.dao.getUserById(id); // may throw UserNotFoundError
+        if (userToDelete.user_type === UserType.ADMIN) {
+            throw new UserIsAdminError();
+        }
+
+        const deleted = await this.dao.deleteUserById(id);
+        if (!deleted) throw new UserNotFoundError();
+        return true;
+    }
 }
 
 export default UserController

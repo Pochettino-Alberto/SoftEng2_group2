@@ -104,12 +104,100 @@ class UserRoutes {
                 })
         )
 
+        /**
+         * Route for updating the information of a user.
+         * It requires the user to be an admin.
+         * It expects the username of the user to edit in the request parameters: Admin users can edit other non-Admin users.
+         * It requires the following body parameters:
+         * - id: string. It cannot be empty.
+         * - username: string. It cannot be empty.
+         * - name: string. It cannot be empty.
+         * - surname: string. It cannot be empty.
+         * - email: string. It cannot be empty.
+         * - usertype: string [citizen | municipality | admin]. It cannot be empty.
+         * It returns the updated user.
+         */
+        this.router.patch(
+            "/edit-user",
+            this.authService.isAdmin,
+            body('id').isInt().notEmpty(),
+            body('username').optional({nullable: true}).isString(),
+            body('name').optional({nullable: true}).isString(),
+            body('surname').optional({nullable: true}).isString(),
+            body('email').optional({nullable: true}).isString(),
+            body('usertype').optional({nullable: true}).isString(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, req.body.usertype)
+                .then((user: any) => res.status(200).json(user))
+                .catch((err: any) => next(err))
+        )
+
+        /**
+         * Route for updating the information of the current logged in user.
+         * It requires the following body parameters:
+         * - id: string. It cannot be empty.
+         * - username: string. It can be empty.
+         * - name: string. It can be empty.
+         * - surname: string. It can be empty.
+         * - email: string. It can be empty.
+         * It returns the updated user.
+         */
+        this.router.patch(
+            "/edit-me",
+            this.authService.isLoggedIn,
+            body('id').isInt().notEmpty(),
+            body('username').optional({nullable: true}).isString(),
+            body('name').optional({nullable: true}).isString(),
+            body('surname').optional({nullable: true}).isString(),
+            body('email').optional({nullable: true}).isString(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, null)
+                .then((user: any) => res.status(200).json(user))
+                .catch((err: any) => next(err))
+        )
 
 
 
+        /**
+         * Route for retrieving a user by its userId.
+         * It requires the user to be authenticated: users with an Admin role can retrieve data of any user, users with a different role can only retrieve their own data.
+         * It expects the userId of the user in the request parameters: the userId must represent an existing user.
+         * It returns the user.
+         * 
+         * Possible errors: 
+         * 401 - Unauthorized
+         * 404 - Not Found
+         * 500 - Internal Server Error
+         */
+        this.router.get(
+            "/users/:userId",
+            this.authService.isLoggedIn,
+            param('userId').isInt({min: 1}).toInt(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.getUserById(req.user, req.params.userId)
+                .then((user: any) => res.status(200).json(user))
+                .catch((err: any) => next(err))
+        )
 
-
-        // To be checked for next tasks //
+        /**
+         * Route for deleting a user by userId.
+         * It requires the user to be authenticated: users with an Admin role can delete the data of any user (except other Admins), users with a different role can only delete their own data.
+         * It expects the username of the user in the request parameters: the username must represent an existing user.
+         * It returns a 200 status code.
+         * Possible error codes:
+         * 401 - Unauthorized
+         * 404 - Not Found
+         * 500 - Internal Server Error
+         */
+        this.router.delete(
+            "/users/:userId",
+            this.authService.isLoggedIn,
+            param('userId').isInt({min: 1}).toInt(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.deleteUser(req.user, req.params.userId)
+                .then(() => res.status(200).end())
+                .catch((err: any) => next(err))
+        )
 
 
         /**
@@ -187,32 +275,6 @@ class UserRoutes {
                 .then(() => res.status(200).end())
                 .catch((err: any) => next(err))
         )*/
-
-        /**
-         * Route for updating the information of a user.
-         * It requires the user to be authenticated.
-         * It expects the username of the user to edit in the request parameters: if the user is not an Admin, the username must match the username of the logged in user. Admin users can edit other non-Admin users.
-         * It requires the following body parameters:
-         * - name: string. It cannot be empty.
-         * - surname: string. It cannot be empty.
-         * - address: string. It cannot be empty.
-         * - birthdate: date. It cannot be empty, it must be a valid date in format YYYY-MM-DD, and it cannot be after the current date
-         * It returns the updated user.
-         */
-        /*this.router.patch(
-            "/:username",
-            this.authService.isLoggedIn,
-            param('username').isString().notEmpty(),
-            body('name').isString().notEmpty(),
-            body('surname').isString().notEmpty(),
-            body('address').isString().notEmpty(),
-            body('birthdate').isDate().notEmpty(),
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.name, req.body.surname, req.body.address, req.body.birthdate, req.params.username)
-                .then((user: any) => res.status(200).json(user))
-                .catch((err: any) => next(err))
-        )*/
-
     }
 }
 

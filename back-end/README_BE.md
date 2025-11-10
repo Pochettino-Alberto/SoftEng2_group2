@@ -19,6 +19,7 @@ The server can be launched with <code>nodemon index.ts</code>
 ## Routes - business logic
 
 - for more detail on each route checkout the [postman collection](./postman_collection.json).
+- ? after a Body parameter means that it is optional (can be null)
 
 ### auth routes
 
@@ -30,13 +31,15 @@ The server can be launched with <code>nodemon index.ts</code>
 
 ### user routes
 
-| Method & Path                     | Body                                             | Description / Business Logic                                      |
-| --------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-| **POST /users/register-citizen**  | {username, name, surname, email, password}       | Registers a new citizen user (does not require authentication)    |
-| **POST /users/register-user**     | {username, name, surname, email, password, role} | Registers a new user for a given role (requires admin privileges) |
-| -- the following routes are todo  |                                                  |                                                                   |
-| **GET /users/search-users**       |                                                  | Lists users                                                       |
-| **DELETE /users/user**            |                                                  | Deletes a municipality user account                               |
-| **GET /users/municipality-roles** |                                                  | Returns a list of Turin municipality technical offices            |
-| **POST /users/user/role**         |                                                  | Assigns a role to a municipality user                             |
-| **DELETE /users/user/role**       |                                                  | Removes assignment of a role to a municipality user               |
+| Method & Path                     | Body                                               | Description / Business Logic                                      |
+| --------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
+| **POST /users/register-citizen**  | {username, name, surname, email, password}         | Registers a new citizen user (does not require authentication)    |
+| **POST /users/register-user**     | {username, name, surname, email, password, role}   | Registers a new user for a given role (requires admin privileges) |
+| **PATCH /users/edit-me**          | {id, username?, name?, surname?, email?}           | Updates the profile of the current logged in user                 |
+| **PATCH /users/edit-user**        | {id, username?, name?, surname?, email?, usertype} | Updates the profile of a generic user (requires admin privileges) |
+| -- the following routes are todo  |                                                    |                                                                   |
+| **GET /users/search-users**       |                                                    | Lists users                                                       |
+| **DELETE /users/user**            |                                                    | Deletes a municipality user account                               |
+| **GET /users/municipality-roles** |                                                    | Returns a list of Turin municipality technical offices            |
+
+| **DELETE /users/user/role** | | Removes assignment of a role to a municipality user |
