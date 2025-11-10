@@ -17,7 +17,7 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,9 +75,14 @@ const Register: React.FC = () => {
     
     try {
       const { confirmPassword, ...registerData } = formData;
+      
+      // Register the user (backend doesn't return user object)
       await register(registerData);
       
-      // Citizens always go to citizen dashboard (they can only register as citizens)
+      // Automatically log in after successful registration
+      await login({ username: registerData.username, password: registerData.password });
+      
+      // Navigate to citizen dashboard
       navigate('/citizen');
     } catch (err: unknown) {
       setErrors({

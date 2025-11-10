@@ -21,7 +21,15 @@ export const authAPI = {
 
   // Register a new citizen
   registerCitizen: async (userData: RegisterData): Promise<User> => {
-    const response = await apiClient.post('/users/register-citizen', userData);
+    // Transform frontend field names to backend field names
+    const backendData = {
+      username: userData.username,
+      name: userData.first_name,
+      surname: userData.last_name,
+      email: userData.email,
+      password: userData.password,
+    };
+    const response = await apiClient.post('/users/register-citizen', backendData);
     return response.data;
   },
 };

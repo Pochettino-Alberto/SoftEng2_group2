@@ -51,19 +51,14 @@ const Navbar: React.FC = () => {
                   style={{ color: '#5199CD' }}
                   className="hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  Dashboard
+                  My Profile
                 </Link>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-700">
-                    Welcome, {user?.first_name}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Logout
+                </button>
               </>
             ) : (
               <>
