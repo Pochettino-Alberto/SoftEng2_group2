@@ -175,6 +175,25 @@ describe('UserDAO', () => {
     await expect(dao.deleteUserById(4)).rejects.toBe(err)
   })
 
+  // Tests for updateUserInfo in DAO
+  test('updateUserInfo resolves with the passed user when db.run succeeds', async () => {
+    // simulate successful db.run (no error)
+    db.run.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null) })
+
+    const dao = new UserDAO()
+    const userToUpdate: any = { username: 'joe', first_name: 'Joe', last_name: 'Old', email: 'joe@old.com', user_type: 'citizen' }
+    await expect(dao.updateUserInfo(7, userToUpdate)).resolves.toBe(userToUpdate)
+    expect(db.run).toHaveBeenCalled()
+  })
+
+  test('updateUserInfo rejects when db.run returns an error', async () => {
+    const err = new Error('update failure')
+    db.run.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
+    const dao = new UserDAO()
+    const userToUpdate: any = { username: 'x' }
+    await expect(dao.updateUserInfo(8, userToUpdate)).rejects.toBe(err)
+  })
+
   // Tests for getUserById
   test('getUserById resolves with a User when row exists', async () => {
     const sampleRow = {
