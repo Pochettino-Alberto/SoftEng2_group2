@@ -14,14 +14,16 @@ describe('UserDAO integration (dao folder)', () => {
 
     const username = 'alice_dao'
     // create user
-    const createdUser = await dao.createUser(username, 'Alice', 'Integration', 'alice@int.test', 'secretpass', 'citizen')
-    expect(createdUser).toBeDefined();
-    expect(createdUser.username).toBe(username);
+  const createdUser = await dao.createUser(username, 'Alice', 'Integration', 'alice@int.test', 'secretpass', 'citizen')
+  // createUser returns the created User object in the DAO implementation
+  expect(createdUser).toBeDefined();
+  expect(createdUser.username).toBe(username);
 
     // retrieve
     const user = await dao.getUserByUsername(username)
     expect(user.username).toBe(username)
-    expect(user.email).toBe('alice.dao@int.test')
+  // Email should match what was provided when creating the user
+  expect(user.email).toBe('alice@int.test')
 
     // authenticate
     const authOk = await dao.getIsUserAuthenticated(username, 'secretpass')
@@ -39,8 +41,10 @@ describe('UserDAO integration (dao folder)', () => {
 
     const username = 'int_bob_dao'
     // create user
-    const created = await dao.createUser(username, 'Bob', 'Integration', 'bob.dao@int.test', 'pwd', 'citizen')
-    expect(created).toBe(true)
+  const created = await dao.createUser(username, 'Bob', 'Integration', 'bob.dao@int.test', 'pwd', 'citizen')
+  // DAO.createUser returns the created User object; ensure it's defined and username matches
+  expect(created).toBeDefined()
+  expect(created.username).toBe(username)
 
     // retrieve by username to get id
     const byName = await dao.getUserByUsername(username)

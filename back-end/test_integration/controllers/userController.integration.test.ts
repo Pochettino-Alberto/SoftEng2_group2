@@ -74,14 +74,17 @@ describe('UserController integration - getUserById', () => {
     const dao = new UserDAO();
     const ctrl = new UserController();
 
-    const username = 'new_user';
-    const created = await ctrl.createUser(username, 'New', 'User', 'new.user@int.test', 'pwd', 'citizen');
-    expect(created).toBe(true);
+  const username = 'new_user';
+  const created = await ctrl.createUser(username, 'New', 'User', 'new.user@int.test', 'pwd', 'citizen');
+  // Controller.createUser resolves to the created User object; ensure it's defined and has expected properties
+  expect(created).toBeDefined();
+  expect(created.username).toBe(username);
+  expect(created.email).toBe('new.user@int.test');
 
-    const stored = await dao.getUserByUsername(username);
-    expect(stored).toBeDefined();
-    expect(stored.username).toBe(username);
-    expect(stored.email).toBe('new.user@int.test');
+  const stored = await dao.getUserByUsername(username);
+  expect(stored).toBeDefined();
+  expect(stored.username).toBe(username);
+  expect(stored.email).toBe('new.user@int.test');
   })
 
   test('getUserByUsername: admin and self access, non-admin forbidden (real DB)', async () => {
