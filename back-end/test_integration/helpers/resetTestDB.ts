@@ -12,11 +12,9 @@ export function resetTestDB(): Promise<void> {
       const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
       const testDbPath = path.resolve(databaseDir, 'testdb.db')
 
-      // remove existing testdb if present
-      if (fs.existsSync(testDbPath)) {
-        fs.unlinkSync(testDbPath)
-      }
-
+      // Instead of deleting the DB file (which can fail if another connection
+      // has it open), open the file and execute the DDL which contains
+      // DROP TABLE IF EXISTS statements to reset schema/state safely.
       const sqlite3 = require('sqlite3').verbose()
       const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
       const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
