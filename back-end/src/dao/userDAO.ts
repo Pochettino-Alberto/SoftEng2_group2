@@ -58,19 +58,20 @@ class UserDAO {
      * @param role The role of the user. It must be one of the three allowed types ("citizen", "municipality", "admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
-    createUser(username: string, name: string, surname: string, email: string, password: string, role: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
+    createUser(username: string, name: string, surname: string, email: string, password: string, role: string): Promise<User> {
+        return new Promise<User>((resolve, reject) => {
             const salt = crypto.randomBytes(16)
             // scryptSync is a syncronous functions that generates a password-based key in hexadecimal, 
             // designed to be computationally expensive. It takes a plain password, unique salt string at least 16 bytes long and KeyLength
             const hashedPassword = crypto.scryptSync(password, salt, 16)
             const sql = "INSERT INTO users(username, first_name, last_name, email, user_type, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
-            db.run(sql, [username, name, surname, email, role, hashedPassword, salt], (err: Error | null) => {
+            db.run(sql, [username, name, surname, email, role, hashedPassword, salt], function (err: Error | null) {
                 if (err) {
                     if (err.message.includes("UNIQUE constraint failed: users.username")) reject(new UserAlreadyExistsError)
                     reject(err)
                 }
-                resolve(true)
+                const user = new User(this.lastID, username, name, surname, email, User.getRole(role));
+                resolve(user);
             })
 
         })

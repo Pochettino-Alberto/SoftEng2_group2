@@ -26,7 +26,7 @@ class UserController {
      */
     async createUser(username: string, name: string, surname: string, email: string, password: string, role: string) /**:Promise<Boolean> */ {
         //return this.dao.createUser(username, name, surname, password, role)
-        return new Promise<Boolean>(async (resolve, reject) => {
+        return new Promise<User>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
             if (userExists)
                 reject(new UserAlreadyExistsError());

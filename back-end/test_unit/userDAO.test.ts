@@ -54,13 +54,15 @@ describe('UserDAO', () => {
   })
 
   test('createUser resolves true when insert succeeds', async () => {
+    const expectedUserId = 1;
     // simulate successful db.run (no error passed to callback)
     db.run.mockImplementation((sql: string, params: any[], cb: Function) => {
-      cb(null)
+      cb.call({ lastID: expectedUserId, changes: 1 }, null);
     })
 
     const dao = new UserDAO()
-    await expect(dao.createUser('alice', 'Alice', 'Smith', 'alice@example.com', 'pass', 'Customer')).resolves.toBe(true)
+    const user = await dao.createUser('alice', 'Alice', 'Smith', 'alice@example.com', 'pass', 'Customer');
+    expect(user.id).toBe(expectedUserId);
     expect(db.run).toHaveBeenCalled()
   })
 

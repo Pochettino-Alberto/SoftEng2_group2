@@ -66,7 +66,7 @@ class UserRoutes {
             }),*/
             this.errorHandler.validateRequest,
             (req: any, res: any, next: any) => this.controller.createUser(req.body.username, req.body.name, req.body.surname, req.body.email, req.body.password, UserType.CITIZEN)
-                .then(() => res.status(200).end())
+                .then((user: User) => res.status(201).json(user))
                 .catch((err) => {
                     next(err)
                 })
@@ -98,7 +98,7 @@ class UserRoutes {
             }),*/
             this.errorHandler.validateRequest,
             (req: any, res: any, next: any) => this.controller.createUser(req.body.username, req.body.name, req.body.surname, req.body.email, req.body.password, req.body.role)
-                .then(() => res.status(200).end())
+                .then((user: User) => res.status(201).json(user))
                 .catch((err) => {
                     next(err)
                 })

@@ -14,8 +14,9 @@ describe('UserDAO integration', () => {
 
     const username = 'alice'
     // create user
-    const created = await dao.createUser(username, 'Alice', 'Integration', 'alice@int.test', 'secretpass', 'citizen')
-    expect(created).toBe(true)
+    const createdUser = await dao.createUser(username, 'Alice', 'Integration', 'alice@int.test', 'secretpass', 'citizen')
+    expect(createdUser).toBeDefined();
+    expect(createdUser.username).toBe(username);
 
     // retrieve
     const user = await dao.getUserByUsername(username)
