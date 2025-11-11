@@ -125,6 +125,27 @@ class UserDAO {
     }
 
     /**
+     * Delete a user in the database, given its id
+     * @returns A Promise that resolves to true if the user is deleted or false if it does not exists
+     */
+    deleteUserById(ID: number): Promise<Boolean> {
+        return new Promise<Boolean>((resolve, reject) => {
+            const sql = 'DELETE FROM users WHERE id = ?';
+            db.run(sql, [ID], function(err: Error | null) {
+                if(err) {
+                    reject(err);
+                    return;
+                }
+                if(!this.changes) {
+                    resolve(false);
+                    return;
+                }
+                resolve(true);
+            });
+        });
+    }
+
+    /**
      * Updates the personal information of one user. The user can only update their own information (except for the admin, which can also update other accounts).
      * @param id The immutable ID of the user
      * @param user The updated user object
