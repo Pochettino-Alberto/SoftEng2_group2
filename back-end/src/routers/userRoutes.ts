@@ -1,7 +1,8 @@
 import express, { Router } from "express"
 import Authenticator from "./auth"
-import { body, param } from "express-validator"
+import { query, body, param } from "express-validator"
 import { UserType, User } from "../components/user"
+import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import UserController from "../controllers/userController"
 
@@ -229,6 +230,33 @@ class UserRoutes {
         )
 
 
+
+        this.router.get(
+            "/search-users",
+            this.authService.isAdmin,
+            query("page_num").optional().isInt({ min: 1 }),
+            query("page_size").optional().isInt({ min: 1 }),
+            query('first_name').optional().isString().default(null),
+            query('last_name').optional().isString().default(null),
+            query('email').optional().isString().default(null),
+            query('role')
+                .optional({ nullable: true })
+                .isIn(Object.values(UserType))
+                .default(null),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => {
+                this.controller.searchUsers(
+                    req.query.page_num || null,
+                    req.query.page_size || null,
+                    req.query.first_name || null,
+                    req.query.last_name || null,
+                    req.query.email || null,
+                    req.query.role || null
+                )
+                .then((pagUsers: PaginatedResult<User>) => res.status(200).json(pagUsers))
+                .catch((err: any) => next(err));
+            }
+        )
         /**
          * Route for retrieving all users.
          * It requires the user to be logged in and to be an admin.

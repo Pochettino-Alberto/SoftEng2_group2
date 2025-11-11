@@ -1,5 +1,6 @@
 import db from "./db"
 import { User } from "../components/user"
+import { PaginatedResult } from "../components/common";
 import crypto from "crypto"
 import { UserAlreadyExistsError, UserNotFoundError, UnauthorizedUserError } from "../errors/userError";
 
@@ -258,6 +259,64 @@ class UserDAO {
             });
         });
     }
+
+
+    async getPaginatedUsers(
+        first_name: string | null,
+        last_name: string | null,
+        email: string | null,
+        role: string | null,
+        limit: number,
+        offset: number
+    ): Promise<{ users: User[]; totalCount: number }> {
+        return new Promise((resolve, reject) => {
+            try {
+                let baseSql = " FROM users WHERE 1=1 ";
+                const params: any[] = [];
+
+                if (first_name) {
+                    baseSql += " AND LOWER(first_name) LIKE ?";
+                    params.push(`%${first_name.toLowerCase()}%`);
+                }
+                if (last_name) {
+                    baseSql += " AND LOWER(last_name) LIKE ?";
+                    params.push(`%${last_name.toLowerCase()}%`);
+                }
+                if (email) {
+                    baseSql += " AND LOWER(email) LIKE ?";
+                    params.push(`%${email.toLowerCase()}%`);
+                }
+                if (role) {
+                    baseSql += " AND user_type = ?";
+                    params.push(role);
+                }
+
+                // Get total count
+                const countSql = `SELECT COUNT(*) as total ${baseSql}`;
+                db.get(countSql, params, (err, row: { total: number } | undefined) => {
+                    if (err) return reject(err);
+                    const totalCount = row?.total ?? 0;
+
+                    // Get paginated users
+                    const dataSql = `SELECT * ${baseSql} LIMIT ? OFFSET ?`;
+                    const dataParams = [...params, limit, offset];
+
+                    db.all(dataSql, dataParams, (err2, rows: any[]) => {
+                        if (err2) return reject(err2);
+
+                        const users = rows.map(
+                            (r) => new User(r.id, r.username, r.first_name, r.last_name, r.email, r.user_type)
+                        );
+
+                        resolve({ users, totalCount });
+                    });
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
 
     /**
      * [Admin reserved function] Returns all users data from the database.
