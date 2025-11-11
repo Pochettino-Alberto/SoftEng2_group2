@@ -1,7 +1,7 @@
 /**
  * Represents a generic paginated response.
  */
-export class PaginatedResult<T> {
+class PaginatedResult<T> {
     page_num: number;
     page_size: number;
     total_pages: number;
