@@ -44,10 +44,11 @@ class UserController {
      * @param name The new name of the user
      * @param surname The new surname of the user
      * @param email The new email of the user
-     * @param user_type The new user_type of the user (will be empty for /edit-me route)
+     * @param user_type The new user_type of the user (will be null for /edit-me route)
+     * @param rolesArray The new assigned roles of the user (will be null for /edit-me route)
      * @returns A Promise that resolves to the updated user
      */
-    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string) {
+    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string, rolesArray?: Array<number>) {
         return new Promise<User>(async (resolve, reject) => {
             try {
                 let userToUpdate = await this.dao.getUserById(id);
@@ -61,10 +62,38 @@ class UserController {
                     if (email) userToUpdate.email = email;
                     if (user_type) userToUpdate.user_type = User.getRole(user_type);
 
+                    // Update user roles
+                    if(rolesArray) {
+                        // Getting current user roles
+                        const currentRolesDB: {RoleID: number; RoleName: string}[] = await this.getRoles(id);
+                        let currentRoles = currentRolesDB.map(role => role.RoleID);
+                        // Getting new roles to INSERT
+                        let newRoles = rolesArray.filter(r => !currentRoles.includes(r));
+                        await this.dao.assignRoles(id, newRoles);
+                        // Getting old roles to DELETE
+                        let oldRolesToRemove = currentRoles.filter(r => !rolesArray.includes(r));
+                        await this.dao.removeRoles(id, oldRolesToRemove);
+                    }
+
+                    // Update user attributes
                     resolve(this.dao.updateUserInfo(id, userToUpdate));
                 }
                 else reject(new UnauthorizedUserError);
             } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
+     * Retrieve user roles stored on database (optionally for a given user)
+     * @returns [{RoleID, RoleName}, {...}, ...]
+     */
+    async getRoles(userid?: number): Promise<{ RoleID: number; RoleName: string }[]> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                resolve(await this.dao.getRoles(userid));
+            } catch(err) {
                 reject(err);
             }
         });

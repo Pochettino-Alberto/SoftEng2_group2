@@ -167,6 +167,97 @@ class UserDAO {
         });
     }
 
+    /**
+     * Retrieve user roles stored on database (optionally for a given user)
+     * @returns [{RoleID, RoleName}, {...}, ...]
+     */
+    getRoles(userid?: number): Promise<{ RoleID: number; RoleName: string }[]> {
+        return new Promise((resolve, reject) => {
+            const sql = userid ? 
+            `SELECT id AS RoleID, label AS RoleName FROM roles R, user_roles UR
+            WHERE R.id = UR.role_id AND UR.user_id = ?` 
+            : `SELECT id, label FROM roles`;
+
+            const params = userid ? [userid] : [];
+            db.all(sql, params, (err: Error | null, rows: { RoleID: number; RoleName: string }[]) => {
+                if(err) reject(err);
+                else resolve(rows);
+            });
+        });
+    }
+
+    /**
+     * Assign existing roles to a given user
+     * @param userId the id of the user
+     * @param roleIds array of role identifiers to assign to the user
+     */
+    assignRoles(userId: number, roleIds: Array<number>) {
+        return new Promise<void>((resolve, reject) => {
+            if (roleIds.length === 0) {
+                return resolve();
+            }
+
+            const sql = `
+                INSERT OR IGNORE INTO user_roles (user_id, role_id)
+                VALUES (?, ?)
+            `;
+
+            db.serialize(() => {
+                const stmt = db.prepare(sql);
+
+                roleIds.forEach(roleId => {
+                    stmt.run([userId, roleId], function (err: Error | null) {
+                        if (err) {
+                            stmt.finalize();
+                            return reject(err);
+                        }
+                    });
+                });
+
+                stmt.finalize(err => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        });
+    }
+
+    /**
+     * Remove existing roles to a given user
+     * @param userId the id of the user
+     * @param roleIds array of role identifiers to remove from the user
+     */
+    removeRoles(userId: number, roleIds: Array<number>) {
+        return new Promise<void>((resolve, reject) => {
+
+            if (roleIds.length === 0) {
+                return resolve();
+            }
+
+            const sql = `
+                DELETE FROM user_roles
+                WHERE user_id = ? AND role_id = ?
+            `;
+
+            db.serialize(() => {
+                const stmt = db.prepare(sql);
+
+                roleIds.forEach(roleId => {
+                    stmt.run([userId, roleId], function (err: Error | null) {
+                        if (err) {
+                            stmt.finalize();
+                            return reject(err);
+                        }
+                    });
+                });
+
+                stmt.finalize(err => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        });
+    }
 
     /**
      * [Admin reserved function] Returns all users data from the database.

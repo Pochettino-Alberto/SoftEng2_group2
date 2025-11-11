@@ -5,6 +5,7 @@ const USER_NOT_CITIZEN = "This operation can be performed only by a citizen"
 const USER_NOT_ADMIN = "This operation can be performed only by an admin"
 const USER_IS_ADMIN = "Admins cannot be deleted"
 const UNAUTHORIZED_USER = "You cannot access the information of other users"
+const USER_ROLE_NOT_FOUND = "The provided user role does not exists"
 
 /**
  * Represents an error that occurs when a user is not found.
@@ -96,5 +97,20 @@ class UnauthorizedUserError extends Error {
         this.customCode = 401
     }
 }
+
+/**
+ * Represents an error that occurs when a role does not exist
+ */
+class UserRoleNotFoundError extends Error {
+    customMessage: String;
+    customCode: Number;
+
+    constructor() {
+        super()
+        this.customMessage = USER_ROLE_NOT_FOUND
+        this.customCode = 404
+    }
+}
+
 
 export { UserNotFoundError, UserNotMunicipalityError as UserNotManagerError, UserNotCitizenError as UserNotCustomerError, UserAlreadyExistsError, UserNotAdminError, UserIsAdminError, UnauthorizedUserError }

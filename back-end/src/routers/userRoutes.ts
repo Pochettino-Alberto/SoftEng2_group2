@@ -110,11 +110,12 @@ class UserRoutes {
          * It expects the username of the user to edit in the request parameters: Admin users can edit other non-Admin users.
          * It requires the following body parameters:
          * - id: string. It cannot be empty.
-         * - username: string. It cannot be empty.
-         * - name: string. It cannot be empty.
-         * - surname: string. It cannot be empty.
-         * - email: string. It cannot be empty.
-         * - usertype: string [citizen | municipality | admin]. It cannot be empty.
+         * - username: string. It can be empty.
+         * - name: string. It can be empty.
+         * - surname: string. It can be empty.
+         * - email: string. It can be empty.
+         * - usertype: string [citizen | municipality | admin]. It can be empty.
+         * - rolesArray: Array of Role IDs. Represents the currently assigned roles of the user. It could be empty.
          * It returns the updated user.
          */
         this.router.patch(
@@ -125,9 +126,10 @@ class UserRoutes {
             body('name').optional({nullable: true}).isString(),
             body('surname').optional({nullable: true}).isString(),
             body('email').optional({nullable: true}).isString(),
-            body('usertype').optional({nullable: true}).isString(),
+            body('usertype').optional({nullable: true}).isIn(Object.values(UserType)),
+            body('rolesArray').optional({nullable: true}).isArray({min: 0}),
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, req.body.usertype)
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, req.body.usertype, req.body.rolesArray)
                 .then((user: any) => res.status(200).json(user))
                 .catch((err: any) => next(err))
         )
@@ -151,11 +153,38 @@ class UserRoutes {
             body('surname').optional({nullable: true}).isString(),
             body('email').optional({nullable: true}).isString(),
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, null)
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, null, null)
                 .then((user: any) => res.status(200).json(user))
                 .catch((err: any) => next(err))
         )
 
+        /**
+         * Route for retrieving all user-roles defined on the database
+         * Admin privileges required
+         * Returns a json [{RoleID, RoleName}, {...}, ...]
+         */
+        this.router.get(
+            "/get-roles",
+            this.authService.isAdmin,
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.getRoles()
+                .then((roles: any) => res.status(200).json(roles))
+                .catch((err: any) => next(err))
+        )
+        /**
+         * Route for retrieving the roles of a given userId
+         * Admin privileges required
+         * Returns a json [{RoleID, RoleName}, {...}, ...]
+         */
+        this.router.get(
+            "/get-roles/:userId",
+            this.authService.isAdmin,
+            param('userId').isInt({min: 1}).toInt(),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.getRoles(req.params.userId)
+                .then((roles: any) => res.status(200).json(roles))
+                .catch((err: any) => next(err))
+        )
 
 
         /**

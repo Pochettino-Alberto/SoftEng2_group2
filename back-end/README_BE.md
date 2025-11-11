@@ -31,15 +31,17 @@ The server can be launched with <code>nodemon index.ts</code>
 
 ### user routes
 
-| Method & Path                     | Body                                               | Description / Business Logic                                      |
-| --------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
-| **POST /users/register-citizen**  | {username, name, surname, email, password}         | Registers a new citizen user (does not require authentication)    |
-| **POST /users/register-user**     | {username, name, surname, email, password, role}   | Registers a new user for a given role (requires admin privileges) |
-| **PATCH /users/edit-me**          | {id, username?, name?, surname?, email?}           | Updates the profile of the current logged in user                 |
-| **PATCH /users/edit-user**        | {id, username?, name?, surname?, email?, usertype} | Updates the profile of a generic user (requires admin privileges) |
-| -- the following routes are todo  |                                                    |                                                                   |
-| **GET /users/search-users**       |                                                    | Lists users                                                       |
-| **DELETE /users/user**            |                                                    | Deletes a municipality user account                               |
-| **GET /users/municipality-roles** |                                                    | Returns a list of Turin municipality technical offices            |
+| Method & Path                     | Body                                                             | Description / Business Logic                                                                                                                   |
+| --------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **POST /users/register-citizen**  | {username, name, surname, email, password}                       | Registers a new citizen user (does not require authentication)                                                                                 |
+| **POST /users/register-user**     | {username, name, surname, email, password, role}                 | Registers a new user for a given role (requires admin privileges)                                                                              |
+| **PATCH /users/edit-me**          | {id, username?, name?, surname?, email?}                         | Updates the profile of the current logged in user                                                                                              |
+| **PATCH /users/edit-user**        | {id, username?, name?, surname?, email?, usertype?, rolesArray?} | Updates the profile of a generic user (requires admin privileges). NOTE: rolesArray contains the roles identifiers so it is an Array<Int> type. You must specify all new and old roles! If it's null, no modification to the user roles will be performed. |
+| **GET /users/get-roles**          |                                                                  | Return all the roles available on the database (requires admin privileges)                                                                     |
+| **GET /users/get-roles/:userId**  |                                                                  | Return all the roles available on the database (requires admin privileges)                                                                     |
+| -- the following routes are todo  |                                                                  |                                                                                                                                                |
+| **GET /users/search-users**       |                                                                  | Lists users                                                                                                                                    |
+| **DELETE /users/user**            |                                                                  | Deletes a municipality user account                                                                                                            |
+| **GET /users/municipality-roles** |                                                                  | Returns a list of Turin municipality technical offices                                                                                         |
 
 | **DELETE /users/user/role** | | Removes assignment of a role to a municipality user |
