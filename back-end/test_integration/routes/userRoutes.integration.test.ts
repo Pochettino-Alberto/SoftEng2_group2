@@ -89,7 +89,7 @@ describe('UserRoutes integration - edit-user', () => {
     await request(app)
       .post('/users/register-citizen')
       .send({ username: 'newcitizen', name: 'C', surname: 'Citizen', email: 'c@int.test', password: 'pwd' })
-      .expect(200)
+      .expect(201)
 
     const stored = await dao.getUserByUsername('newcitizen')
     expect(stored).toBeDefined()
@@ -114,7 +114,7 @@ describe('UserRoutes integration - edit-user', () => {
     await request(app)
       .post('/users/register-user')
       .send({ username: 'managed', name: 'M', surname: 'User', email: 'm@int.test', password: 'pwd', role: 'municipality' })
-      .expect(200)
+      .expect(201)
 
     const stored = await dao.getUserByUsername('managed')
     expect(stored).toBeDefined()
