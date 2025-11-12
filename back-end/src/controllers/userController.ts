@@ -1,5 +1,6 @@
 import { UserNotAdminError, UnauthorizedUserError, UserNotFoundError, UserAlreadyExistsError, UserIsAdminError } from "../errors/userError"
 import { User, UserType } from "../components/user"
+import { PaginatedResult } from "../components/common";
 import UserDAO from "../dao/userDAO"
 import { DateError, Utility } from "../utilities"
 
@@ -251,6 +252,49 @@ class UserController {
         if (!deleted) throw new UserNotFoundError();
         return true;
     }
+
+
+    /**
+     * Searches for users with optional filters and pagination.
+     * Only accessible to Admin users.
+     * 
+     * @param page_num The page number (optional)
+     * @param page_size The page size (optional)
+     * @param first_name Filter by first name (optional)
+     * @param last_name Filter by last name (optional)
+     * @param email Filter by email (optional)
+     * @param role Filter by user role (optional)
+     * @returns A Promise that resolves to an array of matching users
+     */
+    async searchUsers(
+        page_num: number | null,
+        page_size: number | null,
+        first_name: string | null,
+        last_name: string | null,
+        email: string | null,
+        role: string | null
+    ): Promise<PaginatedResult<User>> {
+        return new Promise<PaginatedResult<User>>(async (resolve, reject) => {
+            try {
+                const page = page_num ? Number(page_num) : 1;
+                const size = page_size ? Number(page_size) : 10;
+                const offset = (page - 1) * size;
+                
+                const { users, totalCount } = await this.dao.getPaginatedUsers(
+                    first_name, last_name, email, role, size, offset
+                );
+
+                const pagUsers = new PaginatedResult<User>(page, size, totalCount, users);
+
+                resolve(pagUsers);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+
+
 }
 
 export default UserController
