@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authAPI } from '../api/auth';
-import type { User, LoginData, RegisterData } from '../types/user';
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {authAPI} from '../api/auth';
+import type {LoginData, MunicipalityUser, RegisterData, User} from '../types/user';
 
 interface AuthContextType {
   user: User | null;
@@ -8,6 +8,14 @@ interface AuthContextType {
   login: (credentials: LoginData) => Promise<User>;
   logout: () => Promise<void>;
   register: (userData: RegisterData) => Promise<User>;
+  registerMunicipalityUser: (userData: {
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    rolesArray: number[]
+  }) => Promise<User>;
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
 }
@@ -24,13 +32,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const currentUser = await authAPI.getCurrentUser();
         setUser(currentUser);
-      } catch (error) {
-        // User not logged in - this is normal for public pages
+      } catch (err) {
+        console.error( err);
         setUser(null);
       }
     };
 
-    // Check auth in background, don't block rendering
     checkAuth();
   }, []);
 
@@ -51,12 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newUser;
   };
 
+  const registerMunicipalityUser = async (userData: MunicipalityUser): Promise<User> => {
+    return await authAPI.createMunicipalityUser(userData);
+  };
+
   const value: AuthContextType = {
     user,
     loading,
     login,
     logout,
     register,
+    registerMunicipalityUser,
     isAuthenticated: !!user,
     setUser,
   };

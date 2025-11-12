@@ -23,7 +23,16 @@ export interface RegisterData {
   password: string;
 }
 
+export interface MunicipalityUser extends RegisterData {
+  role?: string;
+}
+
 export interface LoginData {
   username: string;
   password: string;
+}
+
+export interface Role {
+  id: number;
+  label: string;
 }

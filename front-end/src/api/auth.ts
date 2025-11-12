@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { User, LoginData, RegisterData } from '../types/user';
+import type {User, LoginData, RegisterData, MunicipalityUser, Role} from '../types/user';
 
 export const authAPI = {
   // Login a user
@@ -46,4 +46,42 @@ export const authAPI = {
     });
     return response.data;
   },
+
+  // Register a new municipality user
+  createMunicipalityUser: async (userData: MunicipalityUser): Promise<User> => {
+    const backendData = {
+      username: userData.username,
+      name: userData.first_name,
+      surname: userData.last_name,
+      email: userData.email,
+      password: userData.password,
+      role: userData.role,
+    };
+    const response = await apiClient.post('/users/admin/create-municipality-user', backendData);
+    return response.data;
+  },
+
+  assignRoles: async (data: { userId: number; rolesArray: number[] }) => {
+    const response = await apiClient.post('/users/admin/assign-roles', data);
+    return response.data;
+  },
+
+  getRoles: async (): Promise<Role[]> => {
+    const response = await apiClient.get('/users/get-roles');
+    return response.data;
+  },
+
+  searchUsers: async (): Promise<User[]> => {
+    const response = await apiClient.get('/users/search-users?page_num=1&page_size=100');
+    return response.data?.items || [];
+  },
+
+  getUserRoles: async (userId: number): Promise<Role[]> => {
+    const response = await apiClient.get(`/users/get-roles/${userId}`);
+    return response.data.map((r: Role) => ({
+      id: r.id,
+      label: r.label
+    }));
+  },
+
 };

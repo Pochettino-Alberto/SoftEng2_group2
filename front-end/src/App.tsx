@@ -16,6 +16,8 @@ import CitizenDashboard from './pages/citizen/CitizenDashboard';
 import Profile from './pages/citizen/Profile';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
+import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
+import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
 
 console.log('App.tsx loaded');
 
@@ -72,7 +74,8 @@ function App() {
                   <ProtectedRoute allowedRoles={[UserType.ADMIN]}>
                     <Routes>
                       <Route path="/" element={<AdminDashboard />} />
-                      {/* Add more admin routes here */}
+                      <Route path="create-municipality-user" element={<AdminCreateMunicipalityUser />} />
+                      <Route path="assign-roles" element={<AdminAssignRoles />} />
                     </Routes>
                   </ProtectedRoute>
                 }

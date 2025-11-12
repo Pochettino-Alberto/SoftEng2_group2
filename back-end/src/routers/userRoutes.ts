@@ -257,6 +257,64 @@ class UserRoutes {
                 .catch((err: any) => next(err));
             }
         )
+
+        this.router.post(
+            "/admin/create-municipality-user",
+            this.authService.isAdmin,
+            body('username').isString().notEmpty(),
+            body('name').isString().notEmpty(),
+            body('surname').isString().notEmpty(),
+            body('email').isString().notEmpty(),
+            body('password').isString().notEmpty(),
+            body('rolesArray').optional({ nullable: true }).isArray({ min: 0 }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    // Create user with municipality type (UserType.MUNICIPALITY value is 'municipality')
+                    const createdUser: User = await this.controller.createUser(
+                        req.body.username,
+                        req.body.name,
+                        req.body.surname,
+                        req.body.email,
+                        req.body.password,
+                        UserType.MUNICIPALITY
+                    );
+
+                    // If roles provided, set them (rolesArray is array of role IDs)
+                    if (req.body.rolesArray && Array.isArray(req.body.rolesArray) && req.body.rolesArray.length > 0) {
+                        await this.controller.setUserRoles(createdUser.id, req.body.rolesArray);
+                    }
+
+                    // Return created user (no password)
+                    res.status(201).json(createdUser);
+                } catch (err: any) {
+                    next(err);
+                }
+            }
+        )
+
+        /**
+         * ADMIN - Set (replace) roles for an existing user
+         * Body: { userId, rolesArray }
+         */
+        this.router.post(
+            "/admin/assign-roles",
+            this.authService.isAdmin,
+            body('userId').isInt({ min: 1 }),
+            body('rolesArray').isArray({ min: 0 }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const userId = Number(req.body.userId);
+                    const rolesArray: number[] = req.body.rolesArray.map((r: any) => Number(r));
+                    await this.controller.setUserRoles(userId, rolesArray);
+                    res.status(200).json({ message: "Roles updated" });
+                } catch (err: any) {
+                    next(err);
+                }
+            }
+        )
+
         /**
          * Route for retrieving all users.
          * It requires the user to be logged in and to be an admin.

@@ -37,6 +37,48 @@ class UserController {
     }
 
     /**
+     * Set (replace) roles for a given user.
+     * This will add any roleIDs in rolesArray that are missing and remove any existing roles not present in rolesArray.
+     * Only admins should call this at route level (enforced in routes).
+     */
+    async setUserRoles(userId: number, rolesArray: Array<number>) : Promise<void> {
+        // Reuse the same logic used in updateUserInfo
+        // The DAO methods are assignRoles(userId, roleIds) and removeRoles(userId, roleIds)
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                // get current roles for user (db returns [{RoleID, RoleName}, ...])
+                const currentRolesDB: {RoleID: number; RoleName: string}[] = await this.getRoles(userId);
+                const currentRoles = currentRolesDB.map(r => r.RoleID);
+
+                // compute to add and to remove
+                const toAdd = rolesArray.filter(r => !currentRoles.includes(r));
+                const toRemove = currentRoles.filter(r => !rolesArray.includes(r));
+
+                await this.dao.assignRoles(userId, toAdd);
+                await this.dao.removeRoles(userId, toRemove);
+
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
+     * Convenience wrapper to only add roles to a user (does not remove existing roles)
+     */
+    async assignRolesToUser(userId: number, rolesArray: Array<number>) : Promise<void> {
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                await this.dao.assignRoles(userId, rolesArray || []);
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
      * Updates the personal information of one user. The user can only update their own information.
      * The admin can edit EVERY user
      * @param user The user who is performing the update (gotten from Authenticator)
