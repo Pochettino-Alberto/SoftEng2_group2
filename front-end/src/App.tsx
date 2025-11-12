@@ -13,6 +13,7 @@ import Account from './pages/auth/Account';
 import Reports from './pages/Reports';
 import Statistics from './pages/Statistics';
 import CitizenDashboard from './pages/citizen/CitizenDashboard';
+import Profile from './pages/citizen/Profile';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
 
@@ -44,6 +45,7 @@ function App() {
                   <ProtectedRoute allowedRoles={[UserType.CITIZEN]}>
                     <Routes>
                       <Route path="/" element={<CitizenDashboard />} />
+                      <Route path="profile" element={<Profile />} />
                       {/* Add more citizen routes here */}
                     </Routes>
                   </ProtectedRoute>

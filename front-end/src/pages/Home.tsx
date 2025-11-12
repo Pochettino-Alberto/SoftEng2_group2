@@ -133,20 +133,28 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Water Supply', icon: '💧' },
-              { name: 'Public Lighting', icon: '💡' },
-              { name: 'Waste Management', icon: '♻️' },
-              { name: 'Road Maintenance', icon: '🛣️' },
-              { name: 'Green Areas', icon: '🌳' },
-              { name: 'Traffic Signs', icon: '🚦' },
+              { name: 'Drinking Water', icon: '💧' },
+              { name: 'Architectural Barriers', icon: '♿' },
               { name: 'Sewer System', icon: '🚰' },
-              { name: 'Accessibility', icon: '♿' },
+              { name: 'Public Lighting', icon: '🔦' },
+              { name: 'Waste', icon: '♻️' },
+              { name: 'Road Signs & Traffic', icon: '🚦' },
+              { name: 'Roads & Furnishings', icon: '🏙️' },
+              { name: 'Green Areas & Playgrounds', icon: '🌳' },
             ].map((category, index) => (
               <Card key={index} hover className="p-6 text-center cursor-pointer">
                 <div className="text-4xl mb-2">{category.icon}</div>
                 <h4 className="text-sm font-semibold text-gray-800">{category.name}</h4>
               </Card>
             ))}
+          </div>
+          
+          {/* Other Category - Centered at Bottom */}
+          <div className="flex justify-center mt-6">
+            <Card hover className="p-6 text-center cursor-pointer w-48">
+              <div className="text-4xl mb-2">📋</div>
+              <h4 className="text-sm font-semibold text-gray-800">Other</h4>
+            </Card>
           </div>
         </div>
       </section>
