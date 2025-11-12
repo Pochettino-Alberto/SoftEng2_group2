@@ -1,5 +1,7 @@
 import React from 'react';
 import Card from '../../components/Card';
+import ReportsPage from './ReportsPage';
+
 
 const MunicipalityDashboard: React.FC = () => {
   return (
@@ -10,6 +12,7 @@ const MunicipalityDashboard: React.FC = () => {
         <Card className="p-8">
           <p className="text-gray-600">Municipality functionality coming soon...</p>
         </Card>
+        <ReportsPage></ReportsPage>
       </div>
     </div>
   );

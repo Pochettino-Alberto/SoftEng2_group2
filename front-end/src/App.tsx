@@ -4,7 +4,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { UserType } from './types/user';
-
+import DynamicMeta from './components/DynamicMeta';
 // Pages
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -24,6 +24,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <DynamicMeta />
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
