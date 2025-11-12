@@ -55,7 +55,7 @@ export const authAPI = {
       surname: userData.last_name,
       email: userData.email,
       password: userData.password,
-      role: userData.role,
+      rolesArray: userData.rolesArray,
     };
     const response = await apiClient.post('/users/admin/create-municipality-user', backendData);
     return response.data;
