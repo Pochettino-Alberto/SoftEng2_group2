@@ -200,4 +200,83 @@ describe('UserRoutes integration - edit-user', () => {
     const { UserNotFoundError } = require('../../src/errors/userError')
     await expect(dao.getUserById(target.id)).rejects.toBeInstanceOf(UserNotFoundError)
   })
+
+  test('GET /users/get-roles returns roles for admin', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const dao = new UserDAO()
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    // register centralized error handler so thrown errors map to proper JSON responses
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/get-roles')
+      .expect(200)
+
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBeGreaterThanOrEqual(0)
+  })
+
+  test('GET /users/get-roles/:userId returns roles for specific user', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const dao = new UserDAO()
+    await dao.createUser('roleuser', 'R', 'User', 'ru@int.test', 'pwd', 'citizen')
+    const target = await dao.getUserByUsername('roleuser')
+
+    // assign a known role id (1 exists in default values)
+    await dao.assignRoles(target.id, [1])
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get(`/users/get-roles/${target.id}`)
+      .expect(200)
+
+    expect(Array.isArray(res.body)).toBe(true)
+    // should contain at least the role we assigned
+    const ids = res.body.map((r: any) => r.RoleID)
+    expect(ids).toContain(1)
+  })
+
+  test('GET /users/get-roles/:userId invalid param returns 422', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/get-roles/not-an-int')
+      .expect(422)
+
+    expect(res.body.error).toBeDefined()
+  })
 })
