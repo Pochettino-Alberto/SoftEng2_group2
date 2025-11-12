@@ -32,4 +32,18 @@ export const authAPI = {
     const response = await apiClient.post('/users/register-citizen', backendData);
     return response.data;
   },
+
+  // Update current user profile
+  updateProfile: async (userId: number, updates: { 
+    username?: string; 
+    name?: string; 
+    surname?: string; 
+    email?: string;
+  }): Promise<User> => {
+    const response = await apiClient.patch('/users/edit-me', {
+      id: userId,
+      ...updates,
+    });
+    return response.data;
+  },
 };

@@ -15,8 +15,11 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Don't redirect on 401 if we're just checking auth status
-    if (error.response?.status === 401 && !error.config.url?.includes('/auth/current')) {
+    // Don't redirect on 401 if we're just checking auth status or during login attempt
+    const isAuthEndpoint = error.config.url?.includes('/auth/current') || 
+                          error.config.url?.includes('/auth/login');
+    
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       // Handle unauthorized access
       window.location.href = '/auth/login';
     }
