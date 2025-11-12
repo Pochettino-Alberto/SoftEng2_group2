@@ -201,6 +201,110 @@ describe('UserRoutes integration - edit-user', () => {
     await expect(dao.getUserById(target.id)).rejects.toBeInstanceOf(UserNotFoundError)
   })
 
+  test('GET /users/search-users returns paginated users for admin', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const dao = new UserDAO()
+
+    // create multiple users to test pagination and results
+    for (let i = 0; i < 5; i++) {
+      await dao.createUser(`search${i}`, `First${i}`, `Last${i}`, `s${i}@int.test`, 'pwd', 'citizen')
+    }
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/search-users')
+      .expect(200)
+
+    expect(res.body).toHaveProperty('page_num')
+    expect(res.body).toHaveProperty('page_size')
+    expect(res.body).toHaveProperty('total_items')
+    expect(res.body).toHaveProperty('items')
+    expect(Array.isArray(res.body.items)).toBe(true)
+    expect(res.body.total_items).toBeGreaterThanOrEqual(5)
+  })
+
+  test('GET /users/search-users filters by first_name and role', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const dao = new UserDAO()
+    // create unique user for filter
+    await dao.createUser('uniqueSearcher', 'UniqueFirst', 'FindMe', 'uniq@int.test', 'pwd', 'municipality')
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/search-users')
+      .query({ first_name: 'UniqueFirst', role: 'municipality' })
+      .expect(200)
+
+    expect(res.body.items.some((u: any) => u.username === 'uniqueSearcher')).toBe(true)
+  })
+
+  test('GET /users/search-users invalid page_num returns 422', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/search-users')
+      .query({ page_num: 'not-an-int' })
+      .expect(422)
+
+    expect(res.body.error).toBeDefined()
+  })
+
+  test('GET /users/search-users returns 401 for non-admin', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+    const ErrorHandler = require('../../src/helper').default
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { return res.status(401).json({ error: 'User is not an admin', status: 401 }) } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+    ErrorHandler.registerErrorHandler(app)
+
+    const res = await request(app)
+      .get('/users/search-users')
+      .expect(401)
+
+    expect(res.body.error).toBeDefined()
+  })
+
   test('GET /users/get-roles returns roles for admin', async () => {
     const express = require('express')
     const app = express()
