@@ -19,7 +19,7 @@ const CitizenDashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6 cursor-pointer hover:shadow-xl transition-shadow">
+          <Card className="p-6 opacity-50 cursor-not-allowed">
             <div className="flex items-center space-x-4">
               <div className="bg-blue-100 p-3 rounded-full">
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@ const CitizenDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-6 cursor-pointer hover:shadow-xl transition-shadow">
+          <Card className="p-6 opacity-50 cursor-not-allowed">
             <div className="flex items-center space-x-4">
               <div className="bg-green-100 p-3 rounded-full">
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,19 +47,21 @@ const CitizenDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-6 cursor-pointer hover:shadow-xl transition-shadow">
-            <div className="flex items-center space-x-4">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+          <Link to="/citizen/profile">
+            <Card className="p-6 cursor-pointer hover:shadow-xl transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Profile</h3>
+                  <p className="text-sm text-gray-600">Manage your account</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg">Profile</h3>
-                <p className="text-sm text-gray-600">Manage your account</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         </div>
 
         {/* Recent Reports Section */}
@@ -70,9 +72,7 @@ const CitizenDashboard: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <p className="text-gray-600 mb-4">You haven't created any reports yet</p>
-            <Link to="/citizen/create-report">
-              <Button>Create Your First Report</Button>
-            </Link>
+            <Button disabled className="opacity-50 cursor-not-allowed">Create Your First Report</Button>
           </div>
         </Card>
       </div>
