@@ -5,6 +5,9 @@ import { UserNotFoundError, UserAlreadyExistsError } from '../src/errors/userErr
 jest.mock('../src/dao/db', () => ({
   get: jest.fn(),
   run: jest.fn(),
+  all: jest.fn(),
+  prepare: jest.fn(),
+  serialize: jest.fn(),
 }))
 
 // Mock crypto where needed for authentication tests
@@ -235,5 +238,105 @@ describe('UserDAO', () => {
     db.get.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
     const dao = new UserDAO()
     await expect(dao.getUserById(7)).rejects.toBe(err)
+  })
+
+  // Additional tests to improve coverage for getRoles, assignRoles, removeRoles and mapDBrowToUserObject
+  test('mapDBrowToUserObject builds User correctly', () => {
+    const dao = new UserDAO()
+    const dbRow: any = { id: 9, username: 'u', first_name: 'F', last_name: 'L', email: 'e@e', user_type: 'municipality' }
+    const user = dao.mapDBrowToUserObject(dbRow)
+    expect(user.id).toBe(9)
+    expect(user.username).toBe('u')
+    expect(user.email).toBe('e@e')
+    expect(user.user_type).toBeDefined()
+  })
+
+  test('getRoles without userid resolves rows', async () => {
+    const rows = [{ id: 1, label: 'Admin' }]
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, rows) })
+    const dao = new UserDAO()
+    const res = await dao.getRoles()
+    expect(res).toBe(rows)
+    expect(db.all).toHaveBeenCalled()
+  })
+
+  test('getRoles with userid resolves rows', async () => {
+    const rows = [{ RoleID: 2, RoleName: 'Citizen' }]
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, rows) })
+    const dao = new UserDAO()
+    const res = await dao.getRoles(5)
+    expect(res).toBe(rows)
+    expect(db.all).toHaveBeenCalled()
+  })
+
+  test('getRoles rejects on db error', async () => {
+    const err = new Error('roles read fail')
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
+    const dao = new UserDAO()
+    await expect(dao.getRoles()).rejects.toBe(err)
+  })
+
+  test('assignRoles resolves immediately when roleIds empty', async () => {
+    const dao = new UserDAO()
+    await expect(dao.assignRoles(1, [])).resolves.toBeUndefined()
+    expect(db.prepare).not.toHaveBeenCalled()
+  })
+
+  test('assignRoles inserts roles and resolves', async () => {
+    // prepare returns a stmt with run and finalize
+    const runMock = jest.fn((params: any[], cb: Function) => cb(null))
+    const finalizeMock = jest.fn((cb: Function) => cb && cb(null))
+    const stmt = { run: runMock, finalize: finalizeMock }
+    db.prepare.mockImplementation(() => stmt)
+    db.serialize.mockImplementation((cb: Function) => cb())
+
+    const dao = new UserDAO()
+    await expect(dao.assignRoles(10, [1, 2])).resolves.toBeUndefined()
+    expect(db.prepare).toHaveBeenCalled()
+    expect(runMock).toHaveBeenCalledTimes(2)
+    expect(finalizeMock).toHaveBeenCalled()
+  })
+
+  test('assignRoles rejects when stmt.run errors', async () => {
+    const runMock = jest.fn((params: any[], cb: Function) => cb(new Error('insert fail')))
+    const finalizeMock = jest.fn((cb: Function) => cb && cb(null))
+    const stmt = { run: runMock, finalize: finalizeMock }
+    db.prepare.mockImplementation(() => stmt)
+    db.serialize.mockImplementation((cb: Function) => cb())
+
+    const dao = new UserDAO()
+    await expect(dao.assignRoles(10, [1])).rejects.toBeInstanceOf(Error)
+    expect(finalizeMock).toHaveBeenCalled()
+  })
+
+  test('removeRoles resolves immediately when roleIds empty', async () => {
+    const dao = new UserDAO()
+    await expect(dao.removeRoles(1, [])).resolves.toBeUndefined()
+    expect(db.prepare).not.toHaveBeenCalled()
+  })
+
+  test('removeRoles deletes roles and resolves', async () => {
+    const runMock = jest.fn((params: any[], cb: Function) => cb(null))
+    const finalizeMock = jest.fn((cb: Function) => cb && cb(null))
+    const stmt = { run: runMock, finalize: finalizeMock }
+    db.prepare.mockImplementation(() => stmt)
+    db.serialize.mockImplementation((cb: Function) => cb())
+
+    const dao = new UserDAO()
+    await expect(dao.removeRoles(11, [3,4])).resolves.toBeUndefined()
+    expect(db.prepare).toHaveBeenCalled()
+    expect(runMock).toHaveBeenCalledTimes(2)
+  })
+
+  test('removeRoles rejects when stmt.run errors', async () => {
+    const runMock = jest.fn((params: any[], cb: Function) => cb(new Error('delete fail')))
+    const finalizeMock = jest.fn((cb: Function) => cb && cb(null))
+    const stmt = { run: runMock, finalize: finalizeMock }
+    db.prepare.mockImplementation(() => stmt)
+    db.serialize.mockImplementation((cb: Function) => cb())
+
+    const dao = new UserDAO()
+    await expect(dao.removeRoles(11, [3])).rejects.toBeInstanceOf(Error)
+    expect(finalizeMock).toHaveBeenCalled()
   })
 })
