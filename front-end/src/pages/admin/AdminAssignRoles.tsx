@@ -23,7 +23,6 @@ const AdminAssignRoles: React.FC = () => {
             setRolesError('');
             setUsersError('');
 
-            // Fetch Roles
             try {
                 const rolesData = await authAPI.getRoles();
                 setRoles(rolesData || []);
@@ -32,7 +31,6 @@ const AdminAssignRoles: React.FC = () => {
                 setRolesError('Failed to load roles list.');
             }
 
-            // Fetch Users
             try {
                 const usersData = await authAPI.searchUsers();
                 setUsers(usersData || []);
@@ -46,15 +44,13 @@ const AdminAssignRoles: React.FC = () => {
     }, [])
 
     useEffect(() => {
-        setAssignedRoles([]); // Clear previous assigned roles
-        setSelectedRoles([]); // Clear previous selections
+        setAssignedRoles([]);
+        setSelectedRoles([]);
 
         if (selectedUserId !== null) {
             const fetchAssignedRoles = async (userId: number) => {
                 try {
-                    // Use the new API function
                     const userRoles = await authAPI.getUserRoles(userId);
-                    // Map the fetched roles to just an array of IDs
                     const roleIds = userRoles.map(r => r.id);
                     setAssignedRoles(roleIds);
                     setSelectedRoles(roleIds);
@@ -69,15 +65,10 @@ const AdminAssignRoles: React.FC = () => {
 
     const handleUserChange = (id: number) => {
         setSelectedUserId(id);
-        setMessage(''); // Clear previous message on user change
+        setMessage('');
     }
 
     const toggleRole = (id: number) => {
-        // You cannot toggle roles that are part of the 'assignedRoles' list
-        if (assignedRoles.includes(id)) {
-            return;
-        }
-
         setSelectedRoles(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])
     }
 
@@ -136,7 +127,7 @@ const AdminAssignRoles: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {roles.map(r => {
                                     const isAssigned = assignedRoles.includes(r.id);
-                                    const isDisabled = isAssigned;
+                                    const isDisabled = false; // Roles are never disabled here
 
                                     return (
                                         <label
@@ -151,7 +142,7 @@ const AdminAssignRoles: React.FC = () => {
                                                 type="checkbox"
                                                 checked={selectedRoles.includes(r.id)}
                                                 onChange={() => toggleRole(r.id)}
-                                                disabled={isDisabled} // Apply the disable logic here
+                                                disabled={isDisabled}
                                                 className={isDisabled ? 'opacity-50' : ''}
                                             />
                                             <span className="text-sm">
@@ -164,7 +155,6 @@ const AdminAssignRoles: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Message */}
                         {message && <div className={`text-sm ${message.includes('success') ? 'text-green-700' : 'text-red-700'}`}>{message}</div>}
 
                         <div className="flex items-center justify-between">

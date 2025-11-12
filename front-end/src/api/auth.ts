@@ -78,10 +78,9 @@ export const authAPI = {
 
   getUserRoles: async (userId: number): Promise<Role[]> => {
     const response = await apiClient.get(`/users/get-roles/${userId}`);
-    return response.data.map((r: Role) => ({
-      id: r.id,
-      label: r.label
+    return response.data.map((r: any) => ({
+      id: r.RoleID,
+      label: r.RoleName
     }));
   },
-
 };
