@@ -11,9 +11,9 @@ sections:
 
 ### Macro statistics
 
-- Number of stories committed vs. done: 2 vs 1
-- Total points committed vs. done: 13 vs 5
-- Nr of hours planned vs. spent (as a team): 50h vs 59h
+- Number of stories committed vs. done: 3 vs 3
+- Total points committed vs. done: 23 vs 23 
+- Nr of hours planned vs. spent (as a team): 83h 30m vs 73h 37m
 
 **Remember**a story is done ONLY if it fits the Definition of Done:
 
@@ -26,11 +26,12 @@ sections:
 
 ### Detailed statistics
 
-| Story           | # Tasks | Points | Hours est. | Hours actual |
-| --------------- | ------- | ------ | ---------- | ------------ |
-| _Uncategorized_ | 9       | -      | 2d 3h 30m  | 2d 3h 55m    |
-| Get ticket      | 6       | 5      | 2d         | 2d 2h 35m    |
-| Next customer   | 4       | 8      | 1d 6h 30m  | 2d 4h 30m    |
+| Story                      | # Tasks | Points | Hours est. | Hours actual |
+| -------------------------- | ------- | ------ | ---------- | ------------ |
+| _Uncategorized_            | 12      | -      | 4d 4h 35m  | 4d 4h 35m    |
+| User Authentication        | 9       | 13     | 1d 4h 7m   | 1d 4h 7m     |
+| Municipality User Handling | 10      | 5      | 2d 50m     | 2d 50m       |
+| Role Assignments           | 8       | 5      | 1d 5m      | 1d 5m        |
 
 > story `Uncategorized` is for technical tasks, leave out story points (not applicable in this case)
 
@@ -38,52 +39,49 @@ sections:
 
 |            | Mean  | StDev |
 | ---------- | ----- | ----- |
-| Estimation | 2.474 | 2.26  |
-| Actual     | 2.973 | 2.90  |
+| Estimation | 2.141 | 2.279 |
+| Actual     | 1.888 | 2.389 |
 
 - Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1
 
-$$\frac{\sum_i \text{spent}_{task_i}}{\sum_i \text{estimation}_{task_i}} - 1 = \frac{59}{50} - 1 = 0.18 = 18\%$$
+$$\frac{\sum_i \text{spent}_{task_i}}{\sum_i \text{estimation}_{task_i}} - 1 = -0.12 = -12\%$$
 
-**Result:** The total estimation error is **18%**, which means that the effective work required about 18% more time, compared to what was estimated.
+**Result:** The total estimation error is **-12%**, which means that the effective work required about 12% less time, compared to what was estimated.
 
 - Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
 
-$$\frac{1}{19}\sum_{i=1}^{19} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| = \frac{5.016}{19} \approx 26.4\%$$
+$$\frac{1}{39}\sum_{i=1}^{39} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| \approx 33.9\%$$
 
-**Meaning:** The average absolute error per single task is **26.4%**, which tell us that, on average, every single esteem deviated from the effective value of about 26.4%. Such value is higher than the total error (18%) because some errors have compensated each other (some esteems were too high, others too low).
+**Meaning:** The average absolute error per single task is **33.9%**, which tell us that, on average, every single esteem deviated from the effective value of about 33.9%. Such value is higher than the total error (-12%) because some errors have compensated each other (some esteems were too high, others too low).
 
 ## QUALITY MEASURES
 
 - Unit Testing:
-  - Total hours estimated - `6 h`
-  - Total hours spent - `5 h`
-  - Nr of automated unit test cases - `11`
-  - Coverage - `80%`
+  - Total hours estimated - `7 h`
+  - Total hours spent - `4h 30m`
+  - Nr of automated unit test cases - `61`
+  - Coverage - `72%`
 - E2E testing:
-  - Total hours estimated - `6 h`
-  - Total hours spent - `7.5 h`
-  - Nr of test cases - `10`
+  - Total hours estimated - `7 h`
+  - Total hours spent - `4h 55m`
+  - Nr of test cases - `23`
 - Code review
-  - Total hours estimated - `0 h`
-  - Total hours spent - `0 h`
+  - Total hours estimated - `11 h`
+  - Total hours spent - `7h`
 
 ## ASSESSMENT
 
 - What did go wrong in the sprint?
 
-  > Some tasks written on youtrack were not clear enough, creating missunderstandings.
-  > Bad time management throughout the sprint.
+  
 
 - What caused your errors in estimation (if any)?
 
-  > A lack of a defined common project structure caused some missunderstanding, furthermore we did not add some extra time for unexpected errors and bug fixes.
+  
 
 - What lessons did you learn (both positive and negative) in this sprint?
 
-  > We need to create tasks with precise definitions and fit them into an overall project structure defined earlier
-
-  > We had enough meetings to catch up with each other work and share prospective on problems, everybody pitching in with fresh ideas.
+  
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
 
@@ -95,11 +93,8 @@ $$\frac{1}{19}\sum_{i=1}^{19} \left| \frac{spent_{task_i}}{estimation_{task_i}}-
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
-  > At the beginning of the sprint and during it we should keep updating docs regarding the implementation ideas such that it can be common knowledge between team members.
-
-  > Try to maximise parallelism on tasks such that nobody should wait for another person to finish its tasks creating.
+  
 
 - One thing you are proud of as a Team!!
 
-  > We all tried to do our best and we comunicated well.
-  > We also managed to deliver a working piece of software for the user stories committed.
+  
