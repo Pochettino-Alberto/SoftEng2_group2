@@ -25,7 +25,7 @@ export interface RegisterData {
 
 export interface MunicipalityUser extends RegisterData {
   role?: string;
-  rolesArray: Role[];
+  rolesArray:  number[];
 }
 
 export interface LoginData {
