@@ -71,8 +71,14 @@ export const authAPI = {
     return response.data;
   },
 
-  searchUsers: async (): Promise<User[]> => {
-    const response = await apiClient.get('/users/search-users?page_num=1&page_size=100');
+  searchUsers: async (role?: string): Promise<User[]> => {
+    let url = '/users/search-users?page_num=1&page_size=100';
+
+    if (role) {
+      url += `&role=${role}`;
+    }
+
+    const response = await apiClient.get(url);
     return response.data?.items || [];
   },
 

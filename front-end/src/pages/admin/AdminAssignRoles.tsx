@@ -32,7 +32,7 @@ const AdminAssignRoles: React.FC = () => {
             }
 
             try {
-                const usersData = await authAPI.searchUsers();
+                const usersData = await authAPI.searchUsers('municipality');
                 setUsers(usersData || []);
             } catch (err) {
                 console.error('Failed to fetch users:', err);
