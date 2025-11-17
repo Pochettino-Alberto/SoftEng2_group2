@@ -244,7 +244,7 @@ describe('UserDAO', () => {
   test('mapDBrowToUserObject builds User correctly', () => {
     const dao = new UserDAO()
     const dbRow: any = { id: 9, username: 'u', first_name: 'F', last_name: 'L', email: 'e@e', user_type: 'municipality' }
-    const user = dao.mapDBrowToUserObject(dbRow)
+    const user = dao.commonDao.mapDBrowToUserObject(dbRow)
     expect(user.id).toBe(9)
     expect(user.username).toBe('u')
     expect(user.email).toBe('e@e')

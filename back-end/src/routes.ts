@@ -3,6 +3,8 @@ import ErrorHandler from "./helper"
 import Authenticator from "./routers/auth"
 import { UserRoutes } from "./routers/userRoutes"
 import { AuthRoutes } from "./routers/authRoutes"
+import { ReportRoutes } from "./routers/reportRoutes"
+
 const prefix = ""
 
 /**
@@ -24,6 +26,7 @@ function initRoutes(app: express.Application) {
     const authenticator = new Authenticator(app)
     const userRoutes = new UserRoutes(authenticator)
     const authRoutes = new AuthRoutes(authenticator)
+    const reportRoutes = new ReportRoutes(authenticator)
     // Declare new routes here...
 
     /**
@@ -31,6 +34,7 @@ function initRoutes(app: express.Application) {
      */
     app.use(`${prefix}/users`, userRoutes.getRouter())
     app.use(`${prefix}/auth`, authRoutes.getRouter())
+    app.use(`${prefix}/reports`, reportRoutes.getRouter())
     // Add new routers here...
 
     ErrorHandler.registerErrorHandler(app)
