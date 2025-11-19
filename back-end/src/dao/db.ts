@@ -19,10 +19,11 @@ let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
 // The database file path is determined based on the environment variable.
 // Use absolute path resolution so tests and helpers that create the test DB
 // (located at <repo root>/database/testdb.db) point to the same file.
-const dbFilePath = env === "test"
+const defaultPath = env === "test"
     ? path.resolve(__dirname, '..', '..', '..', 'database', 'testdb.db')
-    : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db')
-
+    : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db');
+// if docker is used use the DB_PATH environment variable, otherwise use default onw
+const dbFilePath = process.env.DB_PATH || defaultPath;
 // The database is created and the foreign keys are enabled.
 const db: Database = new sqlite.Database(dbFilePath, (err: Error | null) => {
     if (err) throw err
