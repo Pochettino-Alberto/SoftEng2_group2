@@ -1,4 +1,4 @@
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportStatus, ReportCategory } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
 import { DateError, Utility } from "../utilities"
@@ -20,6 +20,15 @@ class ReportController {
             return await this.dao.saveReport(report);
         } catch (error) {
             console.error("Error saving report:", error);
+            throw error;
+        }
+    }
+
+    async saveReportPhotos(report: Report): Promise<Report> {
+        try {
+            return await this.dao.saveReportPhotos(report);
+        } catch (error) {
+            console.error("Error saving report photos:", error);
             throw error;
         }
     }

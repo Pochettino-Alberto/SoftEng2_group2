@@ -92,7 +92,8 @@ CREATE TABLE reports (
 CREATE TABLE report_photos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     report_id INTEGER NOT NULL,
-    photo_id TEXT NOT NULL, -- to be used in the url
     position INTEGER NOT NULL, -- 1,2,3 (maximum 3 photos per PDF spec)
+    photo_path TEXT NOT NULL, -- relative path inside the supabase bucket
+    photo_public_url TEXT NOT NULL, -- public URL of the photo
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
 );

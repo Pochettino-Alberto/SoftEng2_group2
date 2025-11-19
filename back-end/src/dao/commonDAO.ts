@@ -62,8 +62,7 @@ class CommonDao {
             dbRow.description,
             dbRow.status_reason,
             dbRow.created_at,
-            dbRow.updated_at,
-            dbRow.photos_id = []
+            dbRow.updated_at
         );
 
         if(getSubClasses){
@@ -75,7 +74,6 @@ class CommonDao {
                 report.updated = await this.getById('users', dbRow.updated_by, this.mapDBrowToUserObject);
             
             report.photos = await this.getBy('report_photos', this.mapDBrowToReportPhoto, `report_id = ${report.id} ORDER BY position ASC`);
-            report.photos_id = report.photos.map(p => p.id);
 
         }
 

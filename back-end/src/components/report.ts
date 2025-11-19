@@ -40,22 +40,22 @@ class ReportCategory {
 class ReportPhoto {
     id: number;
     report_id: number;
-    photo_id: string;
     position: number;
-    photo_url: string;
+    photo_path: string;
+    photo_public_url: string;
 
     constructor(
         id: number = 0,
         report_id: number,
-        photo_id: string,
         position: number,
-        photo_url: string = ""
+        photo_url: string,
+        photo_path: string,
     ) {
         this.id = id;
         this.report_id = report_id;
-        this.photo_id = photo_id;
         this.position = position;
-        this.photo_url = photo_url; // evaluated from photo_id
+        this.photo_path = photo_path;
+        this.photo_public_url = photo_url;
     }
 }
 
@@ -87,7 +87,6 @@ class Report {
     createdAt: string;
     updatedAt: string;
 
-    photos_id: number[];
     photos: ReportPhoto[];
 
     /**
@@ -109,8 +108,7 @@ class Report {
         description?: string,
         status_reason?: string,
         createdAt?: string,
-        updatedAt?: string,
-        photos_id: number[] = []
+        updatedAt?: string
     ) {
         this.id = id;
 
@@ -132,8 +130,6 @@ class Report {
 
         this.createdAt = createdAt ?? Utility.now();
         this.updatedAt = updatedAt ?? Utility.now();
-
-        this.photos_id = photos_id;
     }
 }
 

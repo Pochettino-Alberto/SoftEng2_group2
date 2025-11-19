@@ -1,5 +1,5 @@
 import db from "./db"
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportStatus, ReportCategory } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import CommonDao from './commonDAO'
 /**
@@ -17,7 +17,7 @@ class ReportDAO {
     }
 
     /**
-     * Save a new report in the database along with its photos
+     * Save a new report in the database (photos will be saved by calling the next method)
      * @param report - Report object
      * @returns The saved Report object with id populated
      */
@@ -55,20 +55,37 @@ class ReportDAO {
                 function (err) {
                     if (err) return reject(err);
 
-                    // `this` inside callback refers to the statement
-                    report.id = this.lastID;
+                    resolve(report);
+                }
+            );
+        });
+    }
+    /**
+     * Save all the photos associated to a report on the database
+     * @param report - The complete report entity got from the previous method
+     * @returns The saved Report object with id populated
+     */
+    async saveReportPhotos(report: Report): Promise<Report> {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM reports WHERE id=?`;
+
+            db.get(
+                sql,
+                [report.id],
+                function (err) {
+                    if (err) return reject(err);
 
                     // Insert photos if any
-                    if (report.photos_id && report.photos_id.length > 0) {
+                    if (report.photos && report.photos.length > 0) {
                         const photoSql = `
-                            INSERT INTO report_photos (report_id, photo_id, position)
-                            VALUES (?, ?, ?)
+                            INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
+                            VALUES (?, ?, ?, ?)
                         `;
                         const photoStmt = db.prepare(photoSql);
 
                         try {
-                            report.photos_id.forEach((photo_id, index) => {
-                                photoStmt.run(report.id, photo_id, index + 1);
+                            report.photos.forEach(photo => {
+                                photoStmt.run(report.id, photo.position, photo.photo_path, photo.photo_public_url);
                             });
                         } catch (photoErr) {
                             return reject(photoErr);
@@ -80,6 +97,7 @@ class ReportDAO {
             );
         });
     }
+
 
     /**
      * Fetch all report categories from the database

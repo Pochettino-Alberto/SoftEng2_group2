@@ -2,11 +2,12 @@ import express, { Router } from "express"
 import multer from "multer";
 import Authenticator from "./auth"
 import { query, body, param } from "express-validator"
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportStatus, ReportCategory, ReportPhoto } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import ReportController from "../controllers/reportController"
-import PhotoService from "../services/photoService"
+import { supabaseService } from "../services/supabaseService";
+import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
 
 /**
@@ -17,7 +18,6 @@ class ReportRoutes {
     private authService: Authenticator
     private errorHandler: ErrorHandler
     private controller: ReportController
-    private photoService: PhotoService
 
     /**
      * Constructs a new instance of the UserRoutes class.
@@ -28,7 +28,6 @@ class ReportRoutes {
         this.router = express.Router()
         this.errorHandler = new ErrorHandler()
         this.controller = new ReportController
-        this.photoService = new PhotoService
         this.initRoutes()
     }
 
@@ -83,11 +82,6 @@ class ReportRoutes {
                 try {
                     const { title, description, category_id, latitude, longitude, is_public } = req.body;
                     
-                    let photos_id: any[] = []
-                    if((req.files as any[]).length > 0){
-                        photos_id = await this.photoService.uploadFiles(req.files as Express.Multer.File[]);
-                    }
-                    
                     const report = new Report(
                         0,
                         Number(category_id),
@@ -102,11 +96,29 @@ class ReportRoutes {
                         description,
                         undefined,
                         Utility.now(),
-                        undefined,
-                        photos_id
+                        undefined
                     );
 
                     const savedReport = await this.controller.saveReport(report);
+
+                    // At this point, the report is correctly stored on database, we can proceed to upload the photos
+                    let file_ids: { publicUrl: string, filePath: string }[] = []
+                    if((req.files as any[]).length > 0){
+                        // File path: /reports/{report_category_id}/{report_id}
+                        file_ids = await supabaseService.uploadFiles(
+                            `${savedReport.category_id}/${savedReport.id}`,
+                            req.files as Express.Multer.File[],
+                            SupabaseBucket.REPORT_PHOTOS_BUCKET
+                        );
+                    }
+                    // Create a ReportPhoto[] array object, add it inside the Report object, then save the uploaded images urls on DB
+                    let reportPhotos: ReportPhoto[] = [];
+                    file_ids.forEach((elm, index) => reportPhotos.push(new ReportPhoto(
+                        0, report.id, index + 1, elm.publicUrl, elm.filePath
+                    )));
+                    savedReport.photos = reportPhotos;
+                    if(reportPhotos.length > 0)
+                        await this.controller.saveReportPhotos(report);
 
                     res.status(201).json(savedReport);
                 } catch (err) {
