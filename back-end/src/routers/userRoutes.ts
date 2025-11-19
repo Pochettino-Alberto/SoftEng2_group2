@@ -5,6 +5,7 @@ import { UserType, User } from "../components/user"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import UserController from "../controllers/userController"
+import { SERVER_CONFIG } from "../../index";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -22,6 +23,8 @@ class UserRoutes {
     constructor(authenticator: Authenticator) {
         this.authService = authenticator
         this.router = express.Router()
+        this.router.use(express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }))
+        this.router.use(express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }))
         this.errorHandler = new ErrorHandler()
         this.controller = new UserController()
         this.initRoutes()

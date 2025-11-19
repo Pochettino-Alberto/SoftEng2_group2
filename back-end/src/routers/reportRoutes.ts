@@ -9,6 +9,7 @@ import ReportController from "../controllers/reportController"
 import { supabaseService } from "../services/supabaseService";
 import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
+import { SERVER_CONFIG } from "../../index";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -62,14 +63,15 @@ class ReportRoutes {
          */
         this.router.post(
             "/upload",
-            //this.authService.isLoggedIn,
-            //this.authService.isCitizen,    
+            this.authService.isLoggedIn,
+            this.authService.isCitizen,    
             upload.array("photos", 3),
             body("title").isString().notEmpty(),
-            body("category_id").isInt({ min: 1 }),
-            body("latitude").isFloat(),
-            body("longitude").isFloat(),
             body("description").optional().isString(),
+            body("category_id").toInt().isInt({ min: 1 }),
+            body("latitude").toFloat().isFloat(),
+            body("longitude").toFloat().isFloat(),
+            body("is_public").toBoolean().isBoolean(),
             // custom file check middleware
             (req: any, res: any, next: any) => {
                 if ((req.files as any[]).length > 3) {
@@ -131,6 +133,8 @@ class ReportRoutes {
         // GET /report-categories
         this.router.get(
             "/categories",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             (req: any, res: any, next: any) => {
                 this.controller.getReportCategories()
                     .then((categories: ReportCategory[]) => res.status(200).json(categories))
@@ -140,6 +144,8 @@ class ReportRoutes {
 
         this.router.get(
             "/report/:id",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.isAdmin,
             (req: any, res: any, next: any) => {
                 const reportId = Number(req.params.id);
@@ -151,6 +157,8 @@ class ReportRoutes {
 
         this.router.get(
             "/search-reports",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.isAdminOrMunicipality,
             query("page_num").optional().isInt({ min: 1 }),
             query("page_size").optional().isInt({ min: 1 }),

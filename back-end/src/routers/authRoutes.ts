@@ -3,6 +3,7 @@ import Authenticator from "./auth"
 import { body } from "express-validator"
 import { User } from "../components/user"
 import ErrorHandler from "../helper"
+import { SERVER_CONFIG } from "../../index"
 
 /**
  * Represents a class that defines the authentication routes for the application.
@@ -19,7 +20,9 @@ class AuthRoutes {
     constructor(authenticator: Authenticator) {
         this.authService = authenticator
         this.errorHandler = new ErrorHandler()
-        this.router = express.Router();
+        this.router = express.Router()
+        this.router.use(express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }))
+        this.router.use(express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }))
         this.initRoutes();
     }
 

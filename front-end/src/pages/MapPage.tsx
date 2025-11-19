@@ -1,12 +1,14 @@
 // MapPage.tsx (Renamed from NewReportPage.tsx for brevity)
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { reportAPI } from '../api/reports';
+import type { ReportCategory } from './municipality/ReportsPage';
 
 // ICON FIX
 const DefaultIcon = L.icon({
@@ -62,7 +64,7 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; sele
   });
 
   return selectedLocation ? (
-      <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
+    <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
   ) : null;
 };
 
@@ -70,8 +72,24 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; sele
 const MapPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [reportType, setReportType] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState(0);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [photos, setPhotos] = useState<FileList | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [categories, setCategories] = useState<ReportCategory[]>([]);
+
+  // When this component is mounted for the first time, call the server api for loading the report categories
+  useEffect(() => {
+    reportAPI.getReportCategories()
+      .then((repCategories: ReportCategory[]) => {
+        setCategories(repCategories);
+      }).catch(error => {
+        console.log('Could not fetch report categories: ' + error);
+      });
+  }, []);
 
   const handleLocationSelect = (loc: Location) => {
     setSelectedLocation(loc);
@@ -83,27 +101,78 @@ const MapPage: React.FC = () => {
     setIsFormVisible(false);
     setReportType('');
     setDescription('');
+    setTitle('');
+    setCategoryId(0);
+    setIsAnonymous(false);
+    setPhotos(null);
+  };
+
+  const validateReport = (): Boolean => {
+    let error = ''
+    if (selectedLocation == null) error = 'Please select a location on the map first'
+    else if (title == '') error = 'Report title cannot be empty';
+    else if (categoryId == 0) error = 'Please select a report category';
+
+    setFormError(error);
+    return error == '';
+  }
+
+  const handleFileChange = (e: any) => {
+    if (e.target.files && e.target.files.length > 3) {
+      setFormError('You can select a maximum of 3 photos.');
+      e.target.value = '';
+      setPhotos(null);
+      return;
+    }
+    setFormError('');
+    setPhotos(e.target.files);
   };
 
   const handleCreateReport = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLocation) {
-      alert('Please select a location on the map first.');
+    if (!validateReport()) {
       return;
     }
 
-    const reportData = {
+    /*const reportData = {
       ...selectedLocation,
-      reportType,
+      title,
       description,
-    };
+      categoryId
+    };*/
+    const formData = new FormData();
+    // Note: All non-file fields must be appended as strings/numbers
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('category_id', categoryId.toString());
+    formData.append('latitude', selectedLocation!.lat.toString());
+    formData.append('longitude', selectedLocation!.lng.toString());
+    formData.append('is_public', (!isAnonymous).toString());
 
-    console.log('Report Created:', reportData);
+    /*const reportData: CreateReportData = {
+      title, description, categoryId,
+      'latitude': selectedLocation!.lat,
+      'longitude': selectedLocation!.lng,
+      'is_public': !isAnonymous
+    };*/
 
-    alert(`Report of type "${reportType}" created at Lat: ${selectedLocation.lat.toFixed(4)}`);
+    if(photos)
+      for(let i = 0; i < photos.length; i++)
+        formData.append('photos', photos[i]);
+    /*if (photos) {
+      reportData.photos = [];
+      for (let i = 0; i < photos.length; i++)
+        reportData.photos.push(photos[i]);
+    }*/
 
-    // Reset form after successful submission
-    handleCloseForm();
+    console.log('Report to send:', formData);
+    reportAPI.createReport(formData).then(savedReport => {
+      // Reset form after successful submission
+      handleCloseForm();
+
+    }).catch(err => {
+      console.log(err);
+    });
   };
 
   // Memoize Polygon options for performance
@@ -116,120 +185,163 @@ const MapPage: React.FC = () => {
   }), []);
 
   return (
-      <div className="flex h-[calc(100vh-64px)] w-full">
+    <div className="flex h-[calc(100vh-64px)] w-full">
 
-        {/* Report Form - visible on the LEFT */}
-        {isFormVisible && selectedLocation && (
-            <div className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Report Details</h2>
-                <button
-                    type="button"
-                    onClick={handleCloseForm}
-                    className="text-gray-500 hover:text-gray-900 transition-colors"
-                    title="Close Form"
-                >
-                  {/* Tailwind X icon or similar */}
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
+      {/* Report Form - visible on the LEFT */}
+      {isFormVisible && selectedLocation && (
+        <div className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Report Details</h2>
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              className="text-gray-500 hover:text-gray-900 transition-colors"
+              title="Close Form"
+            >
+              {/* Tailwind X icon or similar */}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
 
-              <p className="text-sm text-gray-600 mb-4">
-                **Selected Location:**
-              </p>
-              <form onSubmit={handleCreateReport} className="space-y-4">
+          <p className="text-sm text-gray-600 mb-4">
+            **Selected Location:**
+          </p>
+          <form onSubmit={handleCreateReport} className="space-y-4">
 
-                {/* Latitude Field (Read-only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Latitude</label>
-                  <input
-                      type="text"
-                      value={selectedLocation.lat.toFixed(6)}
-                      readOnly
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
-                  />
-                </div>
-
-                {/* Longitude Field (Read-only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Longitude</label>
-                  <input
-                      type="text"
-                      value={selectedLocation.lng.toFixed(6)}
-                      readOnly
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
-                  />
-                </div>
-
-                {/* Report Type */}
-                <div>
-                  <label htmlFor="reportType" className="block text-sm font-medium text-gray-700">Report Type</label>
-                  <select
-                      id="reportType"
-                      value={reportType}
-                      onChange={(e) => setReportType(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                  >
-                    <option value="">Select a type...</option>
-                    <option value="pothole">Pothole</option>
-                    <option value="graffiti">Graffiti</option>
-                    <option value="lighting">Street Lighting Issue</option>
-                  </select>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                  <textarea
-                      id="description"
-                      rows={3}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                  />
-                </div>
-
-                <button
-                    type="submit"
-                    className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Create Report
-                </button>
-              </form>
+            {/* Latitude Field (Read-only) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Latitude</label>
+              <input
+                type="text"
+                value={selectedLocation.lat.toFixed(6)}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
+              />
             </div>
-        )}
 
-        {/* Map Container - dynamically sized with Tailwind */}
-        <div className={`transition-all duration-300 ${isFormVisible ? 'w-2/3' : 'w-full'} h-full`}>
-          <MapContainer
-              center={TORINO_CENTER}
-              zoom={13}
-              scrollWheelZoom={true}
-              className="h-full w-full"
-              maxBounds={TORINO_BOUNDS}
-              maxBoundsViscosity={1.0}
-              minZoom={12}
-          >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            {/* Longitude Field (Read-only) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Longitude</label>
+              <input
+                type="text"
+                value={selectedLocation.lng.toFixed(6)}
+                readOnly
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
+              />
+            </div>
 
-            {/* Highlight Selectable Area (Torino Bounds) */}
-            <Polygon
-                pathOptions={polygonOptions}
-                positions={TORINO_POLYGON_PATH}
-            />
+            {/* Report Type */}
+            <div>
+              <label htmlFor="reportType" className="block text-sm font-medium text-gray-700">Report Type</label>
+              <select
+                id="reportType"
+                value={categoryId}
+                onChange={(e) => {
+                  let selectedCategory = e.target.value;
+                  setCategoryId(parseInt(selectedCategory));
+                }}
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+                disabled={categories.length === 0}
+              >
+                <option value={0} disabled>
+                  {categories.length === 0 ? 'Loading categories...' : 'Select a category'}
+                </option>
+                {categories.map((cat: ReportCategory) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.icon + " " + cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <LocationMarker
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-            />
-          </MapContainer>
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                id="title"
+                type='text'
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                id="description"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+              />
+            </div>
+
+            {/* Anonymous checkbox */}
+            <div>
+              <label htmlFor="anonymous" className="block text-sm font-medium text-gray-700">Anonymous report</label>
+              <input
+                id='anonymous'
+                type='checkbox'
+                checked={isAnonymous}
+                onChange={() => setIsAnonymous(!isAnonymous)}
+              />
+            </div>
+
+            {/* File Input: Photos */}
+            <label>
+              Photos (Max 3):
+              <input
+                type="file"
+                name="photos"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Create Report
+            </button>
+          </form>
         </div>
+      )}
+
+      {/* Map Container - dynamically sized with Tailwind */}
+      <div className={`transition-all duration-300 ${isFormVisible ? 'w-2/3' : 'w-full'} h-full`}>
+        <MapContainer
+          center={TORINO_CENTER}
+          zoom={13}
+          scrollWheelZoom={true}
+          className="h-full w-full"
+          maxBounds={TORINO_BOUNDS}
+          maxBoundsViscosity={1.0}
+          minZoom={12}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {/* Highlight Selectable Area (Torino Bounds) */}
+          <Polygon
+            pathOptions={polygonOptions}
+            positions={TORINO_POLYGON_PATH}
+          />
+
+          <LocationMarker
+            onLocationSelect={handleLocationSelect}
+            selectedLocation={selectedLocation}
+          />
+        </MapContainer>
       </div>
+    </div>
   );
 };
 

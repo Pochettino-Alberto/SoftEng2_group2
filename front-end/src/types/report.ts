@@ -9,7 +9,7 @@ export const ReportStatus = {
 
 export type ReportStatus = typeof ReportStatus[keyof typeof ReportStatus];
 
-export const ReportCategory = {
+/*export const ReportCategory = {
   WATER_SUPPLY: "Water Supply – Drinking Water",
   ARCHITECTURAL_BARRIERS: "Architectural Barriers",
   SEWER_SYSTEM: "Sewer System",
@@ -19,9 +19,16 @@ export const ReportCategory = {
   ROADS_URBAN: "Roads and Urban Furnishings",
   GREEN_AREAS: "Public Green Areas and Playgrounds",
   OTHER: "Other"
-} as const;
+} as const;*/
 
-export type ReportCategory = typeof ReportCategory[keyof typeof ReportCategory];
+export interface ReportCategory {
+  id: number;
+  name: string;
+  icon: string;
+  description: string;
+};
+
+//export type ReportCategory = typeof ReportCategory[keyof typeof ReportCategory];
 
 export interface Location {
   lat: number;
@@ -33,20 +40,23 @@ export interface Report {
   title: string;
   description: string;
   category: ReportCategory;
+  category_id: number;
   location: Location;
   status: ReportStatus;
   anonymous: boolean;
   photos: string[];
   reporter?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateReportData {
   title: string;
   description: string;
-  category: ReportCategory;
-  location: Location;
-  anonymous: boolean;
-  photos: File[];
+  //category: ReportCategory;
+  categoryId: number;
+  latitude: number;
+  longitude: number;
+  is_public: boolean;
+  photos?: File[];
 }
