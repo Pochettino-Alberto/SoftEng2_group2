@@ -2,6 +2,10 @@
 
 - Return to the [main README](../README.md).
 
+## Tests
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Pochettino-Alberto_SoftEng2_group2&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Pochettino-Alberto_SoftEng2_group2)
+
 ## Structure
 
 The server can be launched with <code>nodemon index.ts</code>
@@ -44,3 +48,21 @@ The server can be launched with <code>nodemon index.ts</code>
 | **DELETE /users/user**            |                                                                  | Deletes a municipality user account                                                                                                                                                                                                                                 |
 | **GET /users/municipality-roles** |                                                                  | Returns a list of Turin municipality technical offices                                                                                                                                                                                                              |
 | **DELETE /users/user/role**       |                                                                  | Removes assignment of a role to a municipality user                                                                                                                                                                                                                 |
+
+### report routes
+
+| Method & Path                  | Query / Body                                                       | Description / Business Logic                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **GET /report/categories**     |                                                                    | Retrieves all the report categories available in the system                                                                            |
+| **GET /report/report/:id**     | `id` (path param, required)                                        | Retrieves a single report by its ID. Includes evaluated sub-objects (category, reporter, updater, photos)                              |
+| **GET /report/search-reports** | `page_num?`, `page_size?`, `status?`, `is_public?`, `category_id?` | Searches reports with optional filters: status, visibility, category. <br> Results are paginated and ordered by `updatedAt` descending |
+
+**Notes:**
+
+- Optional query parameters are indicated with a `?`. If not provided, defaults are applied (`page_num=1`, `page_size=10`, etc.).
+- The `search-reports` route is accessible only to Admin or Municipality users.
+- Returned report objects include:
+  - `category` (ReportCategory object)
+  - `reporter` (User object)
+  - `updated` (User object who last updated the report)
+  - `photos` (array of ReportPhoto objects)

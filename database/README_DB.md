@@ -55,6 +55,56 @@ Represents the many-to-many relationship between users and roles. Each record as
 
 ---
 
-## Ticket management
+## Report Management
 
-- TODO in next sprint
+---
+
+### `report_categories` Table
+
+Defines the categories available for reports (e.g., pothole, noise disturbance, lighting issues).
+
+| Column        | Type                     | Description                                           |
+| ------------- | ------------------------ | ----------------------------------------------------- |
+| `id`          | INTEGER PK AUTOINCREMENT | Unique identifier for the category                    |
+| `name`        | TEXT NOT NULL            | Human-readable category name                          |
+| `icon`        | TEXT NOT NULL            | Icon name or path associated with this category       |
+| `description` | TEXT                     | Optional description of what this category represents |
+
+---
+
+### `reports` Table
+
+Stores user-submitted reports about issues within the municipality.
+
+| Column          | Type                                   | Description                                        |
+| --------------- | -------------------------------------- | -------------------------------------------------- |
+| `id`            | INTEGER PK AUTOINCREMENT               | Unique report identifier                           |
+| `category_id`   | INTEGER FK → `report_categories(id)`   | Category of the reported issue                     |
+| `reporter_id`   | INTEGER FK → `users(id)`               | User who created the report                        |
+| `updated_by`    | INTEGER FK → `users(id)`               | Last user who updated the report                   |
+| `title`         | TEXT NOT NULL                          | Title of the report                                |
+| `description`   | TEXT                                   | Detailed description of the issue                  |
+| `is_public`     | INTEGER CHECK (`0` or `1`) DEFAULT `0` | Whether the report is visible publicly             |
+| `latitude`      | REAL NOT NULL                          | Latitude where the issue was observed              |
+| `longitude`     | REAL NOT NULL                          | Longitude where the issue was observed             |
+| `status`        | TEXT NOT NULL                          | Current status (e.g., open, in_progress, resolved) |
+| `status_reason` | TEXT                                   | Optional explanation for the current status        |
+| `createdAt`     | TEXT NOT NULL                          | Timestamp of report creation                       |
+| `updatedAt`     | TEXT NOT NULL                          | Timestamp of the last update                       |
+
+---
+
+### `report_photos` Table
+
+Stores photos attached to reports.
+
+| Column      | Type                       | Description                                                       |
+| ----------- | -------------------------- | ----------------------------------------------------------------- |
+| `id`        | INTEGER PK AUTOINCREMENT   | Unique identifier for the photo record                            |
+| `report_id` | INTEGER FK → `reports(id)` | Associated report                                                 |
+| `photo_id`  | TEXT NOT NULL              | ID used to retrieve the photo (e.g., filename, UUID, storage key) |
+| `position`  | INTEGER NOT NULL           | Ordering of photos (1–3 as per PDF export rules)                  |
+
+**Foreign Key Rule:**
+
+- Deleting a report automatically deletes its photos (`ON DELETE CASCADE`)

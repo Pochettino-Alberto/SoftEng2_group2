@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Statistics from './pages/Statistics';
 import CitizenDashboard from './pages/citizen/CitizenDashboard';
 import Profile from './pages/citizen/Profile';
+import MapPage from './pages/MapPage.tsx';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
 import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
@@ -48,7 +49,7 @@ function App() {
                     <Routes>
                       <Route path="/" element={<CitizenDashboard />} />
                       <Route path="profile" element={<Profile />} />
-                      {/* Add more citizen routes here */}
+                      <Route path="report/new" element={<MapPage />} />
                     </Routes>
                   </ProtectedRoute>
                 }

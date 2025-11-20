@@ -3,19 +3,16 @@ import { User } from "../components/user"
 import { PaginatedResult } from "../components/common";
 import crypto from "crypto"
 import { UserAlreadyExistsError, UserNotFoundError, UnauthorizedUserError } from "../errors/userError";
+import CommonDao from './commonDAO'
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
  * You are free to implement any method you need here, as long as the requirements are satisfied.
  */
 class UserDAO {
-    /**
-     * Builds a User object from a Database Row Object
-     * @param dbRow Row Object containing the user data read from the database
-     * @returns User Object
-     */
-    mapDBrowToUserObject(dbRow: any): User {
-        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getRole(dbRow.user_type));
+    public commonDao: CommonDao
+    constructor() {
+        this.commonDao = new CommonDao
     }
 
     /**
@@ -95,12 +92,13 @@ class UserDAO {
                     reject(new UserNotFoundError)
                     return
                 }
-                const user: User = this.mapDBrowToUserObject(row);
+                const user: User = this.commonDao.mapDBrowToUserObject(row);
                 resolve(user);
             });
 
         })
     }
+
     /**
      * Returns a user object from the database based on the ID.
      * @param ID The ID of the user to retrieve
@@ -118,7 +116,7 @@ class UserDAO {
                     reject(new UserNotFoundError);
                     return
                 }
-                const user: User = this.mapDBrowToUserObject(row);
+                const user: User = this.commonDao.mapDBrowToUserObject(row);
                 resolve(user);
             });
 
@@ -335,7 +333,7 @@ class UserDAO {
                     return;
                 }
 
-                let userArray = [...rows].map(row => this.mapDBrowToUserObject(row));
+                let userArray = [...rows].map(row => this.commonDao.mapDBrowToUserObject(row));
                 resolve(userArray);
             });
         });

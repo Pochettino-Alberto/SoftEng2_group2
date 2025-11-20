@@ -5,6 +5,9 @@ PRAGMA foreign_keys = ON;
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS report_photos;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS report_categories;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -44,3 +47,53 @@ CREATE TABLE user_roles (
 
 
 
+
+
+-- ===============================
+-- REPORT_CATEGORIES
+-- ===============================
+CREATE TABLE report_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    description TEXT,
+    active INTEGER NOT NULL CHECK (active IN (0,1)) DEFAULT 1
+);
+
+
+-- ===============================
+-- REPORTS
+-- ===============================
+CREATE TABLE reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id INTEGER NOT NULL,
+    reporter_id INTEGER,
+    updated_by INTEGER,
+
+    title TEXT NOT NULL,
+    description TEXT,
+    is_public INTEGER NOT NULL CHECK (is_public IN (0,1)) DEFAULT 0,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    status TEXT NOT NULL,
+    status_reason TEXT,
+
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (category_id) REFERENCES report_categories(id),
+    FOREIGN KEY (reporter_id) REFERENCES users (id),
+    FOREIGN KEY (updated_by) REFERENCES users (id)
+);
+
+-- ===============================
+-- REPORT_PHOTOS
+-- ===============================
+
+CREATE TABLE report_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    position INTEGER NOT NULL, -- 1,2,3 (maximum 3 photos per PDF spec)
+    photo_path TEXT NOT NULL, -- relative path inside the supabase bucket
+    photo_public_url TEXT NOT NULL, -- public URL of the photo
+    FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
+);
