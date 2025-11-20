@@ -1,0 +1,46 @@
+name: CI / SonarCloud
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+        working-directory: back-end
+
+      # 4️⃣ Run tests with coverage
+      - name: Run tests
+        run: npm run test
+        working-directory: back-end
+
+      # 5️⃣ Run SonarCloud analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          organization: pochettino-alberto
+          projectKey: Pochettino-Alberto_SoftEng2_group2
+          projectName: SoftEng2_group2
+          token: ${{ secrets.SONAR_TOKEN }}
+        env:
+          SONAR_SCANNER_OPTS: "-Xmx1024m"
