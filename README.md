@@ -14,6 +14,7 @@ code documentation:
 - [database - README_DB](./database/README_DB.md)
 - [back-end - README_BE](./back-end/README_BE.md)
 - [front-end - README_FE](./front-end/README_FE.md)
+- [docker - README_DOCKER](./README_DOCKER.md)
 
 ## Notes and quick developers tips
 
