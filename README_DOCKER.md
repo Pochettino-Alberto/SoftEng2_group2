@@ -75,7 +75,7 @@ docker rm -f participium_FE participium_BE
 ```
 
 ## Remove everything
-Warning: These commands will delete the database volume and permanently erase all the data in the database.
+Warning: These commands will delete the database volume and permanently erase all the data in the database. Before running these commands, you must stop and  remove the containers as said before.
 
 ```
 docker volume rm participium-db
