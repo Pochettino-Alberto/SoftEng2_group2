@@ -1,9 +1,0 @@
-node_modules
-dist
-coverage
-.env
-npm-debug.log
-test_unit
-test_integration
-.git
-*sqlite

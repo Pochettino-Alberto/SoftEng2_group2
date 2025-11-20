@@ -2,11 +2,11 @@
 FROM node:18-alpine AS build
 WORKDIR /app
 # copy the dependencies
-COPY package*.json ./
+COPY front-end/package*.json ./
 # Use `npm install` to install dependencies
 RUN npm install
 #copy the source code
-COPY . .
+COPY front-end/ .
 #compile -> this will create the dist directory
 RUN npm run build
 
@@ -18,7 +18,7 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Replace default nginx config with a custom one that makes React Router work as expected
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY front-end/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 # Start Nginx, but pass the global option (-g) to tell it not to run in the background (daemon off).
