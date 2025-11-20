@@ -36,11 +36,14 @@ jobs:
 
       # 5️⃣ Run SonarCloud analysis
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          organization: pochettino-alberto
-          projectKey: Pochettino-Alberto_SoftEng2_group2
-          projectName: SoftEng2_group2
-          token: ${{ secrets.SONAR_TOKEN }}
+        # Use the recommended action
+        uses: SonarSource/sonarqube-scan-action@v5.0.0 
+        # Remove the 'with:' block entirely, as the new action doesn't use it for configuration
+        
         env:
+          # Use the universal SONAR_HOST_URL for SonarCloud
+          SONAR_HOST_URL: https://sonarcloud.io 
+          # The token is the only required secret/environment variable for the action itself
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
+          # You can keep the memory setting if you need it
           SONAR_SCANNER_OPTS: "-Xmx1024m"

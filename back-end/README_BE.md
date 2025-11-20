@@ -2,6 +2,10 @@
 
 - Return to the [main README](../README.md).
 
+## Tests
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Pochettino-Alberto_SoftEng2_group2&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Pochettino-Alberto_SoftEng2_group2)
+
 ## Structure
 
 The server can be launched with <code>nodemon index.ts</code>
