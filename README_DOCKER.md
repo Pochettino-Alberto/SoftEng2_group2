@@ -26,6 +26,28 @@ docker run -d \
   -p 5173:80 \
   mattiabenevento/participium_frontend:latest && \
 ```
+
+To run the script on Windows Powershell use:
+
+```
+docker network create participium-net; `
+docker volume create participium-db; `
+docker run -d `
+  --name participium_BE `
+  --network participium-net `
+  -p 3001:3001 `
+  -e NODE_ENV=production `
+  -e PORT=3001 `
+  -e DB_PATH=/usr/src/app/database/database.db `
+  -v participium-db:/usr/src/app/database `
+  mattiabenevento/participium_backend:latest; `
+docker run -d `
+  --name participium_FE `
+  --network participium-net `
+  -p 5173:80 `
+  mattiabenevento/participium_frontend:latest; `
+```
+
 If you prefer to run commands manually, you can run each of them separately but remember to keep the same order.
 
 Once the containers are running, open http://localhost:5173 in your browser to use the web applications.
