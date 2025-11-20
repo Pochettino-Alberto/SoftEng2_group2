@@ -74,7 +74,7 @@ class ReportRoutes {
             body("is_public").toBoolean().isBoolean(),
             // custom file check middleware
             (req: any, res: any, next: any) => {
-                if ((req.files as any[]).length > 3) {
+                if (req.files != null && ((req.files as any[]).length > 3)) {
                     return res.status(400).json({ error: "You can upload a maximum of 3 photos." });
                 }
                 next();
@@ -93,7 +93,7 @@ class ReportRoutes {
                         ReportStatus.PENDING_APPROVAL,
                         Boolean(is_public),
                         //req.user.id, // reporter_id
-                        1,
+                        req.user.id,
                         undefined,
                         description,
                         undefined,

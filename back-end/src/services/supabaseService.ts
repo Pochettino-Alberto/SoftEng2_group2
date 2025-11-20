@@ -47,7 +47,7 @@ class SupabaseService {
         supabaseBucket: SupabaseBucket
     ): Promise<{ publicUrl: string, filePath: string }> {
 
-        const fileName = file.filename;
+        const fileName = file.originalname;
         const filePath = generateFilePath(fileName, directoryPath);
         
         const { data, error } = await supabase.storage

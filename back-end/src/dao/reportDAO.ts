@@ -54,6 +54,7 @@ class ReportDAO {
                 ],
                 function (err) {
                     if (err) return reject(err);
+                    report.id = this.lastID;
 
                     resolve(report);
                 }
