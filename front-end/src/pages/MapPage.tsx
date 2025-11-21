@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L, { LatLngTuple } from 'leaflet';
+import L, {type LatLngTuple } from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -29,24 +29,13 @@ interface Location {
   lng: number;
 }
 
-const MapResizer: React.FC<{ isFormVisible: boolean }> = ({ isFormVisible }) => {
-    const map = useMap();
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            map.invalidateSize();
-        }, 350); // Match or slightly exceed the Tailwind transition duration ('duration-300' = 300ms)
-        return () => clearTimeout(timer);
-    }, [isFormVisible, map]);
-    return null;
-};
-
 const LocationMarker: React.FC<{ onLocationSelect: (loc: Location | null) => void; selectedLocation: Location | null }> = ({ onLocationSelect, selectedLocation }) => {
   useMapEvents({
     click(e) {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
 
-      const point = turf.point([lng, lat]); // GeoJSON = [lng, lat]
+      const point = turf.point([lng, lat]);
       const geoObject = (torinoGeo as any)?.features
           ? (torinoGeo as any).features[0]
           : torinoGeo;
@@ -224,7 +213,7 @@ const MapPage: React.FC = () => {
                   id="reportType"
                   value={categoryId}
                   onChange={(e) => {
-                    let selectedCategory = e.target.value;
+                    const selectedCategory = e.target.value;
                     setCategoryId(parseInt(selectedCategory));
                   }}
                   required
@@ -312,8 +301,6 @@ const MapPage: React.FC = () => {
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-
-            <MapResizer isFormVisible={isFormVisible} />
 
               {/* Torino borders */}
               <GeoJSON
