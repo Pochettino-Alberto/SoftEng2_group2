@@ -1,18 +1,18 @@
-// MapPage.tsx (Renamed from NewReportPage.tsx for brevity)
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, Polygon } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import L, { LatLngTuple } from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import torinoGeo from '../assets/torino.geo.json';
+import * as turf from "@turf/turf";
+
 import { reportAPI } from '../api/reports';
 import type { ReportCategory } from './municipality/ReportsPage';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 
-// ICON FIX
 const DefaultIcon = L.icon({
   iconUrl: icon,
   iconRetinaUrl: iconRetina,
@@ -21,46 +21,47 @@ const DefaultIcon = L.icon({
   iconAnchor: [12, 41],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-// END ICON FIX
 
-// --- Map Configuration ---
-const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
-
-// Bounding box (SW and NE corners)
-const TORINO_BOUNDS: [[number, number], [number, number]] = [
-  [44.9, 7.5],
-  [45.2, 7.8],
-];
-
-// Polygon path representing the bounds (used for visual highlighting)
-// The path needs to trace the four corners of the bounding box
-const TORINO_POLYGON_PATH: [number, number][] = [
-  [TORINO_BOUNDS[0][0], TORINO_BOUNDS[0][1]], // SW
-  [TORINO_BOUNDS[1][0], TORINO_BOUNDS[0][1]], // NW
-  [TORINO_BOUNDS[1][0], TORINO_BOUNDS[1][1]], // NE
-  [TORINO_BOUNDS[0][0], TORINO_BOUNDS[1][1]], // SE
-];
+const TORINO_CENTER: LatLngTuple = [45.0703, 7.6869];
 
 interface Location {
   lat: number;
   lng: number;
 }
 
-// Component to handle map clicks and location selection
-const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; selectedLocation: Location | null }> = ({ onLocationSelect, selectedLocation }) => {
+const MapResizer: React.FC<{ isFormVisible: boolean }> = ({ isFormVisible }) => {
+    const map = useMap();
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            map.invalidateSize();
+        }, 350); // Match or slightly exceed the Tailwind transition duration ('duration-300' = 300ms)
+        return () => clearTimeout(timer);
+    }, [isFormVisible, map]);
+    return null;
+};
+
+const LocationMarker: React.FC<{ onLocationSelect: (loc: Location | null) => void; selectedLocation: Location | null }> = ({ onLocationSelect, selectedLocation }) => {
   useMapEvents({
     click(e) {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
 
-      const [swLat, swLng] = TORINO_BOUNDS[0];
-      const [neLat, neLng] = TORINO_BOUNDS[1];
+      const point = turf.point([lng, lat]); // GeoJSON = [lng, lat]
+      const geoObject = (torinoGeo as any)?.features
+          ? (torinoGeo as any).features[0]
+          : torinoGeo;
+      const boundaryGeometry = (geoObject as any)?.geometry;
+      let inside = false;
 
-      // Check if the clicked point is within the Torino bounds
-      if (lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng) {
-        onLocationSelect({ lat, lng });
+      if (boundaryGeometry) {
+          inside = turf.booleanPointInPolygon(point, boundaryGeometry as turf.Geometry);
+      }
+
+      if (inside) {
+          onLocationSelect({ lat, lng });
       } else {
-        alert('Location must be within the defined boundary of Torino!');
+          alert("Location must be inside the city of Torino!");
+          onLocationSelect(null);
       }
     },
   });
@@ -70,7 +71,6 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; sele
   ) : null;
 };
 
-// The main Map Page component
 const MapPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [title, setTitle] = useState('');
@@ -93,9 +93,9 @@ const MapPage: React.FC = () => {
       });
   }, []);
 
-  const handleLocationSelect = (loc: Location) => {
+  const handleLocationSelect = (loc: Location | null) => {
     setSelectedLocation(loc);
-    setIsFormVisible(true);
+    setIsFormVisible(loc !== null);
   };
 
   const handleCloseForm = () => {
@@ -118,7 +118,7 @@ const MapPage: React.FC = () => {
     return error == '';
   }
 
-  const handleFileChange = (e: any) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 3) {
       setFormWarning('You can select a maximum of 3 photos.');
       e.target.value = '';
@@ -135,12 +135,6 @@ const MapPage: React.FC = () => {
       return;
     }
 
-    /*const reportData = {
-      ...selectedLocation,
-      title,
-      description,
-      categoryId
-    };*/
     const formData = new FormData();
     // Note: All non-file fields must be appended as strings/numbers
     formData.append('title', title);
@@ -150,21 +144,9 @@ const MapPage: React.FC = () => {
     formData.append('longitude', selectedLocation!.lng.toString());
     formData.append('is_public', (!isAnonymous).toString());
 
-    /*const reportData: CreateReportData = {
-      title, description, categoryId,
-      'latitude': selectedLocation!.lat,
-      'longitude': selectedLocation!.lng,
-      'is_public': !isAnonymous
-    };*/
-
     if (photos)
       for (let i = 0; i < photos.length; i++)
         formData.append('photos', photos[i]);
-    /*if (photos) {
-      reportData.photos = [];
-      for (let i = 0; i < photos.length; i++)
-        reportData.photos.push(photos[i]);
-    }*/
 
     console.log('Report to send:', formData);
     reportAPI.createReport(formData).then(savedReport => {
@@ -176,15 +158,6 @@ const MapPage: React.FC = () => {
       console.log(err);
     });
   };
-
-  // Memoize Polygon options for performance
-  const polygonOptions = useMemo(() => ({
-    color: 'blue',
-    fillColor: '#3b82f6', // Tailwind blue-500 equivalent
-    fillOpacity: 0.15,
-    weight: 3,
-    dashArray: '5, 5'
-  }), []);
 
   return (
     <>
@@ -334,20 +307,24 @@ const MapPage: React.FC = () => {
             zoom={13}
             scrollWheelZoom={true}
             className="h-full w-full"
-            maxBounds={TORINO_BOUNDS}
-            maxBoundsViscosity={1.0}
             minZoom={12}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Highlight Selectable Area (Torino Bounds) */}
-            <Polygon
-              pathOptions={polygonOptions}
-              positions={TORINO_POLYGON_PATH}
-            />
+            <MapResizer isFormVisible={isFormVisible} />
+
+              {/* Torino borders */}
+              <GeoJSON
+                  data={torinoGeo as any}
+                  style={{
+                      color: "green",
+                      weight: 2,
+                      fillColor: "#3b82f6",
+                      fillOpacity: 0.15
+              }}
+              />
 
             <LocationMarker
               onLocationSelect={handleLocationSelect}
