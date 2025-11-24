@@ -38,13 +38,13 @@ class CommonDao {
      * @returns ReportPhoto object
      */
     mapDBrowToReportPhoto(dbRow: any): ReportPhoto  {
-        const photo_url="";
+        // DDL columns: id, report_id, position, photo_path, photo_public_url
         return new ReportPhoto(
             dbRow.id,
             dbRow.report_id,
-            dbRow.photo_id,
             dbRow.position,
-            photo_url //TODO implement adding url generated from photo_id
+            dbRow.photo_public_url ?? "",
+            dbRow.photo_path ?? ""
         );
     }
 

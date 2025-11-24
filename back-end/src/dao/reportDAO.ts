@@ -85,14 +85,29 @@ class ReportDAO {
                         const photoStmt = db.prepare(photoSql);
 
                         try {
-                            report.photos.forEach(photo => {
-                                photoStmt.run(report.id, photo.position, photo.photo_path, photo.photo_public_url);
+                            let completed = 0;
+                            report.photos.forEach((photo, idx) => {
+                                photoStmt.run(report.id, photo.position, photo.photo_path, photo.photo_public_url, function (photoErr: any) {
+                                    if (photoErr) return reject(photoErr);
+                                    completed += 1;
+                                    if (completed === report.photos.length) {
+                                        // finalize statement to flush and release resources
+                                        photoStmt.finalize((finalizeErr: any) => {
+                                            if (finalizeErr) return reject(finalizeErr);
+                                            // all photos inserted
+                                            resolve(report);
+                                        });
+                                    }
+                                });
                             });
+                            // return early; resolve will be called once finalized
+                            return;
                         } catch (photoErr) {
                             return reject(photoErr);
                         }
                     }
 
+                    // no photos to insert
                     resolve(report);
                 }
             );
@@ -147,7 +162,7 @@ class ReportDAO {
                     const totalCount = row?.total ?? 0;
 
                     // Paginated data
-                    const dataSql = `SELECT * ${baseSql} ORDER BY updated_at DESC LIMIT ? OFFSET ?`;
+                    const dataSql = `SELECT * ${baseSql} ORDER BY updatedAt DESC LIMIT ? OFFSET ?`;
                     const dataParams = [...params, limit, offset];
 
                     db.all(dataSql, dataParams, async (err2, rows: any[]) => {
