@@ -60,7 +60,7 @@ class SupabaseService {
         if (error) {
             console.error('Supabase Upload Error:', error);
             // Translate Supabase errors into a custom error
-            Promise.reject(new SupabaseFailedToUpload (filePath));
+            throw new SupabaseFailedToUpload(filePath);
         }
 
         const publicUrl = supabase.storage.from(supabaseBucket).getPublicUrl(filePath).data.publicUrl;
