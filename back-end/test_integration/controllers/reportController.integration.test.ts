@@ -105,3 +105,93 @@ describe('ReportController additional integration tests', () => {
     expect(typeof pag.total_items).toBe('number')
   })
 })
+
+// --- Error-branch tests for ReportController to improve coverage ---
+describe('ReportController error branches (mocked DAO)', () => {
+  test('saveReport logs and rethrows when DAO.saveReport throws', async () => {
+    jest.resetModules()
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    // Mock DAO so that saveReport throws
+    class MockDAO {
+      async saveReport() { throw new Error('dao save fail') }
+      async saveReportPhotos(): Promise<any> { return {} }
+      async getAllReportCategories(): Promise<any[]> { return [] }
+      async getReportById(): Promise<any> { return {} }
+      async getPaginatedReports(): Promise<{ reports: any[]; totalCount: number }> { return { reports: [], totalCount: 0 } }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO }))
+    const ReportController = require('../../src/controllers/reportController').default
+
+    const ctrl = new ReportController()
+    await expect(ctrl.saveReport({} as any)).rejects.toThrow(/dao save fail/)
+    expect(spyErr).toHaveBeenCalled()
+
+    spyErr.mockRestore()
+  })
+
+  test('getReportCategories logs and rethrows when DAO.getAllReportCategories throws', async () => {
+    jest.resetModules()
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    class MockDAO2 {
+      async saveReport() { return {} }
+      async saveReportPhotos(): Promise<any> { return {} }
+      async getAllReportCategories(): Promise<any[]> { throw new Error('cats fail') }
+      async getReportById(): Promise<any> { return {} }
+      async getPaginatedReports(): Promise<{ reports: any[]; totalCount: number }> { return { reports: [], totalCount: 0 } }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO2 }))
+    const ReportController = require('../../src/controllers/reportController').default
+
+    const ctrl = new ReportController()
+    await expect(ctrl.getReportCategories()).rejects.toThrow(/cats fail/)
+    expect(spyErr).toHaveBeenCalled()
+
+    spyErr.mockRestore()
+  })
+
+  test('getReportById logs and rethrows when DAO.getReportById throws', async () => {
+    jest.resetModules()
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    class MockDAO3 {
+      async saveReport() { return {} }
+      async saveReportPhotos(): Promise<any> { return {} }
+      async getAllReportCategories(): Promise<any[]> { return [] }
+      async getReportById(): Promise<any> { throw new Error('get by id fail') }
+      async getPaginatedReports(): Promise<{ reports: any[]; totalCount: number }> { return { reports: [], totalCount: 0 } }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO3 }))
+    const ReportController = require('../../src/controllers/reportController').default
+
+    const ctrl = new ReportController()
+    await expect(ctrl.getReportById(1)).rejects.toThrow(/get by id fail/)
+    expect(spyErr).toHaveBeenCalled()
+
+    spyErr.mockRestore()
+  })
+
+  test('searchReports rejects when DAO.getPaginatedReports throws', async () => {
+    jest.resetModules()
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    class MockDAO4 {
+      async saveReport() { return {} }
+      async saveReportPhotos(): Promise<any> { return {} }
+      async getAllReportCategories(): Promise<any[]> { return [] }
+      async getReportById(): Promise<any> { return {} }
+      async getPaginatedReports(): Promise<{ reports: any[]; totalCount: number }> { throw new Error('count boom') }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO4 }))
+    const ReportController = require('../../src/controllers/reportController').default
+
+    const ctrl = new ReportController()
+    await expect(ctrl.searchReports(1, 10, null, null, null)).rejects.toThrow(/count boom/)
+    spyErr.mockRestore()
+  })
+})
