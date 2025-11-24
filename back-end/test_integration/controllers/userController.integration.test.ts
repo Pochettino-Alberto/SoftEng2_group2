@@ -29,6 +29,76 @@ describe('UserController integration - getUserById', () => {
     expect(fetched.user_type).toBe("citizen");
   })
 
+// --- appended from userController.more.integration.test.ts ---
+const { resetTestDB: resetControllersDB_MORE } = require('../helpers/resetTestDB')
+
+beforeAll(async () => {
+  process.env.NODE_ENV = 'test'
+  await resetControllersDB_MORE()
+})
+
+describe('UserController additional integration tests', () => {
+  test('usernameAlreadyInUse returns true/false correctly (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    const username = 'exists_user'
+    await dao.createUser(username, 'Exist', 'User', 'exist@int.test', 'pwd', 'citizen')
+
+    const exists = await ctrl.usernameAlreadyInUse(username)
+    expect(exists).toBe(true)
+
+    const notExists = await ctrl.usernameAlreadyInUse('no_such_user')
+    expect(notExists).toBe(false)
+  })
+
+  test('createUser rejects on duplicate username (real DB)', async () => {
+    const UserController = require('../../src/controllers/userController').default;
+    const ctrl = new UserController();
+    const username = 'dup_user_ctrl'
+
+    // first create ok
+    const created = await ctrl.createUser(username, 'D', 'Up', 'dup@int.test', 'pwd', 'citizen')
+    expect(created).toBeDefined()
+
+    // second create should reject with UserAlreadyExistsError
+    const { UserAlreadyExistsError } = require('../../src/errors/userError')
+    await expect(ctrl.createUser(username, 'D', 'Up', 'dup@int.test', 'pwd', 'citizen')).rejects.toBeInstanceOf(UserAlreadyExistsError)
+  })
+
+  test('setUserRoles and assignRolesToUser modify roles (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const UserController = require('../../src/controllers/userController').default;
+
+    const dao = new UserDAO();
+    const ctrl = new UserController();
+
+    const username = 'roles_user'
+    const created = await dao.createUser(username, 'R', 'User', 'r.user@int.test', 'pwd', 'citizen')
+    const uid = created.id
+
+    // get available roles (no userid) and pick first two
+    const allRoles = await ctrl.getRoles()
+    expect(allRoles.length).toBeGreaterThanOrEqual(1)
+    const getRoleId = (r: any) => r.RoleID ?? r.id ?? r.RoleId
+    const rids = allRoles.slice(0, 2).map((r: any) => getRoleId(r))
+
+    // assign some roles
+    await ctrl.assignRolesToUser(uid, [rids[0]])
+    let assigned = await ctrl.getRoles(uid)
+    expect(assigned.map((r: any) => r.RoleID ?? r.id)).toContain(rids[0])
+
+    // setUserRoles replace roles with empty (remove)
+    await ctrl.setUserRoles(uid, [])
+    const after = await ctrl.getRoles(uid)
+    expect(after.length).toBe(0)
+  })
+})
+
+
   test('user can retrieve own data by id (real DB)', async () => {
     const UserDAO = require('../../src/dao/userDAO').default;
     const UserController = require('../../src/controllers/userController').default;

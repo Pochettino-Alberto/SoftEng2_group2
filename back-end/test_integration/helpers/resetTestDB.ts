@@ -21,12 +21,23 @@ export function resetTestDB(): Promise<void> {
 
       const db = new sqlite3.Database(testDbPath, (err: Error | null) => {
         if (err) return reject(err)
-        db.exec(ddlSQL, (err2: Error | null) => {
+
+        // Ensure foreign key checks are disabled while we DROP/CREATE tables
+        // This prevents SQLITE_CONSTRAINT errors when dropping/creating
+        // tables that reference each other in different orders.
+        const ddlToRun = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*ON;?/i, 'PRAGMA foreign_keys = OFF;')
+
+        db.exec(ddlToRun, (err2: Error | null) => {
           if (err2) return reject(err2)
           db.exec(defaultSQL, (err3: Error | null) => {
             if (err3) return reject(err3)
-            db.close()
-            resolve()
+
+            // Re-enable foreign key enforcement after seeding defaults
+            db.exec('PRAGMA foreign_keys = ON;', (err4: Error | null) => {
+              if (err4) return reject(err4)
+              db.close()
+              resolve()
+            })
           })
         })
       })

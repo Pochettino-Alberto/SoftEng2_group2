@@ -157,7 +157,7 @@ class UserRoutes {
             body('surname').optional({nullable: true}).isString(),
             body('email').optional({nullable: true}).isString(),
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, null, null)
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.user.id, req.body.username, req.body.name, req.body.surname, req.body.email, null, null)
                 .then((user: any) => res.status(200).json(user))
                 .catch((err: any) => next(err))
         )
