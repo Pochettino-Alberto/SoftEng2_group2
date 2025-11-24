@@ -9,26 +9,7 @@ import { teardownTestDb } from './testDb'
 import db from '../src/dao/db'
 import fs from 'fs'
 import path from 'path'
-
-// Helper to register and login a citizen user and return a cookie jar for session
-async function registerAndLogin(agent: any, username: string, password: string) {
-    // register citizen
-    const regRes = await agent.post('/users/register-citizen').send({
-        username,
-        name: 'Test',
-        surname: 'User',
-        email: `${username}@example.com`,
-        password
-    })
-    expect(regRes.status).toBe(201)
-
-    // login
-    const loginRes = await agent.post('/auth/login').send({ username, password })
-    expect(loginRes.status).toBe(200)
-    // capture cookies for authenticated session
-    const cookies = loginRes.headers['set-cookie']
-    return cookies
-}
+import { registerAndLogin, promoteToAdmin } from './e2eHelpers'
 
 describe('E2E Report Routes', () => {
     let agent: any
@@ -46,7 +27,7 @@ describe('E2E Report Routes', () => {
     test('POST /reports/upload create report with photos and then GET /reports/report/:id', async () => {
         const username = `citizen_${Date.now()}`
         const password = 'P@ssw0rd'
-        const cookies = await registerAndLogin(agent, username, password)
+        const { cookies } = await registerAndLogin(agent, username, password)
 
         // Build multipart form
         const res = await agent.post('/reports/upload')
@@ -70,12 +51,7 @@ describe('E2E Report Routes', () => {
         const adminPassword = 'AdminP4ss'
         await registerAndLogin(agent, adminUsername, adminPassword)
         // promote the newly created user to admin role directly in the test DB
-        await new Promise<void>((resolve, reject) => {
-            db.run("UPDATE users SET user_type='admin' WHERE username = ?", [adminUsername], (err: any) => {
-                if (err) return reject(err)
-                resolve()
-            })
-        })
+        await promoteToAdmin(adminUsername)
         const adminLogin = await agent.post('/auth/login').send({ username: adminUsername, password: adminPassword })
         expect(adminLogin.status).toBe(200)
         const adminCookie = adminLogin.headers['set-cookie']
@@ -90,12 +66,7 @@ describe('E2E Report Routes', () => {
         const adminUsername = `admin_${Date.now()}`
         const adminPassword = 'AdminSearchP4ss'
         await registerAndLogin(request, adminUsername, adminPassword)
-        await new Promise<void>((resolve, reject) => {
-            db.run("UPDATE users SET user_type='admin' WHERE username = ?", [adminUsername], (err: any) => {
-                if (err) return reject(err)
-                resolve()
-            })
-        })
+        await promoteToAdmin(adminUsername)
 
         // login as the promoted admin to access search
         const adminLogin = await request.post('/auth/login').send({ username: adminUsername, password: adminPassword })
