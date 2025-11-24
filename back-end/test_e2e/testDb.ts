@@ -13,12 +13,28 @@ const testDbPath = path.resolve(__dirname, '..', '..', 'database', 'testdb.db')
 
 export function resetTestDb() {
     if (fs.existsSync(testDbPath)) {
-        try {
-            fs.unlinkSync(testDbPath)
-            console.log('[testDb] removed existing test DB')
-        } catch (err) {
-            // If the file is busy/locked (another test created it), just warn and continue.
-            console.error('[testDb] failed to remove test DB (will continue):', err)
+        // Try to remove the file. On Windows the file can be briefly locked by the OS
+        // or another process; retry a few times with exponential backoff before giving up.
+        const maxAttempts = 5
+        let attempt = 0
+        while (attempt < maxAttempts) {
+            try {
+                fs.unlinkSync(testDbPath)
+                console.log('[testDb] removed existing test DB')
+                break
+            } catch (err: any) {
+                attempt += 1
+                if (err && err.code === 'EBUSY' && attempt < maxAttempts) {
+                    // small synchronous backoff (busy-wait) — acceptable during test startup
+                    const backoffMs = 50 * Math.pow(2, attempt - 1)
+                    const end = Date.now() + backoffMs
+                    while (Date.now() < end) { /* busy-wait */ }
+                    continue
+                }
+                // If still failing (or different error), warn and continue tests — don't throw.
+                console.warn('[testDb] could not remove test DB (proceeding):', err)
+                break
+            }
         }
     }
 }

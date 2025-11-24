@@ -79,4 +79,43 @@ describe('E2E Report Routes', () => {
         // API returns `total_items` instead of `total`
         expect(res.body).toHaveProperty('total_items')
     })
+
+    test('Non-admin cannot GET /reports/report/:id and search filter by is_public', async () => {
+        // create a citizen and a private report
+        const username = `citizen_filter_${Date.now()}`
+        const password = 'P@ssw0rd'
+        const { user, cookies } = await registerAndLogin(request, username, password)
+
+        // upload a private report
+        const resPrivate = await request.post('/reports/upload')
+            .set('Cookie', cookies)
+            .field('title', 'Private report')
+            .field('description', 'Private desc')
+            .field('category_id', '1')
+            .field('latitude', '45.0')
+            .field('longitude', '7.0')
+            .field('is_public', 'false')
+        expect(resPrivate.status).toBe(201)
+        const privateReport = resPrivate.body
+
+        // another citizen should not be able to GET the report by id (route is admin-only)
+        const otherUser = `citizen_other_${Date.now()}`
+        const { cookies: otherCookies } = await registerAndLogin(request, otherUser, 'AnotherP4ss')
+        const getByNonAdmin = await request.get(`/reports/report/${privateReport.id}`).set('Cookie', otherCookies)
+        expect(getByNonAdmin.status).toBe(401)
+
+        // promote one admin and search for public reports only -> should not include the private one
+        const adminName = `admin_filter_${Date.now()}`
+        await registerAndLogin(request, adminName, 'AdminP4ss')
+        await promoteToAdmin(adminName)
+        const adminLogin = await request.post('/auth/login').send({ username: adminName, password: 'AdminP4ss' })
+        const adminCookie = adminLogin.headers['set-cookie']
+
+        const searchPublic = await request.get('/reports/search-reports?page_num=1&page_size=50&is_public=true').set('Cookie', adminCookie)
+        expect(searchPublic.status).toBe(200)
+        expect(Array.isArray(searchPublic.body.items)).toBeTruthy()
+        // ensure private report is not included
+        const ids = searchPublic.body.items.map((i: any) => i.id)
+        expect(ids).not.toContain(privateReport.id)
+    })
 })

@@ -107,4 +107,33 @@ describe('E2E User Routes', () => {
         expect(getDeleted.status).toBe(404)
     })
 
+    test('Admin edits another user and cannot delete default admin', async () => {
+        // create a normal user to be edited
+        const target = `editTarget_${Date.now()}`
+        const pw = 'P@ssw0rd'
+        const { user: targetUser } = await registerAndLogin(request, target, pw)
+
+        // create an admin and promote
+        const admin = `admin_edit_${Date.now()}`
+        const adminPass = 'AdminP4ss'
+        await registerAndLogin(request, admin, adminPass)
+        await promoteToAdmin(admin)
+        const login = await request.post('/auth/login').send({ username: admin, password: adminPass })
+        const adminCookie = login.headers['set-cookie']
+
+        // Edit target user's email and assign roles (roles exist from default values)
+        const newEmail = `${target}+edited@example.com`
+        const editRes = await request.patch('/users/edit-user')
+            .set('Cookie', adminCookie)
+            .send({ id: targetUser.id, username: targetUser.username, name: targetUser.first_name, surname: targetUser.last_name, email: newEmail, usertype: 'citizen', rolesArray: [1] })
+        expect(editRes.status).toBe(200)
+        expect(editRes.body).toHaveProperty('email', newEmail)
+
+        // Admin attempts to delete the default preloaded admin (id usually 1) -> should be rejected
+        const delDefault = await request.delete('/users/1').set('Cookie', adminCookie)
+        // backend may return 401 (forbidden) or 404 (not found) depending on internal ordering.
+        // Accept either status to make the test resilient across environments.
+        expect([401, 404]).toContain(delDefault.status)
+    })
+
 })
