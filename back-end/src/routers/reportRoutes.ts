@@ -119,11 +119,12 @@ class ReportRoutes {
                         0, report.id, index + 1, elm.publicUrl, elm.filePath
                     )));
                     savedReport.photos = reportPhotos;
-                    if(reportPhotos.length > 0)
-                        await this.controller.saveReportPhotos(report);
+                    if (reportPhotos.length > 0)
+                        await this.controller.saveReportPhotos(savedReport);
 
                     res.status(201).json(savedReport);
                 } catch (err) {
+                    console.error('REPORT UPLOAD ERROR:', err);
                     next(err);
                 }
             }
