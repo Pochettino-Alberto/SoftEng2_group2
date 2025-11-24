@@ -3,7 +3,7 @@ import Authenticator from "./auth"
 import { body } from "express-validator"
 import { User } from "../components/user"
 import ErrorHandler from "../helper"
-import { SERVER_CONFIG } from "../../index"
+import { SERVER_CONFIG } from "../config"
 
 /**
  * Represents a class that defines the authentication routes for the application.

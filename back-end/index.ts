@@ -2,15 +2,11 @@ import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
 import initRoutes from "./src/routes";
+import { SERVER_CONFIG } from "./src/config";
 import dotenv from 'dotenv';
 
 dotenv.config();
 const app: express.Application = express();
-const SERVER_CONFIG = {
-    MAX_JSON_SIZE: "25mb",
-    MAX_URL_SIZE: "25mb",
-    USE_QS_LIBRARY_FOR_URL_ENCODING: true
-}
 
 // middleware
 app.use(morgan("dev")) // Log requests to the console
