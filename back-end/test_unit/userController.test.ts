@@ -209,4 +209,65 @@ describe('UserController', () => {
     const caller = { id: 1, username: 'admin', user_type: 'admin' } as any
     await expect(ctrl.getUserById(caller, 123)).rejects.toBeInstanceOf(UserNotFoundError)
   })
+
+  // Merged tests from userController.more.test.ts
+  describe('UserController - extra coverage', () => {
+    afterEach(() => {
+      jest.restoreAllMocks()
+      jest.resetAllMocks()
+    })
+
+    test('getPaginatedUsers via DAO returns mapped users and count (UserDAO.getPaginatedUsers)', async () => {
+      const users = [{ id: 1, username: 'a' }, { id: 2, username: 'b' }]
+      const totalCount = 7
+      jest.spyOn(UserDAO.prototype, 'getPaginatedUsers' as any).mockResolvedValue({ users, totalCount })
+
+      const ctrl = new UserController()
+      const pag = await ctrl.searchUsers(2, 3, null, null, null, null)
+
+      expect(pag.page_num).toBe(2)
+      expect(pag.page_size).toBe(3)
+      expect(pag.total_items).toBe(totalCount)
+      expect(pag.items).toBeDefined()
+    })
+
+    test('setUserRoles computes toAdd and toRemove and calls DAO assign/remove', async () => {
+      const currentRolesDB = [{ RoleID: 1, RoleName: 'R1' }, { RoleID: 2, RoleName: 'R2' }]
+      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockResolvedValue(currentRolesDB)
+      const assignSpy = jest.spyOn(UserDAO.prototype, 'assignRoles' as any).mockResolvedValue(undefined)
+      const removeSpy = jest.spyOn(UserDAO.prototype, 'removeRoles' as any).mockResolvedValue(undefined)
+
+      const ctrl = new UserController()
+      await expect(ctrl.setUserRoles(10, [2,3])).resolves.toBeUndefined()
+
+      expect(assignSpy).toHaveBeenCalledWith(10, [3])
+      expect(removeSpy).toHaveBeenCalledWith(10, [1])
+    })
+
+    test('assignRolesToUser calls DAO.assignRoles and resolves', async () => {
+      const assignSpy = jest.spyOn(UserDAO.prototype, 'assignRoles' as any).mockResolvedValue(undefined)
+      const ctrl = new UserController()
+      await expect(ctrl.assignRolesToUser(5, [4,5])).resolves.toBeUndefined()
+      expect(assignSpy).toHaveBeenCalledWith(5, [4,5])
+    })
+
+    test('assignRolesToUser rejects when DAO.assignRoles throws', async () => {
+      jest.spyOn(UserDAO.prototype, 'assignRoles' as any).mockRejectedValue(new Error('boom'))
+      const ctrl = new UserController()
+      await expect(ctrl.assignRolesToUser(5, [4])).rejects.toThrow('boom')
+    })
+
+    test('getRoles delegates to DAO and returns rows', async () => {
+      const rows = [{ RoleID: 9, RoleName: 'X' }]
+      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockResolvedValue(rows)
+      const ctrl = new UserController()
+      await expect(ctrl.getRoles(3)).resolves.toBe(rows)
+    })
+
+    test('getRoles rejects when DAO.getRoles throws', async () => {
+      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockRejectedValue(new Error('dbfail'))
+      const ctrl = new UserController()
+      await expect(ctrl.getRoles()).rejects.toThrow('dbfail')
+    })
+  })
 })
