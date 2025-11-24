@@ -31,9 +31,12 @@ class ErrorHandler {
      */
     static registerErrorHandler(router: express.Application) {
         router.use((err: any, req: any, res: any, next: any) => {
-            return res.status(err.customCode || 500).json({
-                error: err.customMessage || "Internal Server Error",
-                status: err.customCode || 500
+            const statusCode = err.customCode || 500;
+            // In test mode include the real error message to help debugging
+            const message = err.customMessage || (process.env.NODE_ENV === 'test' && err.message) || "Internal Server Error";
+            return res.status(statusCode).json({
+                error: message,
+                status: statusCode
             });
         })
     }
