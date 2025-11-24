@@ -34,6 +34,59 @@ describe('UserDAO integration (dao folder)', () => {
     expect(authBad).toBe(false)
   })
 
+// --- appended from userDAO.more.integration.test.ts ---
+const { resetTestDB: resetDBDao_MORE } = require('../helpers/resetTestDB')
+
+beforeAll(async () => {
+  process.env.NODE_ENV = 'test'
+  await resetDBDao_MORE()
+})
+
+describe('UserDAO additional integration tests (dao folder)', () => {
+  test('assignRoles, getRoles, removeRoles work as expected (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default
+    const dao = new UserDAO()
+
+    const username = 'roles_dao'
+    const created = await dao.createUser(username, 'R', 'Dao', 'r.dao@int.test', 'pwd', 'citizen')
+    const uid = created.id
+
+    // get available roles
+    const allRoles = await dao.getRoles()
+    expect(allRoles.length).toBeGreaterThanOrEqual(1)
+    const getRoleId = (r: any) => r.RoleID ?? r.id ?? r.RoleId
+    const rids = allRoles.slice(0, 3).map((r: any) => getRoleId(r))
+
+    // assign roles
+    await dao.assignRoles(uid, [rids[0], rids[1]])
+    let assigned = await dao.getRoles(uid)
+    const assignedIds = assigned.map((r: any) => r.RoleID ?? r.id)
+    expect(assignedIds).toEqual(expect.arrayContaining([rids[0], rids[1]]))
+
+    // remove one role
+    await dao.removeRoles(uid, [rids[1]])
+    const after = await dao.getRoles(uid)
+    expect(after.map((r: any) => r.RoleID ?? r.id)).toEqual(expect.arrayContaining([rids[0]]))
+    expect(after.map((r: any) => r.RoleID ?? r.id)).not.toContain(rids[1])
+  })
+
+  test('getPaginatedUsers supports filters and returns correct totalCount (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default
+    const dao = new UserDAO()
+
+    // create users with different first names and roles
+    await dao.createUser('pag_a', 'Alice', 'A', 'a@int.test', 'pwd', 'citizen')
+    await dao.createUser('pag_b', 'Bob', 'B', 'b@int.test', 'pwd', 'citizen')
+    await dao.createUser('pag_c', 'Alice', 'C', 'c@int.test', 'pwd', 'citizen')
+
+    const { users, totalCount } = await dao.getPaginatedUsers('Alice', null, null, null, 10, 0)
+    expect(totalCount).toBeGreaterThanOrEqual(2)
+    expect(users.every((u: any) => u.first_name.toLowerCase().includes('alice'))).toBe(true)
+  })
+
+})
+
+
   test('getUserById returns the correct user and rejects when not found (real DB)', async () => {
     const UserDAO = require('../../src/dao/userDAO').default
     const { UserNotFoundError } = require('../../src/errors/userError')
@@ -57,5 +110,40 @@ describe('UserDAO integration (dao folder)', () => {
 
     // non-existent id should reject with UserNotFoundError
     await expect(dao.getUserById(999999)).rejects.toBeInstanceOf(UserNotFoundError)
+  })
+
+  test('updateUserInfo persists changes and deleteUserById false when missing (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default
+    const dao = new UserDAO()
+
+    const username = 'to_update'
+    const created = await dao.createUser(username, 'First', 'Last', 'tu@int.test', 'pwd', 'citizen')
+    const uid = created.id
+
+    // update info
+    created.username = 'updated_user_dao'
+    created.email = 'updated@int.test'
+    await dao.updateUserInfo(uid, created)
+
+    const reloaded = await dao.getUserById(uid)
+    expect(reloaded.username).toBe('updated_user_dao')
+    expect(reloaded.email).toBe('updated@int.test')
+
+    // deleting non-existent id should return false
+    const deleted = await dao.deleteUserById(9999999)
+    expect(deleted).toBe(false)
+  })
+
+  test('assignRoles/removeRoles with empty arrays resolve (real DB)', async () => {
+    const UserDAO = require('../../src/dao/userDAO').default
+    const dao = new UserDAO()
+
+    const username = 'empty_roles'
+    const created = await dao.createUser(username, 'E', 'Roles', 'er@int.test', 'pwd', 'citizen')
+    const uid = created.id
+
+    // should not throw
+    await expect(dao.assignRoles(uid, [])).resolves.toBeUndefined()
+    await expect(dao.removeRoles(uid, [])).resolves.toBeUndefined()
   })
 })

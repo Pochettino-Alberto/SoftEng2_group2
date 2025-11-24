@@ -11,4 +11,8 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['lcov', 'text', 'html'],
+  // Only collect coverage from source files (not tests/helpers)
+  collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
+  // Ignore test folders and any helper/test files from coverage
+  coveragePathIgnorePatterns: ['/test_unit/', '/test_integration/', '/node_modules/'],
 };
