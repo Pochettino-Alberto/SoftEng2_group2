@@ -19,3 +19,12 @@ INSERT INTO roles (label, description) VALUES
 ('Technical Office Staff Member', 'Resolves issues assigned by category.');
 
 
+INSERT INTO report_categories (name, icon, description) VALUES
+('Drinking Water', '💧', 'Issues related to public drinking water points, fountains, and water supply.'),
+('Architectural Barriers', '♿', 'Obstacles that prevent accessibility for people with disabilities or mobility limitations.'),
+('Sewer System', '🚰', 'Problems concerning drainage, sewage, and wastewater systems.'),
+('Public Lighting', '🔦', 'Reports about malfunctioning street lights or lighting infrastructure.'),
+('Waste', '♻️', 'Issues related to waste collection, recycling, or illegal dumping.'),
+('Road Signs & Traffic', '🚦', 'Problems involving traffic signs, signals, or traffic flow.'),
+('Roads & Furnishings', '🏙️', 'Damages or issues related to roads, sidewalks, and urban furnishings.'),
+('Green Areas & Playgrounds', '🌳', 'Maintenance of green spaces, parks, playgrounds, and public gardens.');

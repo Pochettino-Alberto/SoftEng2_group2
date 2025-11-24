@@ -140,7 +140,7 @@ const Home: React.FC = () => {
               { name: 'Waste', icon: '♻️' },
               { name: 'Road Signs & Traffic', icon: '🚦' },
               { name: 'Roads & Furnishings', icon: '🏙️' },
-              { name: 'Green Areas & Playgrounds', icon: '🌳' },
+              { name: 'Green Areas & Playgrounds', icon: '🌳' },//TODO: change this, get it from API
             ].map((category, index) => (
               <Card key={index} hover className="p-4 sm:p-6 text-center cursor-pointer">
                 <div className="text-3xl sm:text-4xl mb-2">{category.icon}</div>
