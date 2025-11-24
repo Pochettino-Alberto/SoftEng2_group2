@@ -11,6 +11,7 @@ import { reportAPI } from '../api/reports';
 import type { ReportCategory } from './municipality/ReportsPage';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
+import FileInput from '../components/FileInput';
 
 // ICON FIX
 const DefaultIcon = L.icon({
@@ -77,7 +78,7 @@ const MapPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [photos, setPhotos] = useState<FileList | null>(null);
+  const [photos, setPhotos] = useState<File[] | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [formWarning, setFormWarning] = useState('');
   const [formSuccessMessage, setFormSuccessMessage] = useState('');
@@ -118,15 +119,19 @@ const MapPage: React.FC = () => {
     return error == '';
   }
 
-  const handleFileChange = (e: any) => {
-    if (e.target.files && e.target.files.length > 3) {
-      setFormWarning('You can select a maximum of 3 photos.');
-      e.target.value = '';
-      setPhotos(null);
-      return;
-    }
-    setFormWarning('');
-    setPhotos(e.target.files);
+  // const handleFileChange = (e: any) => {
+  //   if (e.target.files && e.target.files.length > 3) {
+  //     setFormWarning('You can select a maximum of 3 photos.');
+  //     e.target.value = '';
+  //     setPhotos(null);
+  //     return;
+  //   }
+  //   setFormWarning('');
+  //   setPhotos(e.target.files);
+  // };
+  // Example Handler using the recommended File[] type
+  const handleFileChange = (files: File[]) => {
+    setPhotos(files);
   };
 
   const handleCreateReport = (e: React.FormEvent) => {
@@ -168,6 +173,7 @@ const MapPage: React.FC = () => {
 
     console.log('Report to send:', formData);
     reportAPI.createReport(formData).then(savedReport => {
+      console.log(savedReport);
       // Reset form after successful submission
       setFormSuccessMessage('Report sent successfully!');
       handleCloseForm();
@@ -197,7 +203,7 @@ const MapPage: React.FC = () => {
         type={'warning'}
       />
       {/* Success toast (auto hides itself and consumes the message, setting it to empty string) */}
-      <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')}/>
+      <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
 
       <div className="flex h-[calc(100vh-64px)] w-full">
 
@@ -295,7 +301,7 @@ const MapPage: React.FC = () => {
               </div>
 
               {/* Anonymous checkbox */}
-              <div>
+              {/* <div>
                 <label htmlFor="anonymous" className="block text-sm font-medium text-gray-700">Anonymous report</label>
                 <input
                   id='anonymous'
@@ -303,10 +309,43 @@ const MapPage: React.FC = () => {
                   checked={isAnonymous}
                   onChange={() => setIsAnonymous(!isAnonymous)}
                 />
-              </div>
+              </div> */}
+              <label htmlFor="anonymous" className="flex items-center space-x-2 cursor-pointer group">
+                <div className="relative flex items-center h-5">
+                  <input
+                    id='anonymous'
+                    type='checkbox'
+                    checked={isAnonymous}
+                    onChange={() => setIsAnonymous(!isAnonymous)}
+                    // Hide the default browser checkbox
+                    className="hidden"
+                  />
+
+                  {/* Custom Checkbox Appearance */}
+                  <div
+                    className={`w-5 h-5 rounded-md border-2 transition-all duration-200 
+              ${isAnonymous
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-white border-gray-400 group-hover:border-blue-500'
+                      }
+              flex items-center justify-center`}
+                  >
+                    {/* Checkmark Icon (Visible only when checked) */}
+                    {isAnonymous && (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                <span className="text-sm font-medium text-gray-700 select-none">
+                  Anonymous report
+                </span>
+              </label>
 
               {/* File Input: Photos */}
-              <label>
+              {/* <label>
                 Photos (Max 3):
                 <input
                   type="file"
@@ -315,7 +354,29 @@ const MapPage: React.FC = () => {
                   multiple
                   onChange={handleFileChange}
                 />
-              </label>
+              </label> */}
+              <FileInput
+                name="photos"
+                accept="image/*"
+                multiple={true} // Allow multiple selection
+                maxFiles={3} // Enforce the limit
+                onChange={handleFileChange}
+              />
+
+              {/* <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+                <p className="font-semibold text-sm text-gray-800">Parent Component State:</p>
+                {photos?.length === 0 ? (
+                  <p className="text-sm text-gray-500">No files selected.</p>
+                ) : (
+                  <ul className="list-disc pl-5 text-sm space-y-1">
+                    {photos?.map((file, index) => (
+                      <li key={index} className="text-gray-600">
+                        {file.name} ({Math.round(file.size / 1024)} KB)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div> */}
 
               <button
                 type="submit"
