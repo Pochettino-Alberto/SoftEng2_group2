@@ -16,19 +16,30 @@ const sqlite = require("sqlite3")
 //The environment variable is set in the package.json file in the test script.
 let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
 
+// Allow running tests against an in-memory DB for speed. Enable by setting
+// the env var `TEST_DB_IN_MEMORY=true` when running tests.
+const useMemoryDb = env === 'test' && (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
+
 // The database file path is determined based on the environment variable.
 // Use absolute path resolution so tests and helpers that create the test DB
 // (located at <repo root>/database/testdb.db) point to the same file.
-const defaultPath = env === "test"
-    ? path.resolve(__dirname, '..', '..', '..', 'database', 'testdb.db')
-    : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db');
+const defaultPath = useMemoryDb
+    ? ':memory:'
+    : (env === "test"
+        ? path.resolve(__dirname, '..', '..', '..', 'database', 'testdb.db')
+        : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db'));
+
 // if docker is used use the DB_PATH environment variable (defined in docker-compose), otherwise use default one
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
 // check if the db file exists before starting the connection to the db
-const needsInitialization = !fs.existsSync(dbFilePath);
+const needsInitialization = useMemoryDb ? true : !fs.existsSync(dbFilePath);
 
 // --- 3. connection ---
+// Export a promise `dbReady` that resolves when the DB is fully initialized
+let resolveDbReady: () => void
+export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
+
 const db: Database = new sqlite.Database(dbFilePath, (err: Error | null) => {
     if (err) {
         console.error("Error opening database:", err.message);
@@ -42,6 +53,9 @@ const db: Database = new sqlite.Database(dbFilePath, (err: Error | null) => {
     if (needsInitialization) {
         console.log("Database not found (fresh install or test reset). Initializing tables...");
         initializeDb();
+    } else {
+        // No initialization required — signal readiness immediately
+        if (resolveDbReady) resolveDbReady()
     }
 });
 
@@ -76,6 +90,8 @@ function initializeDb() {
                     } else {
                         console.log("✅ Default values inserted successfully.");
                     }
+                    // Signal that DB initialization finished regardless of default SQL success
+                    if (resolveDbReady) resolveDbReady()
                 });
             });
         });
