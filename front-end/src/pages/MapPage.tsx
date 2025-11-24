@@ -1,18 +1,19 @@
-// MapPage.tsx (Renamed from NewReportPage.tsx for brevity)
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, Polygon } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import L, {type LatLngTuple } from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import torinoGeo from '../assets/torino.geo.json';
+import * as turf from "@turf/turf";
+
 import { reportAPI } from '../api/reports';
 import type { ReportCategory } from './municipality/ReportsPage';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
+import FileInput from '../components/FileInput';
 
-// ICON FIX
 const DefaultIcon = L.icon({
   iconUrl: icon,
   iconRetinaUrl: iconRetina,
@@ -21,46 +22,36 @@ const DefaultIcon = L.icon({
   iconAnchor: [12, 41],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-// END ICON FIX
 
-// --- Map Configuration ---
-const TORINO_CENTER: [number, number] = [45.0703, 7.6869];
-
-// Bounding box (SW and NE corners)
-const TORINO_BOUNDS: [[number, number], [number, number]] = [
-  [44.9, 7.5],
-  [45.2, 7.8],
-];
-
-// Polygon path representing the bounds (used for visual highlighting)
-// The path needs to trace the four corners of the bounding box
-const TORINO_POLYGON_PATH: [number, number][] = [
-  [TORINO_BOUNDS[0][0], TORINO_BOUNDS[0][1]], // SW
-  [TORINO_BOUNDS[1][0], TORINO_BOUNDS[0][1]], // NW
-  [TORINO_BOUNDS[1][0], TORINO_BOUNDS[1][1]], // NE
-  [TORINO_BOUNDS[0][0], TORINO_BOUNDS[1][1]], // SE
-];
+const TORINO_CENTER: LatLngTuple = [45.0703, 7.6869];
 
 interface Location {
   lat: number;
   lng: number;
 }
 
-// Component to handle map clicks and location selection
-const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; selectedLocation: Location | null }> = ({ onLocationSelect, selectedLocation }) => {
+const LocationMarker: React.FC<{ onLocationSelect: (loc: Location | null) => void; selectedLocation: Location | null }> = ({ onLocationSelect, selectedLocation }) => {
   useMapEvents({
     click(e) {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
 
-      const [swLat, swLng] = TORINO_BOUNDS[0];
-      const [neLat, neLng] = TORINO_BOUNDS[1];
+      const point = turf.point([lng, lat]);
+      const geoObject = (torinoGeo as any)?.features
+          ? (torinoGeo as any).features[0]
+          : torinoGeo;
+      const boundaryGeometry = (geoObject as any)?.geometry;
+      let inside = false;
 
-      // Check if the clicked point is within the Torino bounds
-      if (lat >= swLat && lat <= neLat && lng >= swLng && lng <= neLng) {
-        onLocationSelect({ lat, lng });
+      if (boundaryGeometry) {
+          inside = turf.booleanPointInPolygon(point, boundaryGeometry as turf.Geometry);
+      }
+
+      if (inside) {
+          onLocationSelect({ lat, lng });
       } else {
-        alert('Location must be within the defined boundary of Torino!');
+          alert("Location must be inside the city of Torino!");
+          onLocationSelect(null);
       }
     },
   });
@@ -70,14 +61,13 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location) => void; sele
   ) : null;
 };
 
-// The main Map Page component
 const MapPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [photos, setPhotos] = useState<FileList | null>(null);
+  const [photos, setPhotos] = useState<File[] | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [formWarning, setFormWarning] = useState('');
   const [formSuccessMessage, setFormSuccessMessage] = useState('');
@@ -93,9 +83,9 @@ const MapPage: React.FC = () => {
       });
   }, []);
 
-  const handleLocationSelect = (loc: Location) => {
+  const handleLocationSelect = (loc: Location | null) => {
     setSelectedLocation(loc);
-    setIsFormVisible(true);
+    setIsFormVisible(loc !== null);
   };
 
   const handleCloseForm = () => {
@@ -118,15 +108,19 @@ const MapPage: React.FC = () => {
     return error == '';
   }
 
-  const handleFileChange = (e: any) => {
-    if (e.target.files && e.target.files.length > 3) {
-      setFormWarning('You can select a maximum of 3 photos.');
-      e.target.value = '';
-      setPhotos(null);
-      return;
-    }
-    setFormWarning('');
-    setPhotos(e.target.files);
+  // const handleFileChange = (e: any) => {
+  //   if (e.target.files && e.target.files.length > 3) {
+  //     setFormWarning('You can select a maximum of 3 photos.');
+  //     e.target.value = '';
+  //     setPhotos(null);
+  //     return;
+  //   }
+  //   setFormWarning('');
+  //   setPhotos(e.target.files);
+  // };
+  // Example Handler using the recommended File[] type
+  const handleFileChange = (files: File[]) => {
+    setPhotos(files);
   };
 
   const handleCreateReport = (e: React.FormEvent) => {
@@ -135,12 +129,6 @@ const MapPage: React.FC = () => {
       return;
     }
 
-    /*const reportData = {
-      ...selectedLocation,
-      title,
-      description,
-      categoryId
-    };*/
     const formData = new FormData();
     // Note: All non-file fields must be appended as strings/numbers
     formData.append('title', title);
@@ -150,24 +138,13 @@ const MapPage: React.FC = () => {
     formData.append('longitude', selectedLocation!.lng.toString());
     formData.append('is_public', (!isAnonymous).toString());
 
-    /*const reportData: CreateReportData = {
-      title, description, categoryId,
-      'latitude': selectedLocation!.lat,
-      'longitude': selectedLocation!.lng,
-      'is_public': !isAnonymous
-    };*/
-
     if (photos)
       for (let i = 0; i < photos.length; i++)
         formData.append('photos', photos[i]);
-    /*if (photos) {
-      reportData.photos = [];
-      for (let i = 0; i < photos.length; i++)
-        reportData.photos.push(photos[i]);
-    }*/
 
     console.log('Report to send:', formData);
     reportAPI.createReport(formData).then(savedReport => {
+      console.log(savedReport);
       // Reset form after successful submission
       setFormSuccessMessage('Report sent successfully!');
       handleCloseForm();
@@ -176,15 +153,6 @@ const MapPage: React.FC = () => {
       console.log(err);
     });
   };
-
-  // Memoize Polygon options for performance
-  const polygonOptions = useMemo(() => ({
-    color: 'blue',
-    fillColor: '#3b82f6', // Tailwind blue-500 equivalent
-    fillOpacity: 0.15,
-    weight: 3,
-    dashArray: '5, 5'
-  }), []);
 
   return (
     <>
@@ -197,7 +165,7 @@ const MapPage: React.FC = () => {
         type={'warning'}
       />
       {/* Success toast (auto hides itself and consumes the message, setting it to empty string) */}
-      <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')}/>
+      <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
 
       <div className="flex h-[calc(100vh-64px)] w-full">
 
@@ -251,7 +219,7 @@ const MapPage: React.FC = () => {
                   id="reportType"
                   value={categoryId}
                   onChange={(e) => {
-                    let selectedCategory = e.target.value;
+                    const selectedCategory = e.target.value;
                     setCategoryId(parseInt(selectedCategory));
                   }}
                   required
@@ -295,7 +263,7 @@ const MapPage: React.FC = () => {
               </div>
 
               {/* Anonymous checkbox */}
-              <div>
+              {/* <div>
                 <label htmlFor="anonymous" className="block text-sm font-medium text-gray-700">Anonymous report</label>
                 <input
                   id='anonymous'
@@ -303,10 +271,43 @@ const MapPage: React.FC = () => {
                   checked={isAnonymous}
                   onChange={() => setIsAnonymous(!isAnonymous)}
                 />
-              </div>
+              </div> */}
+              <label htmlFor="anonymous" className="flex items-center space-x-2 cursor-pointer group">
+                <div className="relative flex items-center h-5">
+                  <input
+                    id='anonymous'
+                    type='checkbox'
+                    checked={isAnonymous}
+                    onChange={() => setIsAnonymous(!isAnonymous)}
+                    // Hide the default browser checkbox
+                    className="hidden"
+                  />
+
+                  {/* Custom Checkbox Appearance */}
+                  <div
+                    className={`w-5 h-5 rounded-md border-2 transition-all duration-200 
+              ${isAnonymous
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-white border-gray-400 group-hover:border-blue-500'
+                      }
+              flex items-center justify-center`}
+                  >
+                    {/* Checkmark Icon (Visible only when checked) */}
+                    {isAnonymous && (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                <span className="text-sm font-medium text-gray-700 select-none">
+                  Anonymous report
+                </span>
+              </label>
 
               {/* File Input: Photos */}
-              <label>
+              {/* <label>
                 Photos (Max 3):
                 <input
                   type="file"
@@ -315,7 +316,29 @@ const MapPage: React.FC = () => {
                   multiple
                   onChange={handleFileChange}
                 />
-              </label>
+              </label> */}
+              <FileInput
+                name="photos"
+                accept="image/*"
+                multiple={true} // Allow multiple selection
+                maxFiles={3} // Enforce the limit
+                onChange={handleFileChange}
+              />
+
+              {/* <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+                <p className="font-semibold text-sm text-gray-800">Parent Component State:</p>
+                {photos?.length === 0 ? (
+                  <p className="text-sm text-gray-500">No files selected.</p>
+                ) : (
+                  <ul className="list-disc pl-5 text-sm space-y-1">
+                    {photos?.map((file, index) => (
+                      <li key={index} className="text-gray-600">
+                        {file.name} ({Math.round(file.size / 1024)} KB)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div> */}
 
               <button
                 type="submit"
@@ -334,20 +357,22 @@ const MapPage: React.FC = () => {
             zoom={13}
             scrollWheelZoom={true}
             className="h-full w-full"
-            maxBounds={TORINO_BOUNDS}
-            maxBoundsViscosity={1.0}
             minZoom={12}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Highlight Selectable Area (Torino Bounds) */}
-            <Polygon
-              pathOptions={polygonOptions}
-              positions={TORINO_POLYGON_PATH}
-            />
+              {/* Torino borders */}
+              <GeoJSON
+                  data={torinoGeo as any}
+                  style={{
+                      color: "green",
+                      weight: 2,
+                      fillColor: "#3b82f6",
+                      fillOpacity: 0.15
+              }}
+              />
 
             <LocationMarker
               onLocationSelect={handleLocationSelect}

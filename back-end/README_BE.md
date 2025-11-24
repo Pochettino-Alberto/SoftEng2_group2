@@ -22,9 +22,6 @@ The server can be launched with <code>nodemon index.ts</code>
 
 ## Routes - business logic
 
-- for more detail on each route checkout the [postman collection](./postman_collection.json).
-- ? after a Body parameter means that it is optional (can be null)
-
 ### auth routes
 
 | Method & Path           | Body                 | Description / Business Logic                                                 |
@@ -56,13 +53,15 @@ The server can be launched with <code>nodemon index.ts</code>
 | **GET /report/categories**     |                                                                    | Retrieves all the report categories available in the system                                                                            |
 | **GET /report/report/:id**     | `id` (path param, required)                                        | Retrieves a single report by its ID. Includes evaluated sub-objects (category, reporter, updater, photos)                              |
 | **GET /report/search-reports** | `page_num?`, `page_size?`, `status?`, `is_public?`, `category_id?` | Searches reports with optional filters: status, visibility, category. <br> Results are paginated and ordered by `updatedAt` descending |
+| **POST /report/upload**     | {title, description?, category_id, latitude, longitude, is_public, photos? }  | Upload a new report with optional photos. Requires to be logged in as a citizen. |
 
 **Notes:**
-
-- Optional query parameters are indicated with a `?`. If not provided, defaults are applied (`page_num=1`, `page_size=10`, etc.).
+- Optional body parameters are followed by a `?`
+- Optional query parameters are followed by a `?`. If not provided, defaults are applied (`page_num=1`, `page_size=10`, etc.).
 - The `search-reports` route is accessible only to Admin or Municipality users.
 - Returned report objects include:
   - `category` (ReportCategory object)
   - `reporter` (User object)
   - `updated` (User object who last updated the report)
   - `photos` (array of ReportPhoto objects)
+- for more detail on each route checkout the [postman collection](./postman_collection.json).
