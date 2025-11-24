@@ -9,7 +9,7 @@ import ReportController from "../controllers/reportController"
 import { supabaseService } from "../services/supabaseService";
 import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
-import { SERVER_CONFIG } from "../../index";
+import { SERVER_CONFIG } from "../config";
 
 /**
  * Represents a class that defines the routes for handling users.

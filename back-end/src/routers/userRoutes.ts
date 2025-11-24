@@ -5,7 +5,7 @@ import { UserType, User } from "../components/user"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import UserController from "../controllers/userController"
-import { SERVER_CONFIG } from "../../index";
+import { SERVER_CONFIG } from "../config";
 
 /**
  * Represents a class that defines the routes for handling users.
