@@ -10,9 +10,9 @@ const AdminDashboard: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">Admin Dashboard</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <Card className="p-4 sm:p-6">
+                    <Card className="p-4 sm:p-6 flex flex-col">
                         <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">Create Municipality User</h3>
-                        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">Create internal municipality accounts (municipal officers, technicians, admins).</p>
+                        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow">Create new municipality staff accounts</p>
 
                         <Link to="/admin/create-municipality-user" className="inline-block w-full sm:w-auto">
                             <Button
@@ -25,9 +25,9 @@ const AdminDashboard: React.FC = () => {
                         </Link>
                     </Card>
 
-                    <Card className="p-4 sm:p-6">
+                    <Card className="p-4 sm:p-6 flex flex-col">
                         <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">Assign Roles to Users</h3>
-                        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">Assign or update predefined roles to municipality users.</p>
+                        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow">Manage user roles and permissions</p>
 
                         <Link to="/admin/assign-roles" className="inline-block w-full sm:w-auto">
                             <Button

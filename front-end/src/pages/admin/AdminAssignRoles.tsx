@@ -129,7 +129,18 @@ const AdminAssignRoles: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-6 sm:py-10">
             <div className="max-w-4xl mx-auto px-4 sm:px-6">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6">Assign Roles to User</h1>
+                {/* Header with Back Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Assign Roles to User</h1>
+                    <Link to="/admin">
+                        <Button variant="outline" className="w-full sm:w-auto">
+                            <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Dashboard
+                        </Button>
+                    </Link>
+                </div>
 
                 {/* Success/Error Notification */}
                 {message && (
@@ -166,54 +177,83 @@ const AdminAssignRoles: React.FC = () => {
 
                 <Card className="p-4 sm:p-6">
                     <form onSubmit={submit} className="space-y-4 sm:space-y-6">
+                        {/* User Selection */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">User List</label>
-                            {usersError && <div className="text-xs sm:text-sm text-red-600 mb-2">{usersError}</div>}
-                            <select
-                                className="w-full p-2 sm:p-3 text-sm sm:text-base border rounded"
-                                onChange={(e) => handleUserChange(Number(e.target.value))}
-                                value={selectedUserId ?? ''}
-                                disabled={usersError !== ''}
-                            >
-                                <option value="">-- select user --</option>
-                                {users.map(u => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.username} — {u.first_name} {u.last_name}
-                                    </option>
-                                ))}
-                            </select>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <svg className="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Select User
+                            </label>
+                            {usersError && (
+                                <div className="mb-2 p-2 bg-red-50 border-l-4 border-red-500 rounded-r text-xs sm:text-sm text-red-700">
+                                    {usersError}
+                                </div>
+                            )}
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <select
+                                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-all"
+                                    style={{ '--tw-ring-color': '#5199CD' } as React.CSSProperties}
+                                    onChange={(e) => handleUserChange(Number(e.target.value))}
+                                    value={selectedUserId ?? ''}
+                                    disabled={usersError !== ''}
+                                >
+                                    <option value="">Choose a user...</option>
+                                    {users.map(u => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.username} — {u.first_name} {u.last_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         {/* Show roles section only when a user is selected and showRoles is true */}
                         {showRoles && selectedUserId !== null && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
-                                    {rolesError && <div className="text-xs sm:text-sm text-red-600 mb-2">{rolesError}</div>}
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <svg className="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                        Assign Roles
+                                    </label>
+                                    {rolesError && (
+                                        <div className="mb-2 p-2 bg-red-50 border-l-4 border-red-500 rounded-r text-xs sm:text-sm text-red-700">
+                                            {rolesError}
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                         {roles.map(r => {
                                             const isAssigned = assignedRoles.includes(r.id);
-                                            const isDisabled = false; // Roles are never disabled here
+                                            const isSelected = selectedRoles.includes(r.id);
 
                                             return (
                                                 <label
                                                     key={r.id}
-                                                    className={`flex items-center space-x-2 p-2 sm:p-3 rounded border transition-colors 
-                                                        ${isDisabled
-                                                        ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed'
-                                                        : 'bg-white border-gray-300 hover:bg-gray-50'
+                                                    className={`flex items-center space-x-3 p-3 sm:p-3.5 rounded-lg border-2 transition-all cursor-pointer
+                                                        ${isSelected
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                                                     }`}
                                                 >
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedRoles.includes(r.id)}
+                                                        checked={isSelected}
                                                         onChange={() => toggleRole(r.id)}
-                                                        disabled={isDisabled}
-                                                        className={isDisabled ? 'opacity-50' : ''}
+                                                        className="w-4 h-4 rounded focus:ring-2"
+                                                        style={{ accentColor: '#5199CD' }}
                                                     />
-                                                    <span className="text-xs sm:text-sm">
+                                                    <span className="text-xs sm:text-sm font-medium text-gray-900">
                                                         {r.label}
-                                                        {isAssigned && ' (Assigned)'}
+                                                        {isAssigned && (
+                                                            <span className="ml-2 text-xs text-gray-500 font-normal">(Current)</span>
+                                                        )}
                                                     </span>
                                                 </label>
                                             )
@@ -221,18 +261,30 @@ const AdminAssignRoles: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                                <div className="flex justify-end pt-2">
                                     <Button
                                         type="submit"
                                         disabled={loading || selectedUserId === null || usersError !== '' || rolesError !== ''}
                                         style={{ backgroundColor: '#5199CD' }}
                                         className="w-full sm:w-auto"
                                     >
-                                        {loading ? 'Saving...' : 'Save Roles'}
+                                        {loading ? (
+                                            <>
+                                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Save Roles
+                                            </>
+                                        )}
                                     </Button>
-                                    <Link to="/admin" className="text-xs sm:text-sm text-gray-600">
-                                        Back to Admin
-                                    </Link>
                                 </div>
                             </>
                         )}
