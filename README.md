@@ -14,6 +14,7 @@ code documentation:
 - [database - README_DB](./database/README_DB.md)
 - [back-end - README_BE](./back-end/README_BE.md)
 - [front-end - README_FE](./front-end/README_FE.md)
+- [docker - README_DOCKER](./README_DOCKER.md)
 
 ## Notes and quick developers tips
 
@@ -138,3 +139,24 @@ code documentation:
 - Photos: mandatory attachments, max 3 per report.
 - Privacy: anonymous option hides reporter name in public listings.
 - Traceability: status changes, admin comments, and mandatory rejection explanations enhance transparency and trust.
+
+## Docker
+
+Short instructions to build and run the project with Docker Compose.
+
+- Build and start the services (front-end served on `http://localhost:5173`, back-end on `http://localhost:3001`):
+
+```powershell
+docker-compose up --build -d
+```
+
+- Stop and remove containers:
+
+```powershell
+docker-compose down
+```
+
+- Notes:
+  - The SQLite database file is persisted by mounting the repository `./database` folder into the back-end container.
+  - The front-end build receives `VITE_API_BASE_URL` at build time and is set in `docker-compose.yml` to point to the `back-end` service.
+  - If you need to run the back-end locally in dev mode, use the `back-end` scripts (`npm run dev`) and the front-end (`npm run dev`).

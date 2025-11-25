@@ -1,16 +1,27 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
 export function resetTestDB(): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-  // __dirname = back-end/test_integration/helpers
-  // repository root is three levels up from __dirname
-  const projectRoot = path.resolve(__dirname, '..', '..', '..')
-  const databaseDir = path.resolve(projectRoot, 'database')
+      // __dirname = back-end/test_integration/helpers
+      // repository root is three levels up from __dirname
+      const projectRoot = path.resolve(__dirname, '..', '..', '..')
+      const databaseDir = path.resolve(projectRoot, 'database')
       const ddlPath = path.resolve(databaseDir, 'tables_DDL.sql')
       const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
-      const testDbPath = path.resolve(databaseDir, 'testdb.db')
+
+      // Determine the test DB path - must match db.ts logic
+      // Allow CI to force using the repo file DB via CI_USE_FILE_DB (stable path)
+      const useMemoryDb = process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1'
+      const useRepoFileDb = process.env.CI_USE_FILE_DB === 'true' || process.env.CI_USE_FILE_DB === '1'
+
+      const testDbPath = useMemoryDb
+        ? ':memory:'
+        : (useRepoFileDb
+            ? path.resolve(databaseDir, 'testdb.db')
+            : path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
 
       // Instead of deleting the DB file (which can fail if another connection
       // has it open), open the file and execute the DDL which contains
@@ -19,17 +30,36 @@ export function resetTestDB(): Promise<void> {
       const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
       const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
 
-      const db = new sqlite3.Database(testDbPath, (err: Error | null) => {
+      const openMode = (typeof sqlite3.OPEN_READWRITE === 'number' && typeof sqlite3.OPEN_CREATE === 'number')
+        ? (sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE)
+        : undefined
+
+      const db = openMode
+        ? new sqlite3.Database(testDbPath, openMode, (err: Error | null) => handleOpen(err))
+        : new sqlite3.Database(testDbPath, (err: Error | null) => handleOpen(err))
+
+      function handleOpen(err: Error | null) {
         if (err) return reject(err)
-        db.exec(ddlSQL, (err2: Error | null) => {
+
+        // Ensure foreign key checks are disabled while we DROP/CREATE tables
+        // This prevents SQLITE_CONSTRAINT errors when dropping/creating
+        // tables that reference each other in different orders.
+        const ddlToRun = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*ON;?/i, 'PRAGMA foreign_keys = OFF;')
+
+        db.exec(ddlToRun, (err2: Error | null) => {
           if (err2) return reject(err2)
           db.exec(defaultSQL, (err3: Error | null) => {
             if (err3) return reject(err3)
-            db.close()
-            resolve()
+
+            // Re-enable foreign key enforcement after seeding defaults
+            db.exec('PRAGMA foreign_keys = ON;', (err4: Error | null) => {
+              if (err4) return reject(err4)
+              db.close()
+              resolve()
+            })
           })
         })
-      })
+      }
     } catch (err) {
       reject(err)
     }

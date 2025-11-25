@@ -383,4 +383,66 @@ describe('UserRoutes integration - edit-user', () => {
 
     expect(res.body.error).toBeDefined()
   })
+
+  test('POST /users/admin/create-municipality-user with rolesArray assigns roles', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+
+    const dao = new UserDAO()
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+
+    const payload = { username: 'muni_user', name: 'M', surname: 'U', email: 'mu@int.test', password: 'pwd', rolesArray: [1] }
+
+    await request(app)
+      .post('/users/admin/create-municipality-user')
+      .send(payload)
+      .expect(201)
+
+    const stored = await dao.getUserByUsername('muni_user')
+    expect(stored).toBeDefined()
+
+    const roles = await dao.getRoles(stored.id)
+    expect(Array.isArray(roles)).toBe(true)
+    expect(roles.map((r: any) => r.RoleID ?? r.id)).toContain(1)
+  })
+
+  test('POST /users/admin/assign-roles validates input and sets roles', async () => {
+    const express = require('express')
+    const app = express()
+    app.use(express.json())
+
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { UserRoutes } = require('../../src/routers/userRoutes')
+
+    const dao = new UserDAO()
+    const created = await dao.createUser('assign_target', 'A', 'T', 'at@int.test', 'pwd', 'citizen')
+
+    const fakeAuth = makeFakeAuth({ isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() } })
+
+    const ur = new UserRoutes(fakeAuth)
+    app.use('/users', ur.getRouter())
+
+    // invalid payload (missing rolesArray) should return 422
+    await request(app)
+      .post('/users/admin/assign-roles')
+      .send({ userId: created.id })
+      .expect(422)
+
+    // valid payload sets roles
+    await request(app)
+      .post('/users/admin/assign-roles')
+      .send({ userId: created.id, rolesArray: [1, 2] })
+      .expect(200)
+
+    const roles = await dao.getRoles(created.id)
+    expect(roles.map((r: any) => r.RoleID ?? r.id)).toEqual(expect.arrayContaining([1,2]))
+  })
 })

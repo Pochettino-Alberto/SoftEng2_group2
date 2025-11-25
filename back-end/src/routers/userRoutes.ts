@@ -5,6 +5,7 @@ import { UserType, User } from "../components/user"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import UserController from "../controllers/userController"
+import { SERVER_CONFIG } from "../config";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -22,6 +23,8 @@ class UserRoutes {
     constructor(authenticator: Authenticator) {
         this.authService = authenticator
         this.router = express.Router()
+        this.router.use(express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }))
+        this.router.use(express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }))
         this.errorHandler = new ErrorHandler()
         this.controller = new UserController()
         this.initRoutes()
@@ -154,7 +157,7 @@ class UserRoutes {
             body('surname').optional({nullable: true}).isString(),
             body('email').optional({nullable: true}).isString(),
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.body.id, req.body.username, req.body.name, req.body.surname, req.body.email, null, null)
+            (req: any, res: any, next: any) => this.controller.updateUserInfo(req.user, req.user.id, req.body.username, req.body.name, req.body.surname, req.body.email, null, null)
                 .then((user: any) => res.status(200).json(user))
                 .catch((err: any) => next(err))
         )

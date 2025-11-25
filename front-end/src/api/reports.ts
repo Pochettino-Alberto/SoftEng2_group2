@@ -1,10 +1,16 @@
 import apiClient from './client';
-import type { Report, CreateReportData } from '../types/report';
+import type { Report } from '../types/report';
+import type { ReportCategory } from '../pages/municipality/ReportsPage';
 
 export const reportAPI = {
   // Get all reports (public access)
   getAllReports: async (): Promise<Report[]> => {
     const response = await apiClient.get('/reports');
+    return response.data;
+  },
+
+  getReportCategories: async (): Promise<ReportCategory[]> => {
+    const response = await apiClient.get('/reports/categories');
     return response.data;
   },
 
@@ -14,11 +20,18 @@ export const reportAPI = {
     return response.data;
   },
 
-  // Create a new report (citizen only)
-  createReport: async (reportData: CreateReportData): Promise<Report> => {
-    // For now, we'll handle file uploads separately
-    // This would need multipart/form-data handling
-    const response = await apiClient.post('/reports', reportData);
+  // Create a new report (citizen only) and uploads relative photos
+  createReport: async (reportData: FormData): Promise<Report> => {
+    const config = {
+      headers: {
+        // By setting Content-Type to undefined, Axios removes the header entirely.
+        // This forces the browser/Axios to correctly set the header to 'multipart/form-data'
+        // with the necessary boundary.
+        'Content-Type': undefined,
+      }
+    };
+
+    const response = await apiClient.post('/reports/upload', reportData, config);
     return response.data;
   },
 

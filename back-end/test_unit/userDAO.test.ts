@@ -339,4 +339,46 @@ describe('UserDAO', () => {
     await expect(dao.removeRoles(11, [3])).rejects.toBeInstanceOf(Error)
     expect(finalizeMock).toHaveBeenCalled()
   })
+
+  // Pagination tests merged from userDAO.pagination.test.ts
+  test('getPaginatedUsers returns users and total without filters', async () => {
+    const countRow = { total: 3 }
+    const rows = [
+      { id: 1, username: 'a', first_name: 'A', last_name: 'B', email: 'a@e', user_type: 'citizen' },
+      { id: 2, username: 'b', first_name: 'B', last_name: 'C', email: 'b@e', user_type: 'municipality' }
+    ]
+
+    // Mock count then rows
+    db.get.mockImplementationOnce((sql: string, params: any[], cb: Function) => { cb(null, countRow) })
+    db.all.mockImplementationOnce((sql: string, params: any[], cb: Function) => { cb(null, rows) })
+
+    const dao = new UserDAO()
+    const res = await dao.getPaginatedUsers(null, null, null, null, 10, 0)
+
+    expect(res.totalCount).toBe(3)
+    expect(res.users.length).toBe(2)
+    expect(res.users[0].username).toBe('a')
+  })
+
+  test('getPaginatedUsers applies filters and passes params in order', async () => {
+    const countRow = { total: 1 }
+    const rows = [ { id: 9, username: 'filtered', first_name: 'F', last_name: 'L', email: 'f@e', user_type: 'citizen' } ]
+
+    // capture params
+    let capturedCountParams: any[] | null = null
+    let capturedDataParams: any[] | null = null
+
+    db.get.mockImplementationOnce((sql: string, params: any[], cb: Function) => { capturedCountParams = params; cb(null, countRow) })
+    db.all.mockImplementationOnce((sql: string, params: any[], cb: Function) => { capturedDataParams = params; cb(null, rows) })
+
+    const dao = new UserDAO()
+    const res = await dao.getPaginatedUsers('Ann', 'Smith', 'ann@example.com', 'citizen', 5, 10)
+
+    expect(res.totalCount).toBe(1)
+    expect(res.users[0].username).toBe('filtered')
+
+    // ensure params ordering: first_name, last_name, email, role for count and then + limit, offset
+    expect(capturedCountParams).toEqual([ '%ann%', '%smith%', '%ann@example.com%', 'citizen' ])
+    expect(capturedDataParams).toEqual([ '%ann%', '%smith%', '%ann@example.com%', 'citizen', 5, 10 ])
+  })
 })

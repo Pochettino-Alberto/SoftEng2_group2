@@ -1,0 +1,32 @@
+
+services:
+  # --- backend service ---
+  # indicates where the backend Dockerfile is located
+  back-end:
+    image: mattiabenevento/participium_backend:v1.0.0
+    container_name: participium_BE
+    # port forwarding
+    ports:
+      - "3001:3001"
+    # Maps the local database to the container
+    volumes:
+      - ./database:/usr/src/app/database
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # we tell the TS code in db.ts where it can look for the database in case docker is used
+      - DB_PATH=/usr/src/app/database/database.db
+    restart: unless-stopped
+
+  # --- frontend service ---
+  front-end:
+    # tells where dockerfile for frontend is located
+    image: mattiabenevento/participium_frontend:v1.0.0
+    container_name: participium_FE
+    # port mapping pc-container
+    ports:
+      - "5173:80"
+    # Tells docker that it must start backend first
+    depends_on:
+      - back-end
+    restart: unless-stopped

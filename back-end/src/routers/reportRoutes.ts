@@ -2,12 +2,14 @@ import express, { Router } from "express"
 import multer from "multer";
 import Authenticator from "./auth"
 import { query, body, param } from "express-validator"
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportStatus, ReportCategory, ReportPhoto } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import ReportController from "../controllers/reportController"
-import PhotoService from "../services/photoService"
+import { supabaseService } from "../services/supabaseService";
+import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
+import { SERVER_CONFIG } from "../config";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -17,7 +19,6 @@ class ReportRoutes {
     private authService: Authenticator
     private errorHandler: ErrorHandler
     private controller: ReportController
-    private photoService: PhotoService
 
     /**
      * Constructs a new instance of the UserRoutes class.
@@ -28,7 +29,6 @@ class ReportRoutes {
         this.router = express.Router()
         this.errorHandler = new ErrorHandler()
         this.controller = new ReportController
-        this.photoService = new PhotoService
         this.initRoutes()
     }
 
@@ -63,17 +63,18 @@ class ReportRoutes {
          */
         this.router.post(
             "/upload",
-            //this.authService.isLoggedIn,
-            //this.authService.isCitizen,    
+            this.authService.isLoggedIn,
+            this.authService.isCitizen,    
             upload.array("photos", 3),
             body("title").isString().notEmpty(),
-            body("category_id").isInt({ min: 1 }),
-            body("latitude").isFloat(),
-            body("longitude").isFloat(),
             body("description").optional().isString(),
+            body("category_id").toInt().isInt({ min: 1 }),
+            body("latitude").toFloat().isFloat(),
+            body("longitude").toFloat().isFloat(),
+            body("is_public").toBoolean().isBoolean(),
             // custom file check middleware
             (req: any, res: any, next: any) => {
-                if ((req.files as any[]).length > 3) {
+                if (req.files != null && ((req.files as any[]).length > 3)) {
                     return res.status(400).json({ error: "You can upload a maximum of 3 photos." });
                 }
                 next();
@@ -82,11 +83,6 @@ class ReportRoutes {
             async (req: any, res: any, next: any) => {
                 try {
                     const { title, description, category_id, latitude, longitude, is_public } = req.body;
-                    
-                    let photos_id: any[] = []
-                    if((req.files as any[]).length > 0){
-                        photos_id = await this.photoService.uploadFiles(req.files as Express.Multer.File[]);
-                    }
                     
                     const report = new Report(
                         0,
@@ -97,19 +93,38 @@ class ReportRoutes {
                         ReportStatus.PENDING_APPROVAL,
                         Boolean(is_public),
                         //req.user.id, // reporter_id
-                        1,
+                        req.user.id,
                         undefined,
                         description,
                         undefined,
                         Utility.now(),
-                        undefined,
-                        photos_id
+                        undefined
                     );
 
                     const savedReport = await this.controller.saveReport(report);
 
+                    // At this point, the report is correctly stored on database, we can proceed to upload the photos
+                    let file_ids: { publicUrl: string, filePath: string }[] = []
+                    if((req.files as any[]).length > 0){
+                        // File path: /reports/{report_category_id}/{report_id}
+                        file_ids = await supabaseService.uploadFiles(
+                            `${savedReport.category_id}/${savedReport.id}`,
+                            req.files as Express.Multer.File[],
+                            SupabaseBucket.REPORT_PHOTOS_BUCKET
+                        );
+                    }
+                    // Create a ReportPhoto[] array object, add it inside the Report object, then save the uploaded images urls on DB
+                    let reportPhotos: ReportPhoto[] = [];
+                    file_ids.forEach((elm, index) => reportPhotos.push(new ReportPhoto(
+                        0, report.id, index + 1, elm.publicUrl, elm.filePath
+                    )));
+                    savedReport.photos = reportPhotos;
+                    if (reportPhotos.length > 0)
+                        await this.controller.saveReportPhotos(savedReport);
+
                     res.status(201).json(savedReport);
                 } catch (err) {
+                    console.error('REPORT UPLOAD ERROR:', err);
                     next(err);
                 }
             }
@@ -119,6 +134,8 @@ class ReportRoutes {
         // GET /report-categories
         this.router.get(
             "/categories",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             (req: any, res: any, next: any) => {
                 this.controller.getReportCategories()
                     .then((categories: ReportCategory[]) => res.status(200).json(categories))
@@ -128,6 +145,8 @@ class ReportRoutes {
 
         this.router.get(
             "/report/:id",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.isAdmin,
             (req: any, res: any, next: any) => {
                 const reportId = Number(req.params.id);
@@ -139,6 +158,8 @@ class ReportRoutes {
 
         this.router.get(
             "/search-reports",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.isAdminOrMunicipality,
             query("page_num").optional().isInt({ min: 1 }),
             query("page_size").optional().isInt({ min: 1 }),
