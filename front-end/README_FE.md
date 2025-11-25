@@ -2,6 +2,17 @@
 
 - Return to the [main README](../README.md).
 
+## Responsive Design
+
+All pages are fully responsive using **Tailwind CSS mobile-first approach**:
+
+- **Mobile** (default - 320px+): Base styles optimized for mobile devices
+- **sm:** (640px+): Mobile landscape, small tablets
+- **md:** (768px+): Tablets
+- **lg:** (1024px+): Desktops and laptops
+- **xl:** (1280px+): Large desktops
+- **2xl:** (1536px+): Extra large screens
+
 ## Components
 
 ## Routes - business logic
