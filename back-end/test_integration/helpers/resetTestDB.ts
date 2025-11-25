@@ -5,17 +5,23 @@ import os from 'os'
 export function resetTestDB(): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-  // __dirname = back-end/test_integration/helpers
-  // repository root is three levels up from __dirname
-  const projectRoot = path.resolve(__dirname, '..', '..', '..')
-  const databaseDir = path.resolve(projectRoot, 'database')
+      // __dirname = back-end/test_integration/helpers
+      // repository root is three levels up from __dirname
+      const projectRoot = path.resolve(__dirname, '..', '..', '..')
+      const databaseDir = path.resolve(projectRoot, 'database')
       const ddlPath = path.resolve(databaseDir, 'tables_DDL.sql')
       const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
-      // Use the same per-worker temp DB path logic as db.ts uses for NODE_ENV=test
-      const testDbPath = path.join(
-        os.tmpdir(),
-        `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`
-      )
+
+      // Determine the test DB path - must match db.ts logic
+      // Allow CI to force using the repo file DB via CI_USE_FILE_DB (stable path)
+      const useMemoryDb = process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1'
+      const useRepoFileDb = process.env.CI_USE_FILE_DB === 'true' || process.env.CI_USE_FILE_DB === '1'
+
+      const testDbPath = useMemoryDb
+        ? ':memory:'
+        : (useRepoFileDb
+            ? path.resolve(databaseDir, 'testdb.db')
+            : path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
 
       // Instead of deleting the DB file (which can fail if another connection
       // has it open), open the file and execute the DDL which contains
@@ -24,7 +30,15 @@ export function resetTestDB(): Promise<void> {
       const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
       const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
 
-      const db = new sqlite3.Database(testDbPath, (err: Error | null) => {
+      const openMode = (typeof sqlite3.OPEN_READWRITE === 'number' && typeof sqlite3.OPEN_CREATE === 'number')
+        ? (sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE)
+        : undefined
+
+      const db = openMode
+        ? new sqlite3.Database(testDbPath, openMode, (err: Error | null) => handleOpen(err))
+        : new sqlite3.Database(testDbPath, (err: Error | null) => handleOpen(err))
+
+      function handleOpen(err: Error | null) {
         if (err) return reject(err)
 
         // Ensure foreign key checks are disabled while we DROP/CREATE tables
@@ -45,7 +59,7 @@ export function resetTestDB(): Promise<void> {
             })
           })
         })
-      })
+      }
     } catch (err) {
       reject(err)
     }

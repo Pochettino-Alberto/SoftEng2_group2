@@ -29,10 +29,23 @@ jobs:
         run: npm ci
         working-directory: back-end
 
-      # 4️⃣ Run tests with coverage
-      - name: Run tests
-        run: npm run test
+      # 4️⃣ Run unit and integration tests with file-based DB (for stability)
+      - name: Run unit and integration tests
+        run: npm run test -- --testPathPattern='test_unit|test_integration'
         working-directory: back-end
+        env:
+          NODE_ENV: 'test'
+          CI_USE_FILE_DB: 'true'
+          DB_PATH: ${{ github.workspace }}/database/testdb.db
+
+      # 4b️⃣ Run e2e tests with in-memory DB (to avoid I/O errors in container)
+      - name: Run e2e tests  
+        run: npm run test -- --testPathPattern='test_e2e'
+        working-directory: back-end
+        env:
+          TEST_DB_IN_MEMORY: 'true'
+          NODE_ENV: 'test'
+          DB_PATH: ''
 
       # 5️⃣ Run SonarCloud analysis
       - name: SonarCloud Scan
