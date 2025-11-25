@@ -2,7 +2,7 @@ import express, { Router } from "express"
 import multer from "multer";
 import Authenticator from "./auth"
 import { query, body, param } from "express-validator"
-import { Report, ReportStatus, ReportCategory, ReportPhoto } from "../components/report"
+import { Report, ReportStatus, ReportCategory, ReportPhoto, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import ReportController from "../controllers/reportController"
@@ -153,6 +153,40 @@ class ReportRoutes {
                 this.controller.getReportById(reportId)
                     .then((report: Report) => res.status(200).json(report))
                     .catch((err: any) => next(err));
+            }
+        );
+
+        this.router.patch(
+            "/report/:id/status",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.isAdminOrMunicipality,
+            param("id").toInt().isInt({ min: 1 }),
+            body("status").isString().isIn([ReportStatus.ASSIGNED, ReportStatus.REJECTED]),
+            body("status_reason").optional().isString().trim(),
+            // Custom check: if status is REJECTED, status_reason is required and cannot be empty
+            body("status_reason").custom((value, { req }) => {
+                if (req.body.status === ReportStatus.REJECTED && (!value || value.trim() === '')) {
+                    throw new Error("Status reason is required when rejecting a report.");
+                }
+                return true;
+            }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.id);
+                    const { status, status_reason } = req.body;
+
+                    await this.controller.updateReportStatus(reportId, status as ReportStatusType, status_reason);
+
+                    // Fetch the updated report to return a complete, fresh representation
+                    const updatedReport = await this.controller.getReportById(reportId);
+
+                    res.status(200).json(updatedReport);
+                } catch (err) {
+                    console.error('REPORT STATUS UPDATE ERROR:', err);
+                    next(err);
+                }
             }
         );
 

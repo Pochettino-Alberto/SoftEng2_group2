@@ -1,7 +1,8 @@
 import db from "./db"
-import { Report, ReportStatus, ReportCategory } from "../components/report"
-import { PaginatedResult } from "../components/common";
+import { Report, ReportCategory, ReportStatusType } from "../components/report"
 import CommonDao from './commonDAO'
+import { Utility } from "../utilities";
+
 /**
  * A class that implements the interaction with the database for all user-related operations.
  * You are free to implement any method you need here, as long as the requirements are satisfied.
@@ -141,6 +142,41 @@ class ReportDAO {
 
                     // no photos to insert
                     resolve(report);
+                }
+            );
+        });
+    }
+
+    /**
+     * Updates the status and status_reason of a report in the database.
+     * @param reportId - The ID of the report to update.
+     * @param status - The new status of the report.
+     * @param statusReason - The reason for the status change (rejection reason).
+     * @returns Promise resolving with the updated Report object (or void, assuming success if no error).
+     */
+    async updateReportStatus(reportId: number, status: ReportStatusType, statusReason?: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const updatedAt = Utility.now();
+            const sql = `
+                UPDATE reports 
+                SET status = ?, status_reason = ?, updatedAt = ? 
+                WHERE id = ?
+            `;
+
+            db.run(
+                sql,
+                [
+                    status,
+                    statusReason ?? null,
+                    updatedAt,
+                    reportId
+                ],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new Error(`Report with ID ${reportId} not found.`));
+                    }
+                    resolve();
                 }
             );
         });

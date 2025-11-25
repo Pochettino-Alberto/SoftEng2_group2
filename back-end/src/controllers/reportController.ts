@@ -1,4 +1,4 @@
-import { Report, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportCategory, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
 import { DateError, Utility } from "../utilities"
@@ -51,6 +51,15 @@ class ReportController {
             return await this.dao.getReportById(reportId);
         } catch (error) {
             console.error("Error fetching report:", error);
+            throw error;
+        }
+    }
+
+    async updateReportStatus(reportId: number, status: ReportStatusType, statusReason?: string): Promise<void> {
+        try {
+            return await this.dao.updateReportStatus(reportId, status, statusReason);
+        } catch (error) {
+            console.error(`Error updating status for report ${reportId}:`, error);
             throw error;
         }
     }
