@@ -23,7 +23,7 @@ export function resetTestDb() {
         console.log('[testDb] using in-memory DB, skipping file reset')
         return
     }
-
+    console.log('[testDb] resetTestDb - testDbPath =', testDbPath)
     if (fs.existsSync(testDbPath)) {
         // Try to remove the file. On Windows the file can be briefly locked by the OS
         // or another process; retry a few times with exponential backoff before giving up.
@@ -36,7 +36,8 @@ export function resetTestDb() {
                 break
             } catch (err: any) {
                 attempt += 1
-                if (err && err.code === 'EBUSY' && attempt < maxAttempts) {
+                console.warn('[testDb] unlink attempt', attempt, 'failed:', err && err.code ? err.code : err)
+                if (err && (err.code === 'EBUSY' || err.code === 'EPERM') && attempt < maxAttempts) {
                     // small synchronous backoff (busy-wait) — acceptable during test startup
                     // increase retries/backoff to handle Windows file-lock races
                     const backoffMs = 50 * Math.pow(2, Math.min(attempt - 1, 8))

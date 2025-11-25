@@ -4,6 +4,8 @@ const { resetTestDB: resetControllersDB } = require('../helpers/resetTestDB')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetControllersDB()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('UserController integration - getUserById', () => {
@@ -35,6 +37,8 @@ const { resetTestDB: resetControllersDB_MORE } = require('../helpers/resetTestDB
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetControllersDB_MORE()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('UserController additional integration tests', () => {

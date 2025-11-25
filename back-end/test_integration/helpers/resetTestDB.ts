@@ -13,7 +13,7 @@ export function resetTestDB(): Promise<void> {
       const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
 
       // Determine the test DB path - must match db.ts logic
-      // Allow CI to force using the repo file DB via CI_USE_FILE_DB (stable path)
+      // For tests, prefer in-memory DB for isolation, or per-worker temp DB
       const useMemoryDb = process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1'
       const useRepoFileDb = process.env.CI_USE_FILE_DB === 'true' || process.env.CI_USE_FILE_DB === '1'
 
@@ -23,9 +23,7 @@ export function resetTestDB(): Promise<void> {
             ? path.resolve(databaseDir, 'testdb.db')
             : path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
 
-      // Instead of deleting the DB file (which can fail if another connection
-      // has it open), open the file and execute the DDL which contains
-      // DROP TABLE IF EXISTS statements to reset schema/state safely.
+      // Open a fresh connection to reset the database schema
       const sqlite3 = require('sqlite3').verbose()
       const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
       const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
@@ -41,20 +39,26 @@ export function resetTestDB(): Promise<void> {
       function handleOpen(err: Error | null) {
         if (err) return reject(err)
 
-        // Ensure foreign key checks are disabled while we DROP/CREATE tables
-        // This prevents SQLITE_CONSTRAINT errors when dropping/creating
-        // tables that reference each other in different orders.
-        const ddlToRun = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*ON;?/i, 'PRAGMA foreign_keys = OFF;')
+        // Remove any PRAGMA foreign_keys = ON from DDL to avoid conflicts
+        // and prepend PRAGMA foreign_keys = OFF to ensure it's set before operations
+        const ddlToRun = `PRAGMA foreign_keys = OFF;
 
+${ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*ON;?/gi, '')}
+
+PRAGMA foreign_keys = ON;`
+
+        // Execute DDL (which contains DROP TABLE IF EXISTS and CREATE TABLE statements)
+        // db.exec() runs all statements in a single batch
         db.exec(ddlToRun, (err2: Error | null) => {
           if (err2) return reject(err2)
+
+          // Insert default values
           db.exec(defaultSQL, (err3: Error | null) => {
             if (err3) return reject(err3)
 
-            // Re-enable foreign key enforcement after seeding defaults
-            db.exec('PRAGMA foreign_keys = ON;', (err4: Error | null) => {
-              if (err4) return reject(err4)
-              db.close()
+            // Close this connection so tests can use the main app connection
+            db.close((err5: Error | null) => {
+              if (err5) return reject(err5)
               resolve()
             })
           })
@@ -65,3 +69,4 @@ export function resetTestDB(): Promise<void> {
     }
   })
 }
+
