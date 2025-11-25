@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 import db from '../src/dao/db'
 
 /**
@@ -9,7 +10,12 @@ import db from '../src/dao/db'
  * expose a teardown function that closes the sqlite connection.
  */
 
-const testDbPath = path.resolve(__dirname, '..', '..', 'database', 'testdb.db')
+// Determine the test DB path in the same way the application does.
+// If a DB path is provided via `DB_PATH` keep it; otherwise use a
+// per-worker tmp DB filename to avoid collisions in CI.
+const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
+    ? ':memory:'
+    : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
 
 export function resetTestDb() {
     // If tests are configured to use an in-memory DB, nothing to delete on disk.
