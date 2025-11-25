@@ -33,10 +33,6 @@ jobs:
       - name: Run tests
         run: npm run test
         working-directory: back-end
-        env:
-          NODE_ENV: test
-          # Keep TEST_DB_IN_MEMORY unset by default; set to 'true' if you want in-memory DB
-          TEST_DB_IN_MEMORY: 'false'
 
       # 5️⃣ Run SonarCloud analysis
       - name: SonarCloud Scan
