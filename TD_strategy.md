@@ -38,4 +38,3 @@ We prioritize debt based on impact:
 * **Better task approach:** If while completing the task, one of us has to manage several files, he should try to fix warnings that don't require too much effort. For example, assuming that one of us is about to modify a file that contains a code smell: before adding new code to the file, the person should fix the code smell.
 * **Review:** During Sprint Planning, we review the oldest debt tickets to see if they need to be addressed in the coming sprint. We will create tasks to address high priority technical debt. The total time effort dedicated to solve the technical debt related tasks should not require more than 15% of the total time budget of the current sprint.
 ---
-*Document created for Sprint 3.*
