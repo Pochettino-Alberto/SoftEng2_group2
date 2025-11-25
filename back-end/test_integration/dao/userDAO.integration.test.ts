@@ -5,6 +5,8 @@ beforeAll(async () => {
   // ensure NODE_ENV=test so src/dao/db.ts picks the test DB
   process.env.NODE_ENV = 'test'
   await resetDBDao()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('UserDAO integration (dao folder)', () => {
@@ -40,6 +42,8 @@ const { resetTestDB: resetDBDao_MORE } = require('../helpers/resetTestDB')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetDBDao_MORE()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('UserDAO additional integration tests (dao folder)', () => {

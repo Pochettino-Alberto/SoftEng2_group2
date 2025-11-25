@@ -4,6 +4,8 @@ const { resetTestDB: resetReportsDB_DAO } = require('../helpers/resetTestDB')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetReportsDB_DAO()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('ReportDAO integration', () => {

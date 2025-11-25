@@ -7,7 +7,7 @@
     "start": "ts-node index.ts",
     "dev": "nodemon --exec ts-node index.ts",
     "build": "tsc",
-    "test": "cross-env NODE_ENV=test jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testTimeout=60000",
+    "test": "cross-env NODE_ENV=test TEST_DB_IN_MEMORY=true jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testTimeout=60000",
     "test_unit": "cross-env NODE_ENV=test jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_unit --testTimeout=60000",
     "test_integration": "cross-env NODE_ENV=test jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_integration --testTimeout=60000",
     "test_e2e": "cross-env NODE_ENV=test jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_e2e --testTimeout=60000",

@@ -4,6 +4,8 @@ const { resetTestDB: resetReportsDB_CTRL } = require('../helpers/resetTestDB')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetReportsDB_CTRL()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('ReportController integration', () => {
@@ -35,6 +37,8 @@ const { resetTestDB: resetReportsDB_CTRL_MORE } = require('../helpers/resetTestD
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetReportsDB_CTRL_MORE()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('ReportController additional integration tests', () => {
