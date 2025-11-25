@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Report } from '../types/report';
+import type { Report, ReportStatus } from '../types/report'; // Using ReportStatus from your file
 import type { ReportCategory } from '../pages/municipality/ReportsPage';
 
 export const reportAPI = {
@@ -38,6 +38,16 @@ export const reportAPI = {
   // Get user's own reports
   getMyReports: async (): Promise<Report[]> => {
     const response = await apiClient.get('/reports/my-reports');
+    return response.data;
+  },
+
+  // Update a report's status (Admin or Municipality only)
+  updateReportStatus: async (
+    reportId: number,
+    status: ReportStatus,
+    status_reason?: string,
+  ): Promise<Report> => {
+    const response = await apiClient.patch(`/reports/report/${reportId}/status`, { status, status_reason });
     return response.data;
   },
 
