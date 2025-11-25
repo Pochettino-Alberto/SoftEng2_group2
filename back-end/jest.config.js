@@ -15,7 +15,7 @@ module.exports = {
   // Only collect coverage from source files (not tests/helpers)
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   // Ignore test folders and any helper/test files from coverage
-  coveragePathIgnorePatterns: ['/test_unit/', '/test_integration/', '/test_e2e/', '/node_modules/', '/src/services/', '/src/errors/'],
+  coveragePathIgnorePatterns: ['/test_unit/', '/test_integration/', '/test_e2e/', '/node_modules/'],
   // Increase default timeout for CI (some e2e operations may be slower)
   testTimeout: 60000,
 };
