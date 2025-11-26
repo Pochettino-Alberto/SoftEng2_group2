@@ -51,7 +51,15 @@ describe('db module', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(db).toBeDefined();
-    expect(consoleLogSpy).toHaveBeenCalled();
+    // When DB file exists, initialization should not run and the SQL files should not be read
+    expect((fs.readFileSync as jest.Mock)).not.toHaveBeenCalledWith(
+      expect.stringContaining('tables_DDL.sql'),
+      expect.anything()
+    );
+    expect((fs.readFileSync as jest.Mock)).not.toHaveBeenCalledWith(
+      expect.stringContaining('tables_default_values.sql'),
+      expect.anything()
+    );
   });
 
   it('initializes DB when file does not exist and reads SQL files', async () => {
@@ -86,7 +94,8 @@ describe('db module', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(db).toBeDefined();
-    expect(consoleLogSpy).toHaveBeenCalled();
+    // When DB file does not exist, initialization should read the DDL and default SQL files
+    expect((fs.readFileSync as jest.Mock)).toHaveBeenCalled();
   });
 
   it('calls PRAGMA journal_mode, busy_timeout, and foreign_keys on successful open', async () => {
