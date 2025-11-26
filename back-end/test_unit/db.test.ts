@@ -26,6 +26,11 @@ describe('db module', () => {
   });
 
   it('connects to existing DB and does not initialize when file exists', async () => {
+    // Ensure CI env vars don't force skipping initialization
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
+
     // USA SPYON INVECE DI DOMOCK PER FS
     jest.spyOn(fs, 'existsSync').mockReturnValue(true);
     jest.spyOn(fs, 'readFileSync').mockImplementation(jest.fn());
@@ -63,6 +68,11 @@ describe('db module', () => {
   });
 
   it('initializes DB when file does not exist and reads SQL files', async () => {
+    // Ensure CI env vars don't force skipping initialization
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
+
     // USA SPYON: Forza existsSync a false
     jest.spyOn(fs, 'existsSync').mockReturnValue(false);
     
