@@ -16,7 +16,10 @@ INSERT INTO users (username, password_hash, salt, first_name, last_name, email, 
 INSERT INTO roles (label, description) VALUES
 ('Municipal Public Relations Officer', 'Handles citizen communications and report approvals.'),
 ('Municipal Administrator', 'Oversees system management and user permissions.'),
-('Technical Office Staff Member', 'Resolves issues assigned by category.');
+('Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.'),
+('Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.'),
+('Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and public health violations.'),
+('Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.');
 
 
 INSERT INTO report_categories (name, icon, description) VALUES
