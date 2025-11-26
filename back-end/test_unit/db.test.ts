@@ -121,7 +121,14 @@ describe('db module', () => {
   });
 
   it('handles SQL file read errors gracefully', async () => {
-    // 1. Usa doMock invece di spyOn per garantire che il modulo 'fs' 
+    // 1. Assicuriamoci che le variabili d'ambiente CI non forzino il ramo
+    // che salta l'inizializzazione (in ambienti come Sonar/CI alcune variabili
+    // possono essere settate e prevenire la lettura dei file SQL).
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
+
+    // Usa doMock invece di spyOn per garantire che il modulo 'fs' 
     // richiesto da db.ts sia esattamente questo oggetto, indipendentemente dalla cache.
     jest.doMock('fs', () => {
       const mockFs = {
