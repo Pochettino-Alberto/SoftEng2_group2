@@ -113,4 +113,30 @@ describe('ReportController', () => {
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
+
+  it('updateReportStatus delegates to DAO with correct args', async () => {
+    const mockUpdate = jest.fn().mockResolvedValue(undefined)
+    const MockDAO = jest.fn().mockImplementation(() => ({ updateReportStatus: mockUpdate }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    await expect(ctrl.updateReportStatus(12, 'Assigned', undefined)).resolves.toBeUndefined()
+    expect(mockUpdate).toHaveBeenCalledWith(12, 'Assigned', undefined)
+  })
+
+  it('updateReportStatus logs and rethrows when DAO throws', async () => {
+    const err = new Error('update-fail')
+    const MockDAO = jest.fn().mockImplementation(() => ({ updateReportStatus: jest.fn().mockRejectedValue(err) }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(ctrl.updateReportStatus(5, 'Rejected', 'reason')).rejects.toThrow('update-fail')
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
 })

@@ -230,6 +230,41 @@ describe('ReportDAO', () => {
       await expect(dao.getAllReportCategories()).rejects.toThrow('all failed')
     })
 
+    it('updateReportStatus resolves when db.run reports changes', async () => {
+      // simulate successful update: this.changes = 1
+      jest.doMock('../src/dao/db', () => ({
+        run: (sql: string, params: any[], cb: any) => cb.call({ changes: 1 }, null)
+      }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.updateReportStatus(2, 'Assigned', undefined)).resolves.toBeUndefined()
+    })
+
+    it('updateReportStatus rejects when no rows changed', async () => {
+      // simulate update affecting 0 rows
+      jest.doMock('../src/dao/db', () => ({
+        run: (sql: string, params: any[], cb: any) => cb.call({ changes: 0 }, null)
+      }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.updateReportStatus(999, 'Assigned')).rejects.toThrow('Report with ID 999 not found.')
+    })
+
+    it('updateReportStatus rejects on db error', async () => {
+      jest.doMock('../src/dao/db', () => ({
+        run: (sql: string, params: any[], cb: any) => cb(new Error('db-run-fail'))
+      }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.updateReportStatus(3, 'Rejected', 'nope')).rejects.toThrow('db-run-fail')
+    })
+
   })
 
   describe('ReportDAO photos async and error branches', () => {
