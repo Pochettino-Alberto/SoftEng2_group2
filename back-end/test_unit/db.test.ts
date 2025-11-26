@@ -1,23 +1,22 @@
 import path from 'path';
+import fs from 'fs'; // Importiamo fs reale per poterlo spiare
 
-// Definisci il percorso del DB di test (adattalo se la struttura cartelle è diversa)
 const TEST_DB_PATH = path.join(__dirname, '../database/testdb.db');
 
 describe('db module', () => {
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    jest.resetModules(); // Pulisce la cache dei moduli
+    jest.resetModules(); // Resetta i moduli richiesti (importante per il singleton db)
+    jest.restoreAllMocks(); // Pulisce gli spy creati con jest.spyOn
     process.env = { ...ORIGINAL_ENV };
 
-    // --- MODIFICA IMPORTANTE: Pulizia fisica del DB ---
-    // Usiamo requireActual per bypassare eventuali mock e cancellare il file vero
-    const fsActual = jest.requireActual('fs');
-    if (fsActual.existsSync(TEST_DB_PATH)) {
+    // Pulizia fisica del DB (Safety check)
+    if (fs.existsSync(TEST_DB_PATH)) {
       try {
-        fsActual.unlinkSync(TEST_DB_PATH);
+        fs.unlinkSync(TEST_DB_PATH);
       } catch (err) {
-        // Ignora errori se il file è bloccato o già rimosso
+        // Ignora errori di lock file
       }
     }
   });
@@ -27,13 +26,16 @@ describe('db module', () => {
   });
 
   it('connects to existing DB and does not initialize when file exists', async () => {
-    // Mock fs.existsSync to return true (db exists)
-    jest.doMock('fs', () => ({
-      existsSync: () => true,
-      readFileSync: jest.fn(),
-    }));
+    // Ensure CI env vars don't force skipping initialization
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
 
-    // Mock sqlite3
+    // USA SPYON INVECE DI DOMOCK PER FS
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest.spyOn(fs, 'readFileSync').mockImplementation(jest.fn());
+
+    // Per sqlite3 usiamo ancora doMock perché dobbiamo intercettare il costruttore
     jest.doMock('sqlite3', () => ({
       Database: function (filePath: string, cb: any) {
         const dbObj = {
@@ -48,27 +50,39 @@ describe('db module', () => {
 
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    // Require module after mocks
+    // Importa il modulo DOPO aver settato i mock
     const db = require('../src/dao/db').default;
 
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(db).toBeDefined();
-    expect(consoleLogSpy).toHaveBeenCalled();
-
-    consoleLogSpy.mockRestore();
+    // When DB file exists, initialization should not run and the SQL files should not be read
+    expect((fs.readFileSync as jest.Mock)).not.toHaveBeenCalledWith(
+      expect.stringContaining('tables_DDL.sql'),
+      expect.anything()
+    );
+    expect((fs.readFileSync as jest.Mock)).not.toHaveBeenCalledWith(
+      expect.stringContaining('tables_default_values.sql'),
+      expect.anything()
+    );
   });
 
   it('initializes DB when file does not exist and reads SQL files', async () => {
-    // Simulate missing db file
-    jest.doMock('fs', () => ({
-      existsSync: () => false,
-      readFileSync: (p: string) => {
-        if (p.endsWith('tables_DDL.sql')) return 'CREATE TABLE t(id INTEGER)';
-        if (p.endsWith('tables_default_values.sql')) return "INSERT INTO t(id) VALUES (1)";
+    // Ensure CI env vars don't force skipping initialization
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
+
+    // USA SPYON: Forza existsSync a false
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+    
+    // Mock intelligente di readFileSync
+    jest.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
+        const pathStr = p.toString();
+        if (pathStr.endsWith('tables_DDL.sql')) return 'CREATE TABLE t(id INTEGER)';
+        if (pathStr.endsWith('tables_default_values.sql')) return "INSERT INTO t(id) VALUES (1)";
         return '';
-      },
-    }));
+    });
 
     jest.doMock('sqlite3', () => ({
       Database: function (filePath: string, cb: any) {
@@ -90,18 +104,16 @@ describe('db module', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(db).toBeDefined();
-    expect(consoleLogSpy).toHaveBeenCalled();
-
-    consoleLogSpy.mockRestore();
-    consoleErrSpy.mockRestore();
+    // When DB file does not exist, initialization should read the DDL and default SQL files
+    expect((fs.readFileSync as jest.Mock)).toHaveBeenCalled();
   });
 
   it('calls PRAGMA journal_mode, busy_timeout, and foreign_keys on successful open', async () => {
     const mockRun = jest.fn();
-    jest.doMock('fs', () => ({
-      existsSync: () => true,
-      readFileSync: jest.fn(),
-    }));
+    
+    // USA SPYON
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest.spyOn(fs, 'readFileSync').mockImplementation(jest.fn());
 
     jest.doMock('sqlite3', () => ({
       OPEN_READWRITE: 1,
@@ -125,25 +137,32 @@ describe('db module', () => {
     expect(mockRun).toHaveBeenCalledWith('PRAGMA foreign_keys = ON');
     expect(mockRun).toHaveBeenCalledWith('PRAGMA journal_mode = WAL');
     expect(mockRun).toHaveBeenCalledWith('PRAGMA busy_timeout = 5000');
-
-    consoleLogSpy.mockRestore();
   });
 
   it('handles SQL file read errors gracefully', async () => {
-    // Qui è fondamentale che existsSync ritorni false. 
-    // Avendo cancellato il file nel beforeEach, anche se il mock fallisse, il codice reale vedrebbe false.
-    jest.doMock('fs', () => ({
-      // Aggiungiamo __esModule e default per compatibilità massima con ts-jest
-      __esModule: true,
-      default: {
-         existsSync: () => false,
-         readFileSync: () => { throw new Error('ENOENT: no such file'); }
-      },
-      existsSync: () => false,
-      readFileSync: () => {
-        throw new Error('ENOENT: no such file');
-      },
-    }));
+    // 1. Assicuriamoci che le variabili d'ambiente CI non forzino il ramo
+    // che salta l'inizializzazione (in ambienti come Sonar/CI alcune variabili
+    // possono essere settate e prevenire la lettura dei file SQL).
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
+
+    // Usa doMock invece di spyOn per garantire che il modulo 'fs' 
+    // richiesto da db.ts sia esattamente questo oggetto, indipendentemente dalla cache.
+    jest.doMock('fs', () => {
+      const mockFs = {
+        existsSync: () => false, // FORZA IL RAMO "FILE NOT EXIST"
+        readFileSync: () => {
+          throw new Error('Failed to read SQL files'); // FORZA L'ERRORE
+        },
+        unlinkSync: () => {}, // Mock per sicurezza
+      };
+      return {
+        __esModule: true,
+        default: mockFs, // Per "import fs from 'fs'"
+        ...mockFs,       // Per "import { readFileSync } from 'fs'"
+      };
+    });
 
     jest.doMock('sqlite3', () => ({
       Database: function (filePath: string, cb: any) {
@@ -152,15 +171,21 @@ describe('db module', () => {
           exec: jest.fn(),
           serialize: (fn: any) => fn(),
         };
+        // Callback asincrono
         process.nextTick(() => cb(null));
         return dbObj;
       },
     }));
 
     const consoleErrSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // Ricarica il modulo sotto test
     const db = require('../src/dao/db').default;
 
-    await new Promise((resolve) => setImmediate(resolve));
+    // 2. TIMING FIX: Usa setTimeout invece di setImmediate.
+    // In CI, i cicli di clock sono imprevedibili. 100ms sono un'eternità per la CPU
+    // ma garantiscono che process.nextTick sia stato eseguito.
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(consoleErrSpy).toHaveBeenCalledWith(
       expect.stringContaining('Failed to read SQL files'),
@@ -170,15 +195,16 @@ describe('db module', () => {
     consoleErrSpy.mockRestore();
   });
 
+
   it('resolves dbReady promise when initialization completes', async () => {
-    jest.doMock('fs', () => ({
-      existsSync: () => false,
-      readFileSync: (p: string) => {
-        if (p.endsWith('tables_DDL.sql')) return 'CREATE TABLE t(id INTEGER)';
-        if (p.endsWith('tables_default_values.sql')) return "INSERT INTO t(id) VALUES (1)";
+    // USA SPYON
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+    jest.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
+        const pathStr = p.toString();
+        if (pathStr.endsWith('tables_DDL.sql')) return 'CREATE TABLE t(id INTEGER)';
+        if (pathStr.endsWith('tables_default_values.sql')) return "INSERT INTO t(id) VALUES (1)";
         return '';
-      },
-    }));
+    });
 
     jest.doMock('sqlite3', () => ({
       Database: function (filePath: string, cb: any) {
@@ -199,7 +225,5 @@ describe('db module', () => {
     const result = await Promise.race([dbReady, timeoutPromise]);
 
     expect(result).toBeUndefined();
-
-    consoleLogSpy.mockRestore();
   });
 });

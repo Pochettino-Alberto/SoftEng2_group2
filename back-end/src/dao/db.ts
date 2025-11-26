@@ -81,7 +81,9 @@ function onOpen(err: Error | null) {
     } catch (e) {
         // ignore if mocked DB doesn't implement run
     }
-    console.log(`Connected to database: ${dbFilePath}`);
+    if (process.env.NODE_ENV !== 'test') {
+        console.log(`Connected to database: ${dbFilePath}`);
+    }
 
     // Compute initialization decision at runtime so tests that set
     // `process.env.NODE_ENV = 'test'` in `beforeAll` (and helpers that
@@ -109,7 +111,9 @@ function onOpen(err: Error | null) {
     }
 
     if (shouldInitialize) {
-        console.log("Database not found (fresh install or test reset). Initializing tables...");
+        if (process.env.NODE_ENV !== 'test') {
+            console.log("Database not found (fresh install or test reset). Initializing tables...");
+        }
         initializeDb();
     } else {
         // No initialization required — signal readiness immediately
