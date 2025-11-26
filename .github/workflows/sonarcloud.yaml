@@ -29,34 +29,47 @@ jobs:
         run: npm ci
         working-directory: back-end
 
-      # 4️⃣ Run unit and integration tests with file-based DB (for stability)
-      - name: Run unit and integration tests
-        run: npm run test -- --testPathPattern='test_unit|test_integration'
+      # 4️⃣ Run Unit Tests
+      # Questo crea il report in coverage/unit/lcov.info
+      - name: Run Unit Tests
+        run: npm run test_unit
         working-directory: back-end
         env:
           NODE_ENV: 'test'
           CI_USE_FILE_DB: 'true'
           DB_PATH: ${{ github.workspace }}/database/testdb.db
 
-      # 4b️⃣ Run e2e tests with in-memory DB (to avoid I/O errors in container)
-      - name: Run e2e tests  
-        run: npm run test -- --testPathPattern='test_e2e'
+      # 5️⃣ Run Integration Tests
+      # Questo crea il report in coverage/integration/lcov.info
+      - name: Run Integration Tests
+        run: npm run test_integration
+        working-directory: back-end
+        env:
+          NODE_ENV: 'test'
+          CI_USE_FILE_DB: 'true'
+          DB_PATH: ${{ github.workspace }}/database/testdb.db
+
+      # 6️⃣ Run E2E Tests
+      # Questo crea il report in coverage/e2e/lcov.info
+      # Usa DB in memoria per evitare problemi di I/O o concorrenza
+      - name: Run E2E Tests
+        run: npm run test_e2e
         working-directory: back-end
         env:
           TEST_DB_IN_MEMORY: 'true'
           NODE_ENV: 'test'
           DB_PATH: ''
 
-      # 5️⃣ Run SonarCloud analysis
+      # 7️⃣ Run SonarCloud analysis
+      # Leggerà i 3 report generati sopra (configurati in sonar-project.properties)
       - name: SonarCloud Scan
-        # Use the recommended action
-        uses: SonarSource/sonarqube-scan-action@v5.0.0 
-        # Remove the 'with:' block entirely, as the new action doesn't use it for configuration
-        
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
-          # Use the universal SONAR_HOST_URL for SonarCloud
-          SONAR_HOST_URL: https://sonarcloud.io 
-          # The token is the only required secret/environment variable for the action itself
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
-          # You can keep the memory setting if you need it
+          # URL standard per SonarCloud
+          SONAR_HOST_URL: https://sonarcloud.io
+          # Token segreto salvato nei Secrets di GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Token di GitHub necessario per commentare le PR
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Opzione memoria (che avevi nel vecchio file)
           SONAR_SCANNER_OPTS: "-Xmx1024m"
