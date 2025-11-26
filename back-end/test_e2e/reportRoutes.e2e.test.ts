@@ -118,4 +118,70 @@ describe('E2E Report Routes', () => {
         const ids = searchPublic.body.items.map((i: any) => i.id)
         expect(ids).not.toContain(privateReport.id)
     })
+
+        test('PATCH /reports/report/:id/status allows admin to assign a report', async () => {
+            // create a citizen and upload a report
+            const username = `citizen_status_${Date.now()}`
+            const password = 'P@ssw0rd'
+            const { user, cookies } = await registerAndLogin(request, username, password)
+
+            const res = await request.post('/reports/upload')
+                .set('Cookie', cookies)
+                .field('title', 'Report to assign')
+                .field('description', 'Assign test')
+                .field('category_id', '1')
+                .field('latitude', '45.0')
+                .field('longitude', '7.0')
+                .field('is_public', 'true')
+
+            expect(res.status).toBe(201)
+            const savedReport = res.body
+
+            // promote an admin and login
+            const adminUsername = `admin_status_${Date.now()}`
+            const adminPassword = 'AdminP4ss'
+            await registerAndLogin(agent, adminUsername, adminPassword)
+            await promoteToAdmin(adminUsername)
+            const adminLogin = await agent.post('/auth/login').send({ username: adminUsername, password: adminPassword })
+            expect(adminLogin.status).toBe(200)
+            const adminCookie = adminLogin.headers['set-cookie']
+
+            const patchRes = await agent.patch(`/reports/report/${savedReport.id}/status`).set('Cookie', adminCookie).send({ status: 'Assigned' })
+            expect(patchRes.status).toBe(200)
+            expect(patchRes.body).toHaveProperty('id', savedReport.id)
+            expect(patchRes.body).toHaveProperty('status', 'Assigned')
+        })
+
+        test('PATCH /reports/report/:id/status allows admin to reject with reason', async () => {
+            const username = `citizen_reject_${Date.now()}`
+            const password = 'P@ssw0rd'
+            const { user, cookies } = await registerAndLogin(request, username, password)
+
+            const res = await request.post('/reports/upload')
+                .set('Cookie', cookies)
+                .field('title', 'Report to reject')
+                .field('description', 'Reject test')
+                .field('category_id', '1')
+                .field('latitude', '45.0')
+                .field('longitude', '7.0')
+                .field('is_public', 'true')
+
+            expect(res.status).toBe(201)
+            const savedReport = res.body
+
+            const adminUsername = `admin_reject_${Date.now()}`
+            const adminPassword = 'AdminP4ss'
+            await registerAndLogin(agent, adminUsername, adminPassword)
+            await promoteToAdmin(adminUsername)
+            const adminLogin = await agent.post('/auth/login').send({ username: adminUsername, password: adminPassword })
+            expect(adminLogin.status).toBe(200)
+            const adminCookie = adminLogin.headers['set-cookie']
+
+            const reason = 'Not relevant'
+            const patchRes = await agent.patch(`/reports/report/${savedReport.id}/status`).set('Cookie', adminCookie).send({ status: 'Rejected', status_reason: reason })
+            expect(patchRes.status).toBe(200)
+            expect(patchRes.body).toHaveProperty('id', savedReport.id)
+            expect(patchRes.body).toHaveProperty('status', 'Rejected')
+            expect(patchRes.body).toHaveProperty('status_reason', reason)
+        })
 })

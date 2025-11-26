@@ -176,4 +176,63 @@ describe('ReportRoutes integration', () => {
     const res = await request(app).get('/report/search-reports').query({ page_num: 'abc' })
     expect(res.status).toBe(422)
   })
+
+  it('PATCH /report/:id/status succeeds when payload valid and user authorized', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      updateReportStatus: async (id: number, status: any, reason: any) => true,
+      getReportById: async (id: number) => ({ id, status: 'Assigned', status_reason: null as any })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .patch('/report/report/12/status')
+      .send({ status: 'Assigned' })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ id: 12, status: 'Assigned', status_reason: null })
+  })
+
+  it('PATCH /report/:id/status returns 422 when id invalid or status missing/invalid', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      updateReportStatus: async () => true,
+      getReportById: async (id: number) => ({ id, status: 'Assigned' })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    // invalid id
+    const res1 = await request(app).patch('/report/report/abc/status').send({ status: 'Assigned' })
+    expect(res1.status).toBe(422)
+
+    // invalid status value
+    const res2 = await request(app).patch('/report/report/5/status').send({ status: 'NotAStatus' })
+    expect(res2.status).toBe(422)
+
+    // rejecting without status_reason should be 422
+    const res3 = await request(app).patch('/report/report/6/status').send({ status: 'Rejected' })
+    expect(res3.status).toBe(422)
+  })
 })
