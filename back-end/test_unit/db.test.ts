@@ -121,13 +121,21 @@ describe('db module', () => {
   });
 
   it('handles SQL file read errors gracefully', async () => {
-    // --- PUNTO CRITICO ---
-    // Usando spyOn sul modulo 'fs' importato globalmente, siamo sicuri al 100%
-    // che db.ts userà questo mock, indipendentemente da come fa l'import.
-    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
-    
-    jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
-        throw new Error('Failed to read SQL files'); // Lanciamo direttamente l'errore atteso
+    // 1. Usa doMock invece di spyOn per garantire che il modulo 'fs' 
+    // richiesto da db.ts sia esattamente questo oggetto, indipendentemente dalla cache.
+    jest.doMock('fs', () => {
+      const mockFs = {
+        existsSync: () => false, // FORZA IL RAMO "FILE NOT EXIST"
+        readFileSync: () => {
+          throw new Error('Failed to read SQL files'); // FORZA L'ERRORE
+        },
+        unlinkSync: () => {}, // Mock per sicurezza
+      };
+      return {
+        __esModule: true,
+        default: mockFs, // Per "import fs from 'fs'"
+        ...mockFs,       // Per "import { readFileSync } from 'fs'"
+      };
     });
 
     jest.doMock('sqlite3', () => ({
@@ -137,22 +145,30 @@ describe('db module', () => {
           exec: jest.fn(),
           serialize: (fn: any) => fn(),
         };
+        // Callback asincrono
         process.nextTick(() => cb(null));
         return dbObj;
       },
     }));
 
     const consoleErrSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // Ricarica il modulo sotto test
     const db = require('../src/dao/db').default;
 
-    await new Promise((resolve) => setImmediate(resolve));
+    // 2. TIMING FIX: Usa setTimeout invece di setImmediate.
+    // In CI, i cicli di clock sono imprevedibili. 100ms sono un'eternità per la CPU
+    // ma garantiscono che process.nextTick sia stato eseguito.
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Ora siamo sicuri che sia entrato nel ramo "File does not exist"
     expect(consoleErrSpy).toHaveBeenCalledWith(
       expect.stringContaining('Failed to read SQL files'),
       expect.anything()
     );
+
+    consoleErrSpy.mockRestore();
   });
+
 
   it('resolves dbReady promise when initialization completes', async () => {
     // USA SPYON
