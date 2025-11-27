@@ -32,14 +32,14 @@ sections:
 | Point selection on the map                     | 9       | 13     | 1d 2h      | 6h 45m     |
 | Upload citizen report                          | 10      | 5      | 2d 30m       | 2d 6h 15m       |
 | Approve or reject reports by municipal officer | 8       | 5      | 2d 4h 30m    | 1d 7h 25m        |
-\
+
 > story `Uncategorized` is for technical tasks, leave out story points (not applicable in this case)
 
 - Hours per task average, standard deviation (estimate and actual)
 
 |            | Mean  | StDev |
 | ---------- | ----- | ----- |
-| Estimation |  |  |
+| Estimation | 2.47h |  |
 | Actual     |  |  |
 
 - Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1
@@ -73,11 +73,11 @@ $$\frac{1}{}\sum_{i=1}^{} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \r
 
 - What did go wrong in the sprint?
 
-  > 
+  > We didn't complete all the planned story for this sprint.
 
 - What caused your errors in estimation (if any)?
 
-  > 
+  > Some tasks were underestimated because of unexperience of team members with some technologies.
 
 - What lessons did you learn (both positive and negative) in this sprint?
 
