@@ -58,11 +58,16 @@ function PaginatedTable<T>({
         </thead>
         <tbody>
           {items.length > 0 ? (
-            items.map((row, rowIndex) => (
+            items.map((row: T, rowIndex: number) => (
               <tr
                 key={(row as any).id ?? rowIndex}
                 className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onClick={onRowClick ? (e) => {
+                  // don't trigger row click when the user clicked an interactive element (link, button, input, etc.)
+                  const el = (e.target as HTMLElement).closest('a,button,input,textarea,select,label');
+                  if (el) return;
+                  onRowClick(row)
+                } : undefined}
                 role={onRowClick ? 'button' : undefined}
               >
                 {columns.map((col, colIndex) => {
