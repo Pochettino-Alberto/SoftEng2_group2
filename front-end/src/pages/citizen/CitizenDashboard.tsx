@@ -19,19 +19,22 @@ const CitizenDashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="p-4 sm:p-6 opacity-50 cursor-not-allowed">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="bg-blue-100 p-2 sm:p-3 rounded-full">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+          
+          <Link to="/citizen/report/new" className="sm:col-span-2 lg:col-span-1">
+            <Card className="p-4 sm:p-6">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="bg-blue-100 p-2 sm:p-3 rounded-full">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base sm:text-lg">Create Report</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Report a new issue</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-base sm:text-lg">Create Report</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Report a new issue</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
           <Card className="p-4 sm:p-6 opacity-50 cursor-not-allowed">
             <div className="flex items-center space-x-3 sm:space-x-4">
