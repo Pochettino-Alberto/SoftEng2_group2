@@ -46,9 +46,18 @@ describe('Citizen usage', () => {
     await steps.clickRandomInMiddle();
     await steps.selectDropdownByValue(By.id('reportType'), '3');
     await steps.custumSendKeys(By.id('title'), 'Sewer Issue in Downtown');
+    await steps.custumSendKeys(By.id('description'), 'Sewer leacking in Downtown');
+
+    await steps.uploadPhotos(
+      By.css('input[type="file"][name="photos"]'),
+      [
+        "./test_UI/img/gas_leak.jpg",
+      ]
+    );
+
     await steps.custumClick(By.xpath('//button[text()="Create Report"]'));
     
-    await steps.assertExists(By.xpath('//div[text()="Report sent successfully!"]'));
+    await steps.assertExists(By.xpath('//p[text()="Report sent successfully!"]'));
     
     await steps.demoSleep()
   }, 30000);
