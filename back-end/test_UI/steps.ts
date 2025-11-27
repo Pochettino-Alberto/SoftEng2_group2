@@ -83,6 +83,22 @@ export class CommonSteps {
     await actions.move({ x, y }).click().perform();
     await this.demoSleep();
   }
+
+  async uploadPhotos(element: any, filePaths: string[]) {
+    // Selenium requires absolute paths
+    const absolutePaths = filePaths.map(p => require("path").resolve(p));
+
+    const fileInput = await this.driver.wait(
+      until.elementLocated(element),
+      5000,
+      `File input not found: ${element.toString()}`
+    );
+
+    await this.demoSleep(500);
+    await fileInput.sendKeys(absolutePaths.join('\n'));
+    await this.demoSleep(500);
+  }
+
   
   async login(user: { username: string; password: string; type: string }) {
     // Navigate to homepage
