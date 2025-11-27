@@ -5,7 +5,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { UserType } from './types/user';
 import DynamicMeta from './components/DynamicMeta';
-// Pages
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -17,6 +16,8 @@ import Profile from './pages/citizen/Profile';
 import MapPage from './pages/MapPage.tsx';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
+import ReportsPage from './pages/municipality/ReportsPage';
+import ReportDetail from './pages/municipality/ReportDetail.tsx';
 import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
 import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
 
@@ -62,7 +63,8 @@ function App() {
                   <ProtectedRoute allowedRoles={[UserType.MUNICIPALITY]}>
                     <Routes>
                       <Route path="/" element={<MunicipalityDashboard />} />
-                      {/* Add more municipality routes here */}
+                      <Route path="reports" element={<ReportsPage />} />
+                      <Route path="report/:id" element={<ReportDetail />} />
                     </Routes>
                   </ProtectedRoute>
                 }
