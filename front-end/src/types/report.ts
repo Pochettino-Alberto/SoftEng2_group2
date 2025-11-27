@@ -49,6 +49,7 @@ export interface Report {
   reporter?: string;
   createdAt?: string;
   updatedAt?: string;
+  assigned_to?: string;
 }
 
 export interface CreateReportData {

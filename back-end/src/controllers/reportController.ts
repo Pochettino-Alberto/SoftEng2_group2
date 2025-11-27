@@ -1,6 +1,7 @@
 import { Report, ReportCategory, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
+import {User} from "../components/user";
 
 /**
  * Represents a controller for managing users.
@@ -94,6 +95,36 @@ class ReportController {
         });
     }
 
+    /**
+     * Returns all municipality users whose roles are responsible for a given category ID.
+     * @param categoryId - The ID of the report category.
+     * @returns A Promise that resolves to an array of relevant TOS users.
+     */
+    async getTOSUsersByCategory(categoryId: number): Promise<User[]> {
+        try {
+            return await this.dao.getTOSUsersByCategory(categoryId);
+        } catch (error) {
+            console.error(`Error fetching TOS users for category ${categoryId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Assigns a report to a specific user and sets status to 'Assigned'.
+     * @param reportId - The ID of the report.
+     * @param assignedToId - The ID of the technician to assign the report to.
+     * @returns A Promise that resolves to the updated Report object.
+     */
+    async assignReportToUser(reportId: number, assignedToId: number): Promise<Report> {
+        try {
+            await this.dao.assignReportToUser(reportId, assignedToId);
+            // Return the updated report so the frontend can update its state
+            return await this.dao.getReportById(reportId);
+        } catch (error) {
+            console.error(`Error assigning report ${reportId}:`, error);
+            throw error;
+        }
+    }
 
 }
 

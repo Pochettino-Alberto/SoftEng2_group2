@@ -2,6 +2,7 @@
 
 PRAGMA foreign_keys = ON;
 
+DROP TABLE IF EXISTS role_category_responsibility; -- NEW DROP
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
@@ -30,7 +31,8 @@ CREATE TABLE users (
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     label TEXT UNIQUE NOT NULL,
-    description TEXT
+    description TEXT,
+    role_type TEXT CHECK (role_type IN ('TOS', 'management')) DEFAULT 'TOS'
 );
 
 -- ===============================
@@ -46,7 +48,17 @@ CREATE TABLE user_roles (
 );
 
 
-
+-- ===============================
+-- ROLE-CATEGORY RESPONSIBILITY
+-- Links TOS roles to the categories they are responsible for.
+-- ===============================
+CREATE TABLE role_category_responsibility (
+    role_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    PRIMARY KEY (role_id, category_id),
+    FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES report_categories (id) ON DELETE CASCADE
+);
 
 
 -- ===============================
@@ -69,6 +81,7 @@ CREATE TABLE reports (
     category_id INTEGER NOT NULL,
     reporter_id INTEGER,
     updated_by INTEGER,
+    assigned_to INTEGER,
 
     title TEXT NOT NULL,
     description TEXT,
@@ -83,6 +96,7 @@ CREATE TABLE reports (
     FOREIGN KEY (category_id) REFERENCES report_categories(id),
     FOREIGN KEY (reporter_id) REFERENCES users (id),
     FOREIGN KEY (updated_by) REFERENCES users (id)
+    FOREIGN KEY (assigned_to) REFERENCES users (id) -- NEW FK
 );
 
 -- ===============================
