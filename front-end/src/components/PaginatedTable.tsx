@@ -20,6 +20,7 @@ export interface PaginatedTableProps<T> {
   };
   columns: Column<T>[];
   onPageChange?: (newPage: number) => void;
+  onRowClick?: (row: T) => void;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ function PaginatedTable<T>({
   paginatedData,
   columns,
   onPageChange,
+  onRowClick,
   className = '',
 }: PaginatedTableProps<T>) {
   const { page_num, total_pages, total_items, items } = paginatedData;
@@ -46,7 +48,7 @@ function PaginatedTable<T>({
           <tr>
             {columns.map((col, idx) => (
               <th
-                key={idx}
+                key={`${col.header ?? 'col'}-${idx}`}
                 className={`px-4 py-2 font-semibold border-b ${col.className || ''}`}
               >
                 {col.header}
@@ -57,7 +59,12 @@ function PaginatedTable<T>({
         <tbody>
           {items.length > 0 ? (
             items.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={(row as any).id ?? rowIndex}
+                className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                role={onRowClick ? 'button' : undefined}
+              >
                 {columns.map((col, colIndex) => {
                   const value =
                     typeof col.accessor === 'function'
@@ -87,7 +94,7 @@ function PaginatedTable<T>({
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
+   
       {total_pages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <Button
