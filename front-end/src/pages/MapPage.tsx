@@ -9,7 +9,7 @@ import torinoGeo from '../assets/torino.geo.json';
 import * as turf from "@turf/turf";
 
 import { reportAPI } from '../api/reports';
-import type { ReportCategory } from './municipality/ReportsPage';
+import type { ReportCategory } from '../types/report';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import FileInput from '../components/FileInput';
@@ -43,9 +43,12 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location | null) => voi
       const boundaryGeometry = (geoObject as any)?.geometry;
       let inside = false;
 
-      if (boundaryGeometry) {
-          inside = turf.booleanPointInPolygon(point, boundaryGeometry as turf.Geometry);
-      }
+          if (boundaryGeometry) {
+            // boundaryGeometry can be Polygon/MultiPolygon Feature or raw geometry from the geojson file.
+            // Use `any` here to satisfy the turf runtime which accepts GeoJSON polygons; strict typing
+            // would require mapping Geometry -> Feature<Polygon|MultiPolygon>.
+            inside = turf.booleanPointInPolygon(point, boundaryGeometry as any);
+          }
 
       if (inside) {
           onLocationSelect({ lat, lng });
