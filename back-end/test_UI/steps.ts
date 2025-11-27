@@ -59,13 +59,26 @@ export class CommonSteps {
   }
   
   async assertExists(element: any) {
-    const tag = await this.driver.wait(
-      until.elementLocated(element),
-      5000,
-      `Element not found: ${element.toString()}`
-    );
-    const isDisplayed = await tag.isDisplayed();
-    expect(isDisplayed).toBe(true);
+    await this.driver.wait(
+    until.elementLocated(element),
+    10000,
+    `Element not found: ${element.toString()}`
+  );
+
+  // Now wait until the element is actually visible
+  await this.driver.wait(async () => {
+    try {
+      const freshElement = await this.driver.findElement(element);
+      return await freshElement.isDisplayed();
+    } catch {
+      return false; // Handles stale element by retrying
+    }
+  }, 10000);
+
+  // Final assertion
+  const finalElement = await this.driver.findElement(element);
+  const isDisplayed = await finalElement.isDisplayed();
+  expect(isDisplayed).toBe(true);
   }
 
   async clickRandomInMiddle() {
