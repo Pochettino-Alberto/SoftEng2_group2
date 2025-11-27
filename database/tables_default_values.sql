@@ -9,7 +9,9 @@
 
 INSERT INTO users (username, password_hash, salt, first_name, last_name, email, user_type) VALUES
 ('admin', X'80B4DC9201E01C955303467C88656756', X'27CE6E026F80F09999A6E573EC723E7F', 'admin', 'admin', 'admin.admin@email.com', 'admin'),
-('johndoe', X'DC3339912A9BE643D12156772C853619', X'69A67927073D4FC1B3FACDFB2637CE45', 'John', 'Doe', 'John.Doe@email.com', 'citizen');
+('johndoe', X'DC3339912A9BE643D12156772C853619', X'69A67927073D4FC1B3FACDFB2637CE45', 'John', 'Doe', 'John.Doe@email.com', 'citizen'),
+('demo_citizen', X'CD05B6EDC7987452B2FCF8EB1BA8D1E7', X'79B2563A82D62246A8CA03A446D99C0D', 'demo_citizen', 'demo_citizen', 'demo_citizen@email.com', 'citizen');
+--YOOO_demo_!
 
 
 -- Preload official roles based on the municipality structure
