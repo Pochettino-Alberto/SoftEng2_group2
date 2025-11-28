@@ -24,11 +24,13 @@ code documentation:
 
 ### Default sample users credentials
 
-| Username | Password          | User Type |
-| -------- | ----------------- | --------- |
-| johndoe  | securePassword123 | citizen   |
-| admin    | securePassword123 | admin     |
-
+| Username    | Password          | User Type    |
+| ----------- | ----------------- | ------------ |
+| johndoe     | securePassword123 | citizen      |
+| admin       | securePassword123 | admin        |
+| mario.rossi | password          | municipality |
+| franco      | password          | municipality |
+| luigi       | password          | municipality |
 ## Participium — Schematic summary
 
 ---
