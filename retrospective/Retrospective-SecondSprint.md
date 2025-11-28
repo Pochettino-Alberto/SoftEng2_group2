@@ -26,12 +26,12 @@ sections:
 
 ### Detailed statistics
 
-| Story                                          | # Tasks | Points | Hours est. | Hours actual |
-| ---------------------------------------------- | ------- | ------ | ---------- | ------------ |
-| _Uncategorized_                                | 13      | -      | 4d 5h    | 4d 7h 20m    |
-| Point selection on the map                     | 4       | 13     | 1d 2h      | 6h 45m     |
-| Upload citizen report                          | 8      | 5      | 2d 30m       | 2d 6h 15m       |
-| Approve or reject reports by municipal officer | 9       | 5      | 2d 4h 30m    | 1d 7h 25m        |
+| Story                                               | # Tasks | Points | Hours est. | Hours actual |
+| --------------------------------------------------- | ------- | ------ | ---------- | ------------ |
+| _Uncategorized_                                     | 13      | -      | 4d 5h      | 4d 7h 20m    |
+| PT04 Point selection on the map                     | 4       | 13     | 1d 2h      | 6h 45m       |
+| PT05 Upload citizen report                          | 8       | 13     | 2d 30m     | 2d 6h 15m    |
+| PT06 Approve or reject reports by municipal officer | 9       | 8      | 2d 4h 30m  | 1d 7h 25m    |
 
 > story `Uncategorized` is for technical tasks, leave out story points (not applicable in this case)
 
