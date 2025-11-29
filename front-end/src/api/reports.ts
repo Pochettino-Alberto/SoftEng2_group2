@@ -1,26 +1,27 @@
-import apiClient from './client';
-import type { Report } from '../types/report';
-import type { ReportCategory } from '../pages/municipality/ReportsPage';
+import apiClient from './client'
+import type { Report, ReportStatus, ReportCategory } from '../types/report'
 
 export const reportAPI = {
-  // Get all reports (public access)
   getAllReports: async (): Promise<Report[]> => {
-    const response = await apiClient.get('/reports');
-    return response.data;
+    const response = await apiClient.get('/reports')
+    return response.data
   },
 
   getReportCategories: async (): Promise<ReportCategory[]> => {
-    const response = await apiClient.get('/reports/categories');
-    return response.data;
+    const response = await apiClient.get('/reports/categories')
+    return response.data
   },
 
-  // Get report by ID
+  searchReportsPaginated: async (params: { page_num?: number; page_size?: number; status?: string; is_public?: boolean; category_id?: number }) => {
+    const response = await apiClient.get('/reports/search-reports', { params })
+    return response.data
+  },
+
   getReportById: async (id: number): Promise<Report> => {
-    const response = await apiClient.get(`/reports/${id}`);
-    return response.data;
+    const response = await apiClient.get(`/reports/report/${id}`)
+    return response.data
   },
 
-  // Create a new report (citizen only) and uploads relative photos
   createReport: async (reportData: FormData): Promise<Report> => {
     const config = {
       headers: {
@@ -35,20 +36,27 @@ export const reportAPI = {
     return response.data;
   },
 
-  // Get user's own reports
   getMyReports: async (): Promise<Report[]> => {
-    const response = await apiClient.get('/reports/my-reports');
-    return response.data;
+    const response = await apiClient.get('/reports/my-reports')
+    return response.data
   },
 
-  // Get reports by filters
-  getReportsByFilter: async (filters: {
-    category?: string;
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<Report[]> => {
-    const response = await apiClient.get('/reports', { params: filters });
-    return response.data;
+  updateReportStatus: async (
+    reportId: number,
+    status: ReportStatus,
+    status_reason?: string,
+  ): Promise<Report> => {
+    const response = await apiClient.patch(`/reports/report/${reportId}/status`, { status, status_reason })
+    return response.data
   },
-};
+
+  getReportsByFilter: async (filters: {
+    category?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+  }): Promise<Report[]> => {
+    const response = await apiClient.get('/reports', { params: filters })
+    return response.data
+  },
+}

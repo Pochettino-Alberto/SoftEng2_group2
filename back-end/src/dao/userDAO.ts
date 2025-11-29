@@ -64,10 +64,15 @@ class UserDAO {
             const hashedPassword = crypto.scryptSync(password, salt, 16)
             const sql = "INSERT INTO users(username, first_name, last_name, email, user_type, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
             db.run(sql, [username, name, surname, email, role, hashedPassword, salt], function (err: Error | null) {
+                // Debug: log insertion outcome to help investigate intermittent failures
                 if (err) {
-                    if (err.message.includes("UNIQUE constraint failed: users.username")) reject(new UserAlreadyExistsError)
-                    reject(err)
+                    console.error("userDAO.createUser INSERT error:", err.message)
+                    if (err.message.includes("UNIQUE constraint failed: users.username")) {
+                        return reject(new UserAlreadyExistsError)
+                    }
+                    return reject(err)
                 }
+                console.log(`userDAO.createUser inserted id=${this.lastID} username=${username}`)
                 const user = new User(this.lastID, username, name, surname, email, User.getRole(role));
                 resolve(user);
             })

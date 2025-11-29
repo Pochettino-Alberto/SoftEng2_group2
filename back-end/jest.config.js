@@ -4,7 +4,7 @@ module.exports = {
   testEnvironment: 'node',
 
   // include unit, integration and end-to-end tests
-  roots: ['<rootDir>/test_unit', '<rootDir>/test_integration', '<rootDir>/test_e2e'],
+  roots: ['<rootDir>/test_unit', '<rootDir>/test_integration', '<rootDir>/test_e2e', '<rootDir>/test_UI'],
   testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 

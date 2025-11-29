@@ -29,13 +29,13 @@ function initRoutes(app: express.Application) {
     const reportRoutes = new ReportRoutes(authenticator)
     // Declare new routes here...
 
-    /**
-     * The routes for the user, authentication, product, proposal, and cart resources are defined here.
-     */
     app.use(`${prefix}/users`, userRoutes.getRouter())
     app.use(`${prefix}/auth`, authRoutes.getRouter())
     app.use(`${prefix}/reports`, reportRoutes.getRouter())
-    // Add new routers here...
+    
+    app.get('/is_on', (req, res) => {
+        res.status(200).json({ status: 'ok' })
+    })
 
     ErrorHandler.registerErrorHandler(app)
 }

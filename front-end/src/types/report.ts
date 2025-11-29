@@ -43,6 +43,7 @@ export interface Report {
   category_id: number;
   location: Location;
   status: ReportStatus;
+  status_reason?: string;
   anonymous: boolean;
   photos: string[];
   reporter?: string;

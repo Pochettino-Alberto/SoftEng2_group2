@@ -1,12 +1,15 @@
+/// <reference types="jest" />
 // Ensure NODE_ENV=test to let db.ts pick the test DB path
 process.env.NODE_ENV = 'test'
 
 import request from 'supertest'
 import { resetTestDb, teardownTestDb } from './testDb'
-import { dbReady } from '../src/dao/db'
-
+import { beforeAll, afterAll } from '@jest/globals'
 // Remove any existing test DB before requiring modules that open the DB
 resetTestDb()
+
+// Import dbReady after reset so the DB module opens with the expected file state
+import { dbReady } from '../src/dao/db'
 
 // import app after NODE_ENV has been set and DB reset
 import { app } from '../index'

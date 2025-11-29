@@ -10,4 +10,4 @@ database/*.db
 database/*.sqlite
 database/*.db-journal
 database/database.db
-package-lock.json
+**/package-lock.json

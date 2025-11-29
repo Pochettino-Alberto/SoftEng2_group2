@@ -64,11 +64,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <svg style={{ color: '#5199CD' }} className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <svg style={{ color: '#5199CD' }} className="w-12 h-12 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isCitizenLogin ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               ) : (
@@ -76,17 +76,17 @@ const Login: React.FC = () => {
               )}
             </svg>
           </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             {isCitizenLogin ? 'Citizen Login' : 'Admin / Staff Login'}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             {isCitizenLogin 
               ? 'Sign in to report and track issues' 
               : 'Sign in with your official credentials'}
           </p>
         </div>
 
-        <Card className="p-8">
+        <Card className="p-6 sm:p-8">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
               {error}
@@ -95,6 +95,7 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit}>
             <Input
+              id="InputUsername"
               label="Username"
               type="text"
               value={username}
@@ -104,6 +105,7 @@ const Login: React.FC = () => {
             />
 
             <Input
+              id="InputPassword"
               label="Password"
               type="password"
               value={password}
@@ -113,6 +115,7 @@ const Login: React.FC = () => {
             />
 
             <Button
+              id="loginBtnSubmit"
               type="submit"
               className="w-full"
               disabled={loading}
@@ -123,13 +126,13 @@ const Login: React.FC = () => {
           </form>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-center text-gray-600 mb-4">
+            <p className="text-center text-sm sm:text-base text-gray-600 mb-4">
               {isCitizenLogin ? "Don't have an account yet?" : 'Are you a citizen?'}
             </p>
             {isCitizenLogin ? (
               <Link
                 to="/auth/register"
-                className="block w-3/4 mx-auto text-center border-2 py-2.5 px-4 rounded-md font-medium transition-colors hover:bg-gray-50 mb-4"
+                className="block w-full sm:w-3/4 mx-auto text-center border-2 py-2.5 px-4 rounded-md text-sm sm:text-base font-medium transition-colors hover:bg-gray-50 mb-4"
                 style={{ borderColor: '#5199CD', color: '#5199CD' }}
               >
                 Sign Up as Citizen
@@ -137,7 +140,7 @@ const Login: React.FC = () => {
             ) : (
               <Link
                 to="/auth/login/citizen"
-                className="block w-3/4 mx-auto text-center border-2 py-2.5 px-4 rounded-md font-medium transition-colors hover:bg-gray-50 mb-4"
+                className="block w-full sm:w-3/4 mx-auto text-center border-2 py-2.5 px-4 rounded-md text-sm sm:text-base font-medium transition-colors hover:bg-gray-50 mb-4"
                 style={{ borderColor: '#5199CD', color: '#5199CD' }}
               >
                 Go to Citizen Login

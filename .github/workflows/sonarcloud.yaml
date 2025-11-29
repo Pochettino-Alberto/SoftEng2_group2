@@ -14,36 +14,128 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repository
+      # 1. Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Node.js
+      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
+      # 3. Install dependencies and run client-server
+      - name: Install dependencies Backend
         run: npm ci
         working-directory: back-end
 
-      # 4️⃣ Run tests with coverage
-      - name: Run tests
-        run: npm run test
+      - name: Install dependencies Frontend
+        run: npm ci
+        working-directory: front-end
+
+      
+      # START both FE and BE
+      - name: Start Backend
+        run: nohup npm run start:test >/dev/null 2>&1 &
+        working-directory: back-end
+        env:
+          NODE_ENV: test
+
+      - name: Wait for Backend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/is_on > /dev/null; then
+              echo "Backend UP";
+              exit 0;
+            fi
+            echo "Waiting for backend...";
+            sleep 2;
+          done
+          echo "Backend FAILED to start";
+          exit 1
+
+      - name: Start Frontend
+        run: nohup npm run dev >/dev/null 2>&1 &
+        working-directory: front-end
+
+      - name: Wait for Frontend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:5173 > /dev/null; then
+              echo "Frontend UP";
+              exit 0;
+            fi
+            echo "Waiting for frontend...";
+            sleep 2;
+          done
+          echo "Frontend FAILED to start";
+          exit 1
+
+      # 4. Run Unit Tests
+      # Questo crea il report in coverage/unit/lcov.info
+      - name: Run Unit Tests
+        run: npm run test_unit
+        working-directory: back-end
+        env:
+          NODE_ENV: 'test'
+          CI_USE_FILE_DB: 'true'
+          DB_PATH: ${{ github.workspace }}/database/testdb.db
+
+      # 5. Run Integration Tests
+      # Questo crea il report in coverage/integration/lcov.info
+      - name: Run Integration Tests
+        run: npm run test_integration
+        working-directory: back-end
+        env:
+          NODE_ENV: 'test'
+          CI_USE_FILE_DB: 'true'
+          DB_PATH: ${{ github.workspace }}/database/testdb.db
+
+      # 6. Run E2E Tests
+      # Questo crea il report in coverage/e2e/lcov.info
+      # Usa DB in memoria per evitare problemi di I/O o concorrenza
+      - name: Run E2E Tests
+        run: npm run test_e2e
+        working-directory: back-end
+        env:
+          TEST_DB_IN_MEMORY: 'true'
+          NODE_ENV: 'test'
+          DB_PATH: ''
+
+        
+      # Install Chrome
+      - name: Install Google Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      # Ensure chromedriver version matches Chrome
+      - name: Match ChromeDriver to Chrome
+        run: |
+          CHROME_VERSION=$(/usr/bin/google-chrome --version | sed 's/Google Chrome //')
+          CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d. -f1)
+          echo "Matching chromedriver to Chrome $CHROME_MAJOR..."
+          npm install chromedriver@$CHROME_MAJOR --no-save
         working-directory: back-end
 
-      # 5️⃣ Run SonarCloud analysis
-      - name: SonarCloud Scan
-        # Use the recommended action
-        uses: SonarSource/sonarqube-scan-action@v5.0.0 
-        # Remove the 'with:' block entirely, as the new action doesn't use it for configuration
-        
+      # 7. Run Selenium UI tests
+      - name: Run UI Tests
+        run: xvfb-run -a npm run test_ui
+        working-directory: back-end
         env:
-          # Use the universal SONAR_HOST_URL for SonarCloud
-          SONAR_HOST_URL: https://sonarcloud.io 
-          # The token is the only required secret/environment variable for the action itself
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
-          # You can keep the memory setting if you need it
+          NODE_ENV: test
+          CI: true
+          CHROME_BIN: /usr/bin/google-chrome
+
+
+      # 8. Run SonarCloud analysis
+      # Leggerà i 3 report generati sopra (configurati in sonar-project.properties)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          # URL standard per SonarCloud
+          SONAR_HOST_URL: https://sonarcloud.io
+          # Token segreto salvato nei Secrets di GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Token di GitHub necessario per commentare le PR
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Opzione memoria (che avevi nel vecchio file)
           SONAR_SCANNER_OPTS: "-Xmx1024m"

@@ -4,6 +4,8 @@ const { resetTestDB: resetReportsDB_DAO } = require('../helpers/resetTestDB')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetReportsDB_DAO()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('ReportDAO integration', () => {
@@ -386,6 +388,10 @@ describe('ReportDAO integration', () => {
 
   test('db.initializeDb logs when SQL files cannot be read', async () => {
     jest.resetModules()
+    // Ensure CI env vars don't prevent initialization in CI (e.g., Sonar sets DB_PATH)
+    delete process.env.DB_PATH;
+    delete process.env.CI_USE_FILE_DB;
+    process.env.NODE_ENV = 'test';
     const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
 
     // Mock fs to simulate missing DB file and failing readFileSync

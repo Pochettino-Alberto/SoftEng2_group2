@@ -5,6 +5,8 @@ const { makeFakeAuth } = require('../helpers/makeFakeAuth')
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetTestDB()
+  const { dbReady } = require('../../src/dao/db')
+  await dbReady
 })
 
 describe('UserRoutes integration - edit-user', () => {
