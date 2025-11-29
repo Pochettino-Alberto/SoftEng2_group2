@@ -152,7 +152,7 @@ export class CommonSteps {
 export class CommonData {
   
   static getImg(fileName: string): string {
-    return "./test_ui/img/"+fileName;
+    return "./test_UI/img/"+fileName;
   }
 
   static readonly USER_CITIZEN = {

@@ -3,7 +3,7 @@ import { Builder, WebDriver, By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import { CommonSteps, CommonData } from './common';
 
-// npm test -- test_ui/citizen_submit_report.test.ts
+// npm test -- test_UI/citizen_submit_report.test.ts
 
 
 const demoWaitEnabledDefault = !process.env.CI;
