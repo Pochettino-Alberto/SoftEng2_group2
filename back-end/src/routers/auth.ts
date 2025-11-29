@@ -1,5 +1,5 @@
 import express from "express"
-import { User } from "../components/user"
+import { RoleType, User } from "../components/user"
 import UserDAO from "../dao/userDAO";
 import { Utility } from "../utilities"
 const session = require('express-session')
@@ -157,6 +157,23 @@ class Authenticator {
     isMunicipality(req: any, res: any, next: any) {
         if (req.isAuthenticated() && Utility.isMunicipality(req.user)) return next()
         return res.status(401).json({ error: "User is not a municipality officer", status: 401 })
+    }
+
+    hasRoleType(req: any, res: any, next: any, roleType: RoleType) {
+        if (req.isAuthenticated() && Utility.hasRoleType(req.user, roleType)) return next()
+        return res.status(401).json({ error: "User is not a municipality officer", status: 401 })
+    }
+    
+    hasRoleMaintainer(req: any, res: any, next: any) {
+        return this.hasRoleType(req, res, next, RoleType.MAINTAINER);
+    }
+    
+    hasRolePublicRelOff(req: any, res: any, next: any) {
+        return this.hasRoleType(req, res, next, RoleType.REL_OFFICER);
+    }
+    
+    hasRoleTechOff(req: any, res: any, next: any) {
+        return this.hasRoleType(req, res, next, RoleType.TECH_OFFICER);
     }
 
     isAdmin(req: any, res: any, next: any) {

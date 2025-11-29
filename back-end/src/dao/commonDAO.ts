@@ -1,6 +1,6 @@
 import db from "./db"
 import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
-import { User } from "../components/user"
+import { User, UserRole } from "../components/user"
 import { PaginatedResult } from "../components/common";
 
 /**
@@ -9,13 +9,28 @@ import { PaginatedResult } from "../components/common";
  */
 class CommonDao {
 
+    
     /**
      * Builds a User object from a Database Row Object
      * @param dbRow Row Object containing the user data read from the database
      * @returns User Object
      */
     mapDBrowToUserObject(dbRow: any): User {
-        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getRole(dbRow.user_type));
+        return new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getUserType(dbRow.userType));
+    }
+
+    /**
+     * Builds a UserRole object from a Database Row Object
+     * @param dbRow Row Object containing the user data read from the database
+     * @returns User Object
+     */
+    mapDBrowToUserRoleObject(dbRow: any): UserRole {
+        return new UserRole(dbRow.id, dbRow.type, dbRow.label, dbRow.description);
+    }
+    async mapDBrowToUserObjectWithRoles(dbRow: any): Promise<User> {
+        const user = new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getUserType(dbRow.userType));
+        user.userRoles = await this.getUserRolesByUserId(dbRow.id)
+        return user;
     }
 
     /**
@@ -80,6 +95,38 @@ class CommonDao {
         return report;
     }
 
+
+    /**
+     * Generic function to get an object by ID from a table
+     * @param tableName - Name of the table in the database
+     * @param id - The ID of the row to fetch
+     * @param mapRowFn - Function to map a database row to the desired object
+     * @returns Promise resolving to the mapped object
+     */
+    async getUserRolesByUserId(userId: number): Promise<UserRole[]> {
+        return new Promise<UserRole[]>((resolve, reject) => {
+            const sql = `
+                SELECT r.* 
+                FROM roles r
+                JOIN user_roles ur ON r.id = ur.role_id
+                WHERE ur.user_id = ?`;
+
+            db.all(sql, [userId], async (err: Error | null, rows: any[]) => {
+                if (err) return reject(err);
+                if (!rows || rows.length === 0) return resolve([]);
+
+                try {
+                    const userRoles: UserRole[] = [];
+                    for (const row of rows) {
+                        userRoles.push(this.mapDBrowToUserRoleObject(row));
+                    }
+                    resolve(userRoles);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        });
+    }
 
     /**
      * Generic function to get an object by ID from a table

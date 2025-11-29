@@ -32,6 +32,7 @@ Stores available roles that can be assigned to users to define their permissions
 | Column        | Type                     | Description                                    |
 | ------------- | ------------------------ | ---------------------------------------------- |
 | `id`          | INTEGER PK AUTOINCREMENT | Unique identifier for each role                |
+| `type`        | TEXT                     | Type of role assigned                          |
 | `label`       | TEXT UNIQUE NOT NULL     | Unique label or name of the role               |
 | `description` | TEXT                     | Optional description explaining the role’s use |
 

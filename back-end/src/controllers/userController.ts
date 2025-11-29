@@ -22,17 +22,16 @@ class UserController {
      * @param surname - The surname of the new user. It must not be null.
      * @param email - The email of the new user. It must not be null.
      * @param password - The password of the new user. It must not be null.
-     * @param role - The role of the new user. It must not be null and it can only be one of the three allowed types ("Manager", "Customer", "Admin")
+     * @param type - The type of the new user. It must not be null and it can only be one of the three allowed types ("Manager", "Customer", "Admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
-    async createUser(username: string, name: string, surname: string, email: string, password: string, role: string) /**:Promise<Boolean> */ {
-        //return this.dao.createUser(username, name, surname, password, role)
+    async createUser(username: string, name: string, surname: string, email: string, password: string, type: string) /**:Promise<Boolean> */ {
         return new Promise<User>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
             if (userExists)
                 reject(new UserAlreadyExistsError());
             else
-                resolve(await this.dao.createUser(username, name, surname, email, password, role));
+                resolve(await this.dao.createUser(username, name, surname, email, password, type));
         });
     }
 
@@ -87,11 +86,11 @@ class UserController {
      * @param name The new name of the user
      * @param surname The new surname of the user
      * @param email The new email of the user
-     * @param user_type The new user_type of the user (will be null for /edit-me route)
+     * @param userType The new userType of the user (will be null for /edit-me route)
      * @param rolesArray The new assigned roles of the user (will be null for /edit-me route)
      * @returns A Promise that resolves to the updated user
      */
-    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string, rolesArray?: Array<number>) {
+    async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, userType?: string, rolesArray?: Array<number>) {
         return new Promise<User>(async (resolve, reject) => {
             try {
                 let userToUpdate = await this.dao.getUserById(id);
@@ -103,7 +102,7 @@ class UserController {
                     if (name) userToUpdate.first_name = name;
                     if (surname) userToUpdate.last_name = surname;
                     if (email) userToUpdate.email = email;
-                    if (user_type) userToUpdate.user_type = User.getRole(user_type);
+                    if (userType) userToUpdate.userType = User.getUserType(userType);
 
                     // Update user roles
                     if(rolesArray) {
@@ -288,7 +287,7 @@ class UserController {
 
         // Requester is admin: ensure the target exists and isn't an admin
         const userToDelete = await this.dao.getUserById(id); // may throw UserNotFoundError
-        if (userToDelete.user_type === UserType.ADMIN) {
+        if (userToDelete.userType === UserType.ADMIN) {
             throw new UserIsAdminError();
         }
 

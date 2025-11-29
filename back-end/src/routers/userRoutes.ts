@@ -64,10 +64,6 @@ class UserRoutes {
             body('surname').isString().notEmpty(),
             body('email').isString().notEmpty(),
             body('password').isString().notEmpty(),
-            /*body('username').custom(async (username) => {
-                const userExists = await this.controller.usernameAlreadyInUse(username);
-                if(userExists) throw new UserAlreadyExistsError();
-            }),*/
             this.errorHandler.validateRequest,
             (req: any, res: any, next: any) => this.controller.createUser(req.body.username, req.body.name, req.body.surname, req.body.email, req.body.password, UserType.CITIZEN)
                 .then((user: User) => res.status(201).json(user))

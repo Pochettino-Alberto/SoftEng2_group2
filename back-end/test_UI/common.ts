@@ -38,7 +38,7 @@ export class CommonSteps {
     const tag = await this.driver.wait(
       until.elementLocated(element),
       10000,
-      `Element not found: ${element.toString()} found, could not click`
+      `Element not found: ${element.toString()}, could not click`
     );
     
     await this.demoSleep(500);

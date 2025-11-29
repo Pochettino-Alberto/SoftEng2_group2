@@ -1,9 +1,7 @@
 --------- TABLES DEFAULT VALUE ------------
 
-
 -- query to get hex pass and salt
 -- SELECT username, HEX(password_hash) AS password_hash_hex, HEX(salt) AS salt_hex FROM users;
-
 
 -- Preload users
 
@@ -19,15 +17,22 @@ INSERT INTO users (username, password_hash, salt, first_name, last_name, email, 
 ('franco', X'3B08F0E2AEF927CB9E5DFE1D9DA6DD0C', X'395957E7DE1342138365EEA06FB56A6B', 'Franco', 'Bianchi', 'franco@example.com', 'municipality'),
 ('luigi', X'6845DDC9E7559B47150BBE45224F369A', X'25F6DBEEE80373AA5DD238BA711256E1', 'Luigi', 'Verdi', 'luigi@example.com', 'municipality');
 
-
 -- Preload official roles based on the municipality structure
-INSERT INTO roles (label, description) VALUES
-('Municipal Public Relations Officer', 'Handles citizen communications and report approvals.'),
-('Municipal Administrator', 'Oversees system management and user permissions.'),
-('Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.'),
-('Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.'),
-('Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and public health violations.'),
-('Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.');
+INSERT INTO roles (type, label, description) VALUES
+-- 'publicRelations_officer'
+('publicRelations_officer', 'Municipal Public Relations Officer', 'Handles citizen communications and report approvals.'),
+-- 'publicRelations_officer'
+('technical_officer', 'Municipal Administrator', 'Oversees system management and user permissions.'), --WHAT?? isn't this the ADMIN account (by Alberto)
+('technical_officer', 'Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.'),
+('technical_officer', 'Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.'),
+('technical_officer', 'Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and public health violations.'),
+('technical_officer', 'Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.')
+-- 'publicRelations_officer'
+('external_maintainer', 'Roads Maintainer', 'Responsible for carrying out maintenance and repairs on public roads, streets, and sidewalks as directed by the municipality.'),
+('external_maintainer', 'Parks Maintainer', 'Performs upkeep, cleaning, and minor repairs in public parks, gardens, and green spaces.'),
+('external_maintainer', 'Water/sewer Maintainer', 'Handles maintenance, inspections, and repairs of water supply and sewage systems in the municipality.'),
+('external_maintainer', 'Internal Spaces Maintainer', 'Maintains and services internal public spaces, municipal offices, and community buildings under the guidance of the municipality.');
+
 
 -- Assign roles to the municipality users added above
 -- Mario Rossi (user id 3) -> Municipal Public Relations Officer (role id 1)

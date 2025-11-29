@@ -53,17 +53,17 @@ class UserDAO {
      * @param surname The surname of the user
      * @param email The email of the user
      * @param password The password of the user. It must be encrypted using a secure algorithm (e.g. scrypt, bcrypt, argon2)
-     * @param role The role of the user. It must be one of the three allowed types ("citizen", "municipality", "admin")
+     * @param type The role of the user. It must be one of the three allowed types ("citizen", "municipality", "admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
-    createUser(username: string, name: string, surname: string, email: string, password: string, role: string): Promise<User> {
+    createUser(username: string, name: string, surname: string, email: string, password: string, type: string): Promise<User> {
         return new Promise<User>((resolve, reject) => {
             const salt = crypto.randomBytes(16)
             // scryptSync is a syncronous functions that generates a password-based key in hexadecimal, 
             // designed to be computationally expensive. It takes a plain password, unique salt string at least 16 bytes long and KeyLength
             const hashedPassword = crypto.scryptSync(password, salt, 16)
-            const sql = "INSERT INTO users(username, first_name, last_name, email, user_type, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
-            db.run(sql, [username, name, surname, email, role, hashedPassword, salt], function (err: Error | null) {
+            const sql = "INSERT INTO users(username, first_name, last_name, email, userType, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
+            db.run(sql, [username, name, surname, email, type, hashedPassword, salt], function (err: Error | null) {
                 // Debug: log insertion outcome to help investigate intermittent failures
                 if (err) {
                     console.error("userDAO.createUser INSERT error:", err.message)
@@ -73,7 +73,7 @@ class UserDAO {
                     return reject(err)
                 }
                 console.log(`userDAO.createUser inserted id=${this.lastID} username=${username}`)
-                const user = new User(this.lastID, username, name, surname, email, User.getRole(role));
+                const user = new User(this.lastID, username, name, surname, email, User.getUserType(type));
                 resolve(user);
             })
 
@@ -85,10 +85,10 @@ class UserDAO {
      * @param username The username of the user to retrieve
      * @returns A Promise that resolves the information of the requested user
      */
-    getUserByUsername(username: string): Promise<User> {
+    getUserByUsername(username: string, addRoles: boolean = false): Promise<User> {
         return new Promise<User>((resolve, reject) => {
             const sql = "SELECT * FROM users WHERE username = ?"
-            db.get(sql, [username], (err: Error | null, row: any) => {
+            db.get(sql, [username], async (err: Error | null, row: any) => {
                 if (err) {
                     reject(err)
                     return
@@ -97,7 +97,7 @@ class UserDAO {
                     reject(new UserNotFoundError)
                     return
                 }
-                const user: User = this.commonDao.mapDBrowToUserObject(row);
+                const user: User = await this.commonDao.mapDBrowToUserObjectWithRoles(row);
                 resolve(user);
             });
 
@@ -157,9 +157,9 @@ class UserDAO {
      */
     updateUserInfo(id: number, user: User) {
         return new Promise<User>( (resolve, reject) => {
-            const sql = "UPDATE users SET username=?, first_name=?, last_name=?, email=?, user_type=? WHERE id=?";
+            const sql = "UPDATE users SET username=?, first_name=?, last_name=?, email=?, userType=? WHERE id=?";
 
-            db.run(sql, [user.username, user.first_name, user.last_name, user.email, user.user_type, id], (err: Error | null, row: any) => {
+            db.run(sql, [user.username, user.first_name, user.last_name, user.email, user.userType, id], (err: Error | null, row: any) => {
                 if(err) {
                     reject(err);
                     return;
@@ -178,7 +178,7 @@ class UserDAO {
     getRoles(userid?: number): Promise<{ RoleID: number; RoleName: string }[]> {
         return new Promise((resolve, reject) => {
             const sql = userid ? 
-            `SELECT id AS RoleID, label AS RoleName FROM roles R, user_roles UR
+            `SELECT id AS RoleID, label AS RoleName FROM roles R, userRoles UR
             WHERE R.id = UR.role_id AND UR.user_id = ?` 
             : `SELECT id, label FROM roles`;
 
@@ -202,7 +202,7 @@ class UserDAO {
             }
 
             const sql = `
-                INSERT OR IGNORE INTO user_roles (user_id, role_id)
+                INSERT OR IGNORE INTO userRoles (user_id, role_id)
                 VALUES (?, ?)
             `;
 
@@ -239,7 +239,7 @@ class UserDAO {
             }
 
             const sql = `
-                DELETE FROM user_roles
+                DELETE FROM userRoles
                 WHERE user_id = ? AND role_id = ?
             `;
 
@@ -290,7 +290,7 @@ class UserDAO {
                     params.push(`%${email.toLowerCase()}%`);
                 }
                 if (role) {
-                    baseSql += " AND user_type = ?";
+                    baseSql += " AND userType = ?";
                     params.push(role);
                 }
 
@@ -308,7 +308,7 @@ class UserDAO {
                         if (err2) return reject(err2);
 
                         const users = rows.map(
-                            (r) => new User(r.id, r.username, r.first_name, r.last_name, r.email, r.user_type)
+                            (r) => new User(r.id, r.username, r.first_name, r.last_name, r.email, r.userType)
                         );
 
                         resolve({ users, totalCount });
