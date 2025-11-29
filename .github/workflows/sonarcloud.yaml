@@ -65,33 +65,6 @@ jobs:
           NODE_ENV: 'test'
           DB_PATH: ''
 
-      - name: check on Backend
-        run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:3001/is_on > /dev/null; then
-              echo "Backend UP";
-              exit 0;
-            fi
-            echo "Waiting for backend...";
-            sleep 2;
-          done
-          echo "Backend FAILED to start";
-          exit 1
-
-      - name: check on Frontend
-        run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:5173 > /dev/null; then
-              echo "Frontend UP";
-              exit 0;
-            fi
-            echo "Waiting for frontend...";
-            sleep 2;
-          done
-          echo "Frontend FAILED to start";
-          exit 1
-
-
       # Install Chrome
       - name: Install Google Chrome
         uses: browser-actions/setup-chrome@v1
@@ -107,7 +80,7 @@ jobs:
 
       # 7. Run Selenium UI tests
       - name: Run UI Tests
-        run: xvfb-run -a npm run test_ui
+        run: xvfb-run -a npm run ci_test_ui
         working-directory: back-end
         env:
           NODE_ENV: test
