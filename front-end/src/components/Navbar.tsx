@@ -71,6 +71,7 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 <Link
+                  id="SignIn_SignUp"
                   to="/auth/account"
                   style={{ backgroundColor: '#5199CD' }}
                   className="text-white hover:opacity-90 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1"

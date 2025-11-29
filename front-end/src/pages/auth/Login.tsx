@@ -95,6 +95,7 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit}>
             <Input
+              id="InputUsername"
               label="Username"
               type="text"
               value={username}
@@ -104,6 +105,7 @@ const Login: React.FC = () => {
             />
 
             <Input
+              id="InputPassword"
               label="Password"
               type="password"
               value={password}
@@ -113,6 +115,7 @@ const Login: React.FC = () => {
             />
 
             <Button
+              id="loginBtnSubmit"
               type="submit"
               className="w-full"
               disabled={loading}

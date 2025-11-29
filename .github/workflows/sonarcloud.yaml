@@ -61,15 +61,28 @@ jobs:
           DB_PATH: ''
 
         
-      #- name: Install Chrome
-      #  uses: browser-actions/setup-chrome@v1
-      
-      # 7. Run Selenium / UI Tests
-      #- name: Run UI Tests
-      #  run: npm run test_ui
-      #  working-directory: back-end
-      #  env:
-      #    NODE_ENV: 'test'
+      # Install Chrome
+      - name: Install Google Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      # Ensure chromedriver version matches Chrome
+      - name: Match ChromeDriver to Chrome
+        run: |
+          CHROME_VERSION=$(/usr/bin/google-chrome --version | sed 's/Google Chrome //')
+          CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d. -f1)
+          echo "Matching chromedriver to Chrome $CHROME_MAJOR..."
+          npm install chromedriver@$CHROME_MAJOR --no-save
+        working-directory: back-end
+
+      # 7. Run Selenium UI tests
+      - name: Run UI Tests
+        run: xvfb-run -a npm run test_ui
+        working-directory: back-end
+        env:
+          NODE_ENV: test
+          CI: true
+          CHROME_BIN: /usr/bin/google-chrome
+
 
       # 8. Run SonarCloud analysis
       # Leggerà i 3 report generati sopra (configurati in sonar-project.properties)

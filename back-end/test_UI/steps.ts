@@ -1,5 +1,4 @@
 import { WebDriver, until, By, error, WebElement  } from 'selenium-webdriver';
-import { CommonElements } from './elements';
 
 export class CommonSteps {
   driver: WebDriver;
@@ -23,20 +22,25 @@ export class CommonSteps {
       `Element not found: ${element.toString()} found, could not click`
     );
     
-    await this.demoSleep();
+    await this.demoSleep(500);
+    if (this.demoWait) {
+      await this.driver.actions().move({ origin: tag }).perform();
+    }
+    await this.demoSleep(1000);
     await tag.click();
     await this.demoSleep(500);
   }
 
   async custumSendKeys(element: any, text: string) {
-    const usernameInput = await this.driver.wait(
+    const tag = await this.driver.wait(
       until.elementLocated(element),
       5000,
       `Element not found: ${element.toString()} found, could not type`
     );
     
+    await tag.click();
     await this.demoSleep(500);
-    await usernameInput.sendKeys(text);
+    await tag.sendKeys(text);
     await this.demoSleep(200);
   }
 
@@ -60,25 +64,25 @@ export class CommonSteps {
   
   async assertExists(element: any) {
     await this.driver.wait(
-    until.elementLocated(element),
-    10000,
-    `Element not found: ${element.toString()}`
-  );
+      until.elementLocated(element),
+      10000,
+      `Element not found: ${element.toString()}`
+    );
 
-  // Now wait until the element is actually visible
-  await this.driver.wait(async () => {
-    try {
-      const freshElement = await this.driver.findElement(element);
-      return await freshElement.isDisplayed();
-    } catch {
-      return false; // Handles stale element by retrying
-    }
-  }, 10000);
+    // Now wait until the element is actually visible
+    await this.driver.wait(async () => {
+      try {
+        const freshElement = await this.driver.findElement(element);
+        return await freshElement.isDisplayed();
+      } catch {
+        return false; // Handles stale element by retrying
+      }
+    }, 10000);
 
-  // Final assertion
-  const finalElement = await this.driver.findElement(element);
-  const isDisplayed = await finalElement.isDisplayed();
-  expect(isDisplayed).toBe(true);
+    // Final assertion
+    const finalElement = await this.driver.findElement(element);
+    const isDisplayed = await finalElement.isDisplayed();
+    expect(isDisplayed).toBe(true);
   }
 
   async clickRandomInMiddle() {
@@ -118,27 +122,27 @@ export class CommonSteps {
     await this.driver.get('http://localhost:5173');
 
     // Click main Sign In / Sign Up link
-    await this.custumClick(CommonElements.SignInLink);
+    await this.custumClick(By.id('SignIn_SignUp'));
 
     // Select citizen login if needed
     if (user.type === 'citizen') {
-      await this.custumClick(CommonElements.LoginSelectCitizen);
+      await this.custumClick(By.id('SignIn_citizen'));
     } else {
-      // TODO: handle municipality login
+      await this.custumClick(By.id('SignIn_admin'));
     }
 
     // Fill username and password
     await this.custumSendKeys(
-      By.css('input[type="text"][placeholder="Enter your username"]'),
+      By.id('InputUsername'),
       user.username
     );
     await this.custumSendKeys(
-      By.css('input[type="password"][placeholder="Enter your password"]'),
+      By.id('InputPassword'),
       user.password
     );
 
     // Click sign-in button
-    await this.custumClick(By.css('button[type="submit"]'));
+    await this.custumClick(By.id('loginBtnSubmit'));
   }
 
 }
