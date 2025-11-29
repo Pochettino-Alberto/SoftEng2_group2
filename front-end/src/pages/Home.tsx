@@ -8,7 +8,7 @@ const Home: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen">
+    <div id="homePage" className="min-h-screen">
       {/* Hero Section */}
       <section 
         className="text-white relative overflow-hidden"

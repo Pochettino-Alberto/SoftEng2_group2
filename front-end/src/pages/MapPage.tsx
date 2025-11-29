@@ -174,7 +174,7 @@ const MapPage: React.FC = () => {
 
         {/* Report Form - visible on the LEFT */}
         {isFormVisible && selectedLocation && (
-          <div className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
+          <div id="scrollableFormSubmitReport" className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Report Details</h2>
               <button
@@ -357,6 +357,7 @@ const MapPage: React.FC = () => {
         {/* Map Container - dynamically sized with Tailwind */}
         <div className={`transition-all duration-300 ${isFormVisible ? 'w-2/3' : 'w-full'} h-full`}>
           <MapContainer
+            id="mapReport"
             center={TORINO_CENTER}
             zoom={13}
             scrollWheelZoom={true}

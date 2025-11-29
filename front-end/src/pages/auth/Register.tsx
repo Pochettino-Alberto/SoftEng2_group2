@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import { scrollToTop } from '../../utils';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,10 @@ const Register: React.FC = () => {
   
   const { register, login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    scrollToTop();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -112,6 +117,7 @@ const Register: React.FC = () => {
 
           <form onSubmit={handleSubmit}>
             <Input
+              id="InputUsername"
               label="Username"
               name="username"
               type="text"
@@ -124,6 +130,7 @@ const Register: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <Input
+                id="InputFirstName"
                 label="First Name"
                 name="first_name"
                 type="text"
@@ -135,6 +142,7 @@ const Register: React.FC = () => {
               />
 
               <Input
+                id="InputLastName"
                 label="Last Name"
                 name="last_name"
                 type="text"
@@ -147,6 +155,7 @@ const Register: React.FC = () => {
             </div>
 
             <Input
+              id="InputEmail"
               label="Email"
               name="email"
               type="email"
@@ -158,6 +167,7 @@ const Register: React.FC = () => {
             />
 
             <Input
+              id="InputPassword"
               label="Password"
               name="password"
               type="password"
@@ -169,6 +179,7 @@ const Register: React.FC = () => {
             />
 
             <Input
+              id="InputPasswordConfirm"
               label="Confirm Password"
               name="confirmPassword"
               type="password"
@@ -180,6 +191,7 @@ const Register: React.FC = () => {
             />
 
             <Button
+              id="registerBtnSubmit"
               type="submit"
               className="w-full"
               disabled={loading}

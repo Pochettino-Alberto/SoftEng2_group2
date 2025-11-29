@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import { scrollToTop } from '../../utils';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -18,6 +19,10 @@ const Login: React.FC = () => {
 
   const isCitizenLogin = userType === 'citizen';
   const isAdminLogin = userType === 'admin';
+
+  useEffect(() => {
+    scrollToTop();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

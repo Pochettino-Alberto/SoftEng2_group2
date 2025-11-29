@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { scrollToTop } from '../../utils';
 
 const Account: React.FC = () => {
+  useEffect(() => {
+    scrollToTop();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">

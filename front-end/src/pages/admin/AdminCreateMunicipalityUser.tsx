@@ -122,6 +122,7 @@ const AdminCreateMunicipalityUser: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                         <Input
+                            id="InputUsername"
                             label="Username"
                             name="username"
                             value={formData.username}
@@ -159,6 +160,7 @@ const AdminCreateMunicipalityUser: React.FC = () => {
                             error={errors.email}
                         />
                         <Input
+                            id="InputPassword"
                             label="Password"
                             name="password"
                             value={formData.password}
