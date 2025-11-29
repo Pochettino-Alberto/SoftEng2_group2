@@ -19,7 +19,9 @@ let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
 
 // Allow running tests against an in-memory DB for speed. Enable by setting
 // the env var `TEST_DB_IN_MEMORY=true` when running tests.
-const useMemoryDb = env === 'test' && (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
+
+const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+const useMemoryDb = isTestEnv && (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
 
 // The database file path is determined based on the environment variable.
 // Use absolute path resolution so tests and helpers that create the test DB
@@ -81,7 +83,9 @@ function onOpen(err: Error | null) {
     } catch (e) {
         // ignore if mocked DB doesn't implement run
     }
-    if (process.env.NODE_ENV !== 'test') {
+    
+    const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+    if (!isTestEnv) {
         console.log(`Connected to database: ${dbFilePath}`);
     }
 
@@ -111,7 +115,7 @@ function onOpen(err: Error | null) {
     }
 
     if (shouldInitialize) {
-        if (process.env.NODE_ENV !== 'test') {
+        if (!isTestEnv) {
             console.log("Database not found (fresh install or test reset). Initializing tables...");
         }
         initializeDb();
@@ -128,7 +132,7 @@ function onOpen(err: Error | null) {
                     return;
                 }
                 if (!row) {
-                    if (process.env.NODE_ENV !== 'test') {
+                    if (!isTestEnv) {
                         console.log('DB file exists but required tables are missing. Initializing tables...');
                     }
                     initializeDb();

@@ -33,7 +33,8 @@ class ErrorHandler {
         router.use((err: any, req: any, res: any, next: any) => {
             const statusCode = err.customCode || 500;
             // In test mode include the real error message to help debugging
-            const message = err.customMessage || (process.env.NODE_ENV === 'test' && err.message) || "Internal Server Error";
+            const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+            const message = err.customMessage || (isTestEnv && err.message) || "Internal Server Error";
             return res.status(statusCode).json({
                 error: message,
                 status: statusCode
