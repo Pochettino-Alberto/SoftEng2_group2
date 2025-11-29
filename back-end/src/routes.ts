@@ -33,10 +33,6 @@ function initRoutes(app: express.Application) {
     app.use(`${prefix}/auth`, authRoutes.getRouter())
     app.use(`${prefix}/reports`, reportRoutes.getRouter())
     
-    app.get('/is_on', (req, res) => {
-        res.status(200).json({ status: 'ok' })
-    })
-
     ErrorHandler.registerErrorHandler(app)
 }
 
