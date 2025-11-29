@@ -16,7 +16,7 @@
     "reset-database": "node ../database/resetDatabase.js",
     "start:backend_test": "NODE_ENV=test_ui ts-node index.ts",
     "start:frontend": "cd ../front-end && npm run dev",
-    "ci_test_ui": "concurrently -k -n backend,frontend,test \"npm run start:backend_test\" \"npm run start:frontend\" \"wait-on http://localhost:3001 http://localhost:5173 && npm run test_ui\""
+    "ci_test_ui": "concurrently -k -n backend,frontend,test \"npm run start:backend_test\" \"npm run start:frontend\" \"wait-on http://localhost:3001/is_on http://localhost:5173 && npm run test_ui\""
   },
   "author": "",
   "license": "ISC",

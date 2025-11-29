@@ -33,6 +33,12 @@ function initRoutes(app: express.Application) {
     app.use(`${prefix}/auth`, authRoutes.getRouter())
     app.use(`${prefix}/reports`, reportRoutes.getRouter())
     
+    if (process.env.NODE_ENV === 'test_ui') {
+        app.get('/is_on', (req, res) => {
+            res.status(200).json({ status: 'ok' })
+        })
+    }
+
     ErrorHandler.registerErrorHandler(app)
 }
 
