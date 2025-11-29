@@ -15,10 +15,9 @@
     "test_ui": "cross-env NODE_ENV=test jest --runInBand --coverage --coverageDirectory=coverage/ui --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_ui --testTimeout=90000",
     "reset-database": "node ../database/resetDatabase.js",
 
-    "start:test": "NODE_ENV=test ts-node index.ts",
+    "start:backend_test": "NODE_ENV=test ts-node index.ts",
     "start:frontend": "cd ../front-end && npm run dev",
-    "ci_test_ui": "start-server-and-test 'npm:start:test' http://localhost:3000 'start-server-and-test \"npm:start:frontend\" http://localhost:5173 \"npm run test_ui\"'"
-  
+    "ci_test_ui": "start-server-and-test 'npm run start:backend_test' http://localhost:3000 'npm run start:frontend' http://localhost:5173 'npm run test_ui'"
   },
   "author": "",
   "license": "ISC",
