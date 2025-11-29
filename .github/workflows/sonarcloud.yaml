@@ -24,10 +24,52 @@ jobs:
         with:
           node-version: 20
 
-      # 3. Install dependencies
-      - name: Install dependencies
+      # 3. Install dependencies and run client-server
+      - name: Install dependencies Backend
         run: npm ci
         working-directory: back-end
+
+      - name: Install dependencies Frontend
+        run: npm ci
+        working-directory: front-end
+
+      
+      # START both FE and BE
+      - name: Start Backend
+        run: nohup npm run start:test >/dev/null 2>&1 &
+        working-directory: back-end
+        env:
+          NODE_ENV: test
+
+      - name: Wait for Backend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/is_on > /dev/null; then
+              echo "Backend UP";
+              exit 0;
+            fi
+            echo "Waiting for backend...";
+            sleep 2;
+          done
+          echo "Backend FAILED to start";
+          exit 1
+
+      - name: Start Frontend
+        run: nohup npm run dev >/dev/null 2>&1 &
+        working-directory: front-end
+
+      - name: Wait for Frontend
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:5173 > /dev/null; then
+              echo "Frontend UP";
+              exit 0;
+            fi
+            echo "Waiting for frontend...";
+            sleep 2;
+          done
+          echo "Frontend FAILED to start";
+          exit 1
 
       # 4. Run Unit Tests
       # Questo crea il report in coverage/unit/lcov.info
