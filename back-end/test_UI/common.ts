@@ -146,3 +146,19 @@ export class CommonSteps {
   }
 
 }
+
+
+
+export class CommonData {
+  
+  static getImg(fileName: string): string {
+    return "./test_ui/img/"+fileName;
+  }
+
+  static readonly USER_CITIZEN = {
+    username: "demo_citizen",
+    password: "YOOO_demo_!",
+    type: "citizen"
+  };
+
+}
