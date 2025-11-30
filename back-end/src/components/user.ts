@@ -72,28 +72,28 @@ enum RoleType {
 
 class UserRole {
     id: number
-    type: RoleType
+    role_type: RoleType
     label: string
     description: string
     /**
      * Creates a new instance of the UserRole.
      * @param id - 
-     * @param type - The RoleType of the user.
+     * @param role_type - The RoleType of the user.
      * @param label - The label of the UserRole.
      * @param description - The description of the userRole.
      */
-    constructor(id: number = 0, type: string | RoleType, label: string, description: string) {
+    constructor(id: number = 0, role_type: string | RoleType, label: string, description: string) {
         this.id = id
         this.label = label
         this.description = description
         
-        if(Object.values(RoleType).includes(type as RoleType)){
-            this.type = type as RoleType
+        if(Object.values(RoleType).includes(role_type as RoleType)){
+            this.role_type = role_type as RoleType
         } else {
-            switch (type) {
-                case 'publicRelations_officer': this.type = RoleType.REL_OFFICER; break;
-                case 'external_maintainer': this.type = RoleType.MAINTAINER; break;
-                case 'technical_officer': this.type = RoleType.TECH_OFFICER; break;
+            switch (role_type) {
+                case 'publicRelations_officer': this.role_type = RoleType.REL_OFFICER; break;
+                case 'external_maintainer': this.role_type = RoleType.MAINTAINER; break;
+                case 'technical_officer': this.role_type = RoleType.TECH_OFFICER; break;
             }
         }
     }

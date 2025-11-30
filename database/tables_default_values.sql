@@ -18,7 +18,7 @@ INSERT INTO users (username, password_hash, salt, first_name, last_name, email, 
 ('luigi', X'6845DDC9E7559B47150BBE45224F369A', X'25F6DBEEE80373AA5DD238BA711256E1', 'Luigi', 'Verdi', 'luigi@example.com', 'municipality');
 
 -- Preload official roles based on the municipality structure
-INSERT INTO roles (type, label, description) VALUES
+INSERT INTO roles (role_type, label, description) VALUES
 -- 'publicRelations_officer'
 ('publicRelations_officer', 'Municipal Public Relations Officer', 'Handles citizen communications and report approvals.'),
 -- 'publicRelations_officer'
@@ -26,7 +26,7 @@ INSERT INTO roles (type, label, description) VALUES
 ('technical_officer', 'Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.'),
 ('technical_officer', 'Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.'),
 ('technical_officer', 'Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and public health violations.'),
-('technical_officer', 'Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.')
+('technical_officer', 'Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.'),
 -- 'publicRelations_officer'
 ('external_maintainer', 'Roads Maintainer', 'Responsible for carrying out maintenance and repairs on public roads, streets, and sidewalks as directed by the municipality.'),
 ('external_maintainer', 'Parks Maintainer', 'Performs upkeep, cleaning, and minor repairs in public parks, gardens, and green spaces.'),

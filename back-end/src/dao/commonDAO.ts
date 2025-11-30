@@ -25,7 +25,7 @@ class CommonDao {
      * @returns User Object
      */
     mapDBrowToUserRoleObject(dbRow: any): UserRole {
-        return new UserRole(dbRow.id, dbRow.type, dbRow.label, dbRow.description);
+        return new UserRole(dbRow.id, dbRow.role_type, dbRow.label, dbRow.description);
     }
     async mapDBrowToUserObjectWithRoles(dbRow: any): Promise<User> {
         const user = new User(dbRow.id, dbRow.username, dbRow.first_name, dbRow.last_name, dbRow.email, User.getUserType(dbRow.user_type));

@@ -15,7 +15,7 @@ class Utility {
     }
     
     static hasRoleType(user: User, roleType: RoleType): boolean {
-        return user.userRoles.some(userRole => userRole.type === roleType);
+        return user.userRoles.some(userRole => userRole.role_type === roleType);
     }
 
     /**

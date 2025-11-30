@@ -29,7 +29,7 @@ CREATE TABLE users (
 -- ===============================
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT CHECK (user_type IN ('technical_officer', 'external_maintainer', 'publicRelations_officer')) DEFAULT 'technical_officer'
+    role_type TEXT CHECK (role_type IN ('technical_officer', 'external_maintainer', 'publicRelations_officer')) DEFAULT 'technical_officer',
     label TEXT UNIQUE NOT NULL,
     description TEXT
 );
