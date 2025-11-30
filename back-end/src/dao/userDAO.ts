@@ -62,7 +62,7 @@ class UserDAO {
             // scryptSync is a syncronous functions that generates a password-based key in hexadecimal, 
             // designed to be computationally expensive. It takes a plain password, unique salt string at least 16 bytes long and KeyLength
             const hashedPassword = crypto.scryptSync(password, salt, 16)
-            const sql = "INSERT INTO users(username, first_name, last_name, email, userType, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
+            const sql = "INSERT INTO users(username, first_name, last_name, email, user_type, password_hash, salt) VALUES(?, ?, ?, ?, ?, ?, ?)"
             db.run(sql, [username, name, surname, email, type, hashedPassword, salt], function (err: Error | null) {
                 // Debug: log insertion outcome to help investigate intermittent failures
                 if (err) {
@@ -157,9 +157,9 @@ class UserDAO {
      */
     updateUserInfo(id: number, user: User) {
         return new Promise<User>( (resolve, reject) => {
-            const sql = "UPDATE users SET username=?, first_name=?, last_name=?, email=?, userType=? WHERE id=?";
+            const sql = "UPDATE users SET username=?, first_name=?, last_name=?, email=?, user_type=? WHERE id=?";
 
-            db.run(sql, [user.username, user.first_name, user.last_name, user.email, user.userType, id], (err: Error | null, row: any) => {
+            db.run(sql, [user.username, user.first_name, user.last_name, user.email, user.user_type, id], (err: Error | null, row: any) => {
                 if(err) {
                     reject(err);
                     return;
@@ -290,7 +290,7 @@ class UserDAO {
                     params.push(`%${email.toLowerCase()}%`);
                 }
                 if (role) {
-                    baseSql += " AND userType = ?";
+                    baseSql += " AND user_type = ?";
                     params.push(role);
                 }
 
@@ -308,7 +308,7 @@ class UserDAO {
                         if (err2) return reject(err2);
 
                         const users = rows.map(
-                            (r) => new User(r.id, r.username, r.first_name, r.last_name, r.email, r.userType)
+                            (r) => new User(r.id, r.username, r.first_name, r.last_name, r.email, r.user_type)
                         );
 
                         resolve({ users, totalCount });

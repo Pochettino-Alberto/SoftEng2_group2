@@ -11,7 +11,7 @@ class Utility {
      * @returns True if the user is a municipality, false otherwise.
      */
     static isMunicipality(user: User): boolean {
-        return user.userType === UserType.MUNICIPALITY
+        return user.user_type === UserType.MUNICIPALITY
     }
     
     static hasRoleType(user: User, roleType: RoleType): boolean {
@@ -24,11 +24,11 @@ class Utility {
      * @returns True if the user is a citizen, false otherwise.
      */
     static isCitizen(user: User): boolean {
-        return user.userType === UserType.CITIZEN
+        return user.user_type === UserType.CITIZEN
     }
 
     static isAdmin(user: User): boolean {
-        return user.userType === UserType.ADMIN
+        return user.user_type === UserType.ADMIN
     }
 
     static now(): string {

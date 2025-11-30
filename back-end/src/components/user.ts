@@ -7,7 +7,7 @@ class User {
     first_name: string
     last_name: string
     email: string
-    userType: UserType
+    user_type: UserType
 
     userRoles: UserRole[]
     /**
@@ -17,15 +17,15 @@ class User {
      * @param first_name - The name of the user.
      * @param last_name - The surname of the user.
      * @param email - The email of the user.
-     * @param role - The role of the user. This can be "citizen" (default value), "municipality" or "admin".
+     * @param user_type - The role of the user. This can be "citizen" (default value), "municipality" or "admin".
      */
-    constructor(id: number = 0, username: string, first_name: string, last_name: string, email: string, role: UserType = UserType.CITIZEN) {
+    constructor(id: number = 0, username: string, first_name: string, last_name: string, email: string, user_type: UserType = UserType.CITIZEN) {
         this.id = id
         this.username = username
         this.first_name = first_name
         this.last_name = last_name
         this.email = email
-        this.userType = role
+        this.user_type = user_type
         this.userRoles = []
     }
 
