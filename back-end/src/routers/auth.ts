@@ -49,7 +49,7 @@ class Authenticator {
             (username: string, password: string, done: any) => {
                 copyThis.dao.getIsUserAuthenticated(username, password).then((authenticated: Boolean) => {
                     if (authenticated) {
-                        copyThis.dao.getUserByUsername(username).then((user: User) => {
+                        copyThis.dao.getUserByUsername(username, true).then((user: User) => {
                             return done(null, user)
                         })
                     } else {
@@ -74,7 +74,7 @@ class Authenticator {
          * If the user is not found, an error is returned.
          */
         passport.deserializeUser((user: User, done: any) => {
-            this.dao.getUserByUsername(user.username).then((user: User) => {
+            this.dao.getUserByUsername(user.username, true).then((user: User) => {
                 done(null, user)
             }).catch((err: Error) => {
                 done(null, err)

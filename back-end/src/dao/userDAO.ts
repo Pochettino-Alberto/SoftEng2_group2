@@ -97,8 +97,14 @@ class UserDAO {
                     reject(new UserNotFoundError)
                     return
                 }
-                const user: User = await this.commonDao.mapDBrowToUserObjectWithRoles(row);
-                resolve(user);
+                if(addRoles){
+                    const user: User = await this.commonDao.mapDBrowToUserObjectWithRoles(row);
+                    resolve(user);
+                } else {
+                    const user: User = this.commonDao.mapDBrowToUserObject(row);
+                    resolve(user);
+                }
+                    
             });
 
         })
