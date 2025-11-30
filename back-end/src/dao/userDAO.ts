@@ -178,7 +178,7 @@ class UserDAO {
     getRoles(userid?: number): Promise<{ RoleID: number; RoleName: string }[]> {
         return new Promise((resolve, reject) => {
             const sql = userid ? 
-            `SELECT id AS RoleID, label AS RoleName FROM roles R, userRoles UR
+            `SELECT id AS RoleID, label AS RoleName FROM roles R, user_roles UR
             WHERE R.id = UR.role_id AND UR.user_id = ?` 
             : `SELECT id, label FROM roles`;
 
@@ -202,7 +202,7 @@ class UserDAO {
             }
 
             const sql = `
-                INSERT OR IGNORE INTO userRoles (user_id, role_id)
+                INSERT OR IGNORE INTO user_roles (user_id, role_id)
                 VALUES (?, ?)
             `;
 
@@ -239,7 +239,7 @@ class UserDAO {
             }
 
             const sql = `
-                DELETE FROM userRoles
+                DELETE FROM user_roles
                 WHERE user_id = ? AND role_id = ?
             `;
 
