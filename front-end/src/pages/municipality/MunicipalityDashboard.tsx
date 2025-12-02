@@ -9,6 +9,7 @@ const MunicipalityDashboard: React.FC = () => {
   const displayName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Municipality' : 'Municipality';
   const roleLabel = user?.user_type ? String(user.user_type).replace('_', ' ') : 'Municipality';
   const initials = user ? `${(user.first_name?.[0] || '')}${(user.last_name?.[0] || '')}`.toUpperCase() : 'M';
+  const userRoles = user ? user.userRoles || [] : [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
@@ -21,10 +22,33 @@ const MunicipalityDashboard: React.FC = () => {
             <div>
               <div className="text-xl sm:text-2xl font-bold text-gray-900">{displayName}</div>
               {/* email intentionally hidden in dashboard */}
-              <div className="mt-2">
+              {/* <div className="mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                   {roleLabel}
                 </span>
+              </div> */}
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {/* Primary Role Badge: Displays the main user type prominently */}
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                  {roleLabel}
+                </span>
+
+                {/* Secondary Roles Badges: Displays all other unique roles */}
+                {userRoles.length > 0 && (
+                  <span className="text-sm font-medium text-gray-500 mr-1 hidden sm:inline">| Roles:</span>
+                )}
+
+                {userRoles.map((role, index) => (
+                  <>
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 shadow-sm hover:bg-gray-300 transition-colors"
+                    >
+                      {role.label}
+                    </span>
+                  </>
+                ))}
               </div>
             </div>
           </Card>

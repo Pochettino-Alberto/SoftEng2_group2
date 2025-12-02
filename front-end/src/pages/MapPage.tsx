@@ -73,6 +73,7 @@ const MapPage: React.FC = () => {
   const [photos, setPhotos] = useState<File[] | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [formWarning, setFormWarning] = useState('');
+  const [formError, setFormError] = useState('');
   const [formSuccessMessage, setFormSuccessMessage] = useState('');
   const [categories, setCategories] = useState<ReportCategory[]>([]);
 
@@ -82,6 +83,7 @@ const MapPage: React.FC = () => {
       .then((repCategories: ReportCategory[]) => {
         setCategories(repCategories);
       }).catch(error => {
+        setFormError('Could not fetch report categories: ' + error.message);
         console.log('Could not fetch report categories: ' + error);
       });
   }, []);
@@ -105,6 +107,7 @@ const MapPage: React.FC = () => {
     let error = ''
     if (selectedLocation == null) error = 'Please select a location on the map first'
     else if (title == '') error = 'Report title cannot be empty';
+    else if (description == '') error = 'Report description cannot be empty';
     else if (categoryId == 0) error = 'Please select a report category';
 
     setFormWarning(error);
@@ -153,19 +156,28 @@ const MapPage: React.FC = () => {
       handleCloseForm();
 
     }).catch(err => {
+      setFormError('Failed to create report: ' + err.message);
       console.log(err);
     });
   };
 
   return (
     <>
-      {/* Error modal - only shows up when the formError state is not empty */}
+      {/* Warning modal - only shows up when the formWarning state is not empty */}
       <Modal
         isOpen={formWarning !== ''}
         onClose={() => setFormWarning('')}
         title={'Warning'}
         message={formWarning}
         type={'warning'}
+      />
+      {/* Error modal - only shows up when the formError state is not empty */}
+      <Modal
+        isOpen={formError !== ''}
+        onClose={() => setFormError('')}
+        title={'Error'}
+        message={formError}
+        type={'error'}
       />
       {/* Success toast (auto hides itself and consumes the message, setting it to empty string) */}
       <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
@@ -264,17 +276,7 @@ const MapPage: React.FC = () => {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
                 />
               </div>
-
-              {/* Anonymous checkbox */}
-              {/* <div>
-                <label htmlFor="anonymous" className="block text-sm font-medium text-gray-700">Anonymous report</label>
-                <input
-                  id='anonymous'
-                  type='checkbox'
-                  checked={isAnonymous}
-                  onChange={() => setIsAnonymous(!isAnonymous)}
-                />
-              </div> */}
+              {/* Anonymous Checkbox */}
               <label htmlFor="anonymous" className="flex items-center space-x-2 cursor-pointer group">
                 <div className="relative flex items-center h-5">
                   <input
@@ -310,16 +312,6 @@ const MapPage: React.FC = () => {
               </label>
 
               {/* File Input: Photos */}
-              {/* <label>
-                Photos (Max 3):
-                <input
-                  type="file"
-                  name="photos"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                />
-              </label> */}
               <FileInput
                 name="photos"
                 accept="image/*"
@@ -327,21 +319,6 @@ const MapPage: React.FC = () => {
                 maxFiles={3} // Enforce the limit
                 onChange={handleFileChange}
               />
-
-              {/* <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-                <p className="font-semibold text-sm text-gray-800">Parent Component State:</p>
-                {photos?.length === 0 ? (
-                  <p className="text-sm text-gray-500">No files selected.</p>
-                ) : (
-                  <ul className="list-disc pl-5 text-sm space-y-1">
-                    {photos?.map((file, index) => (
-                      <li key={index} className="text-gray-600">
-                        {file.name} ({Math.round(file.size / 1024)} KB)
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div> */}
 
               <button
                 id="submitReportBtn"

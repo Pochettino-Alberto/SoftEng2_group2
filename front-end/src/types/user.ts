@@ -13,6 +13,7 @@ export interface User {
   last_name: string;
   email: string;
   user_type: UserType;
+  userRoles?: Role[];
 }
 
 export interface RegisterData {
@@ -36,4 +37,6 @@ export interface LoginData {
 export interface Role {
   id: number;
   label: string;
+  description: string;
+  role_type: string;
 }
