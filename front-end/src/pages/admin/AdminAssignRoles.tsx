@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import { Link } from 'react-router-dom'
-import type {Role, User} from "../../types/user.ts";
+import type {UserRole, User} from "../../types/user.ts";
 import { authAPI } from '../../api/auth.ts';
 
 const AdminAssignRoles: React.FC = () => {
-    const [roles, setRoles] = useState<Role[]>([])
+    const [roles, setRoles] = useState<UserRole[]>([])
     const [users, setUsers] = useState<User[]>([])
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
     const [selectedRoles, setSelectedRoles] = useState<number[]>([])

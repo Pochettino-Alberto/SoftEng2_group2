@@ -85,11 +85,14 @@ class CommonDao {
                 report.category = await this.getById('report_categories', dbRow.category_id, this.mapDBrowToReportCategoryObject);
             if (dbRow.reporter_id) 
                 report.reporter = await this.getById('users', dbRow.reporter_id, this.mapDBrowToUserObject);
+            if (dbRow.assigned_from_id) 
+                report.assigned_from = await this.getById('users', dbRow.assigned_from_id, this.mapDBrowToUserObject);
+            if (dbRow.maintainer_id) 
+                report.maintainer = await this.getById('users', dbRow.maintainer_id, this.mapDBrowToUserObject);
             if (dbRow.updated_by) 
                 report.updated = await this.getById('users', dbRow.updated_by, this.mapDBrowToUserObject);
             
             report.photos = await this.getBy('report_photos', this.mapDBrowToReportPhoto, `report_id = ${report.id} ORDER BY position ASC`);
-
         }
 
         return report;
