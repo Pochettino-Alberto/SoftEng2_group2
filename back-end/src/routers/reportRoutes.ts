@@ -222,7 +222,7 @@ class ReportRoutes {
          * 500 -> for other errors
          */
         this.router.get(
-            "/assigned-to-techOfficer",
+            "/report/assigned-to-techOfficer",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.hasRoleTechOff,
