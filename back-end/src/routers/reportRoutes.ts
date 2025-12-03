@@ -218,7 +218,8 @@ class ReportRoutes {
         /** GET /reports/assigned-to-techOfficer
          *  Returns all reports assigned to the authenticated technical officer
          * Error codes:
-         * 401 -> if the user that calls the api isn't a technical officer 
+         * 401 -> if the user that calls the api isn't a technical officer
+         * 500 -> for other errors
          */
         this.router.get(
             "/assigned-to-techOfficer",
