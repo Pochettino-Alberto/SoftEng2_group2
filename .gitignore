@@ -6,7 +6,7 @@ Desktop.ini
 Thumbs.db
 
 # Ignore local database files
-database/*.db
+database/*.db*
 database/*.sqlite
 database/*.db-journal
 database/database.db
