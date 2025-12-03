@@ -129,6 +129,12 @@ FROM users u, roles r
 WHERE u.username = 'demo_Municipal_Internal_Spaces_Maintainer'
   AND r.label = 'Internal Spaces Maintainer';
 
+-- Admin -> Municipal Administrator
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u, roles r
+WHERE u.username = 'admin'
+  AND r.label = 'Municipal Administrator';
 
 -- Mario Rossi -> Public Relations Officer
 INSERT INTO user_roles (user_id, role_id)
