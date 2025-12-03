@@ -1,4 +1,4 @@
-import { User, UserType } from "./components/user"
+import { User, UserType, RoleType, UserRole } from "./components/user"
 const DATE_ERROR = "Input date is not compatible with the current date"
 
 /**
@@ -13,6 +13,11 @@ class Utility {
     static isMunicipality(user: User): boolean {
         return user.user_type === UserType.MUNICIPALITY
     }
+    
+    static hasRoleType(user: User, roleType: RoleType): boolean {
+        return user.userRoles.some(userRole => userRole.role_type === roleType);
+    }
+
     /**
      * Checks if a user is a citizen.
      * @param {User} user - The user to check.

@@ -22,17 +22,16 @@ class UserController {
      * @param surname - The surname of the new user. It must not be null.
      * @param email - The email of the new user. It must not be null.
      * @param password - The password of the new user. It must not be null.
-     * @param role - The role of the new user. It must not be null and it can only be one of the three allowed types ("Manager", "Customer", "Admin")
+     * @param type - The type of the new user. It must not be null and it can only be one of the three allowed types ("Manager", "Customer", "Admin")
      * @returns A Promise that resolves to true if the user has been created.
      */
-    async createUser(username: string, name: string, surname: string, email: string, password: string, role: string) /**:Promise<Boolean> */ {
-        //return this.dao.createUser(username, name, surname, password, role)
+    async createUser(username: string, name: string, surname: string, email: string, password: string, type: string) /**:Promise<Boolean> */ {
         return new Promise<User>(async (resolve, reject) => {
             const userExists = await this.usernameAlreadyInUse(username);
             if (userExists)
                 reject(new UserAlreadyExistsError());
             else
-                resolve(await this.dao.createUser(username, name, surname, email, password, role));
+                resolve(await this.dao.createUser(username, name, surname, email, password, type));
         });
     }
 
@@ -103,7 +102,7 @@ class UserController {
                     if (name) userToUpdate.first_name = name;
                     if (surname) userToUpdate.last_name = surname;
                     if (email) userToUpdate.email = email;
-                    if (user_type) userToUpdate.user_type = User.getRole(user_type);
+                    if (user_type) userToUpdate.user_type = User.getUserType(user_type);
 
                     // Update user roles
                     if(rolesArray) {

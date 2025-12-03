@@ -4,7 +4,7 @@ import Card from '../../components/Card'
 import Input from '../../components/Input'
 import Button from '../../components/Button'
 import {useAuth} from "../../context/AuthContext.tsx";
-import type {Role} from "../../types/user.ts";
+import type {UserRole} from "../../types/user.ts";
 import {authAPI} from "../../api/auth.ts";
 
 const AdminCreateMunicipalityUser: React.FC = () => {
@@ -17,7 +17,7 @@ const AdminCreateMunicipalityUser: React.FC = () => {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const [roles, setRoles] = useState<Role[]>([])
+    const [roles, setRoles] = useState<UserRole[]>([])
     const [selectedRoles, setSelectedRoles] = useState<number[]>([])
     const [loading, setLoading] = useState(false)
     const [rolesError, setRolesError] = useState('');
@@ -122,6 +122,7 @@ const AdminCreateMunicipalityUser: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                         <Input
+                            id="InputUsername"
                             label="Username"
                             name="username"
                             value={formData.username}
@@ -159,6 +160,7 @@ const AdminCreateMunicipalityUser: React.FC = () => {
                             error={errors.email}
                         />
                         <Input
+                            id="InputPassword"
                             label="Password"
                             name="password"
                             value={formData.password}

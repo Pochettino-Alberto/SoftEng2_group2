@@ -37,20 +37,7 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <button 
-              disabled 
-              className="px-3 py-2 rounded-md text-sm font-medium text-gray-400 cursor-not-allowed opacity-60"
-              title="Coming Soon"
-            >
-              View Reports
-            </button>
-            <button 
-              disabled 
-              className="px-3 py-2 rounded-md text-sm font-medium text-gray-400 cursor-not-allowed opacity-60"
-              title="Coming Soon"
-            >
-              Statistics
-            </button>
+
 
             {isAuthenticated ? (
               <>
@@ -71,6 +58,7 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 <Link
+                  id="SignIn_SignUp"
                   to="/auth/account"
                   style={{ backgroundColor: '#5199CD' }}
                   className="text-white hover:opacity-90 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
@@ -111,20 +99,7 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <button 
-              disabled 
-              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-400 cursor-not-allowed opacity-60"
-              title="Coming Soon"
-            >
-              View Reports
-            </button>
-            <button 
-              disabled 
-              className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-400 cursor-not-allowed opacity-60"
-              title="Coming Soon"
-            >
-              Statistics
-            </button>
+
 
             {isAuthenticated ? (
               <>

@@ -30,6 +30,7 @@ CREATE TABLE users (
 -- ===============================
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_type TEXT CHECK (role_type IN ('publicRelations_officer','technical_officer', 'external_maintainer')) DEFAULT 'technical_officer',
     label TEXT UNIQUE NOT NULL,
     description TEXT,
     role_type TEXT CHECK (role_type IN ('TOS', 'management')) DEFAULT 'TOS'
@@ -80,6 +81,8 @@ CREATE TABLE reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_id INTEGER NOT NULL,
     reporter_id INTEGER,
+    assigned_from_id INTEGER,
+    maintainer_id INTEGER,
     updated_by INTEGER,
     assigned_to INTEGER,
 
@@ -95,6 +98,8 @@ CREATE TABLE reports (
     updatedAt TEXT NOT NULL,
     FOREIGN KEY (category_id) REFERENCES report_categories(id),
     FOREIGN KEY (reporter_id) REFERENCES users (id),
+    FOREIGN KEY (assigned_from_id) REFERENCES users (id),
+    FOREIGN KEY (maintainer_id) REFERENCES users (id),
     FOREIGN KEY (updated_by) REFERENCES users (id)
     FOREIGN KEY (assigned_to) REFERENCES users (id) -- NEW FK
 );

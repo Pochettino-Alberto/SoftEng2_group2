@@ -2,14 +2,14 @@ import { User, UserType } from '../src/components/user'
 
 describe('User component', () => {
   test('getRole returns correct enum for valid strings', () => {
-    expect(User.getRole('citizen')).toBe(UserType.CITIZEN)
-    expect(User.getRole('municipality')).toBe(UserType.MUNICIPALITY)
-    expect(User.getRole('admin')).toBe(UserType.ADMIN)
+    expect(User.getUserType('citizen')).toBe(UserType.CITIZEN)
+    expect(User.getUserType('municipality')).toBe(UserType.MUNICIPALITY)
+    expect(User.getUserType('admin')).toBe(UserType.ADMIN)
   })
 
   test('getRole returns null and logs error for invalid string', () => {
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const res = User.getRole('invalid_role')
+    const res = User.getUserType('invalid_role')
     expect(res).toBeNull()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()

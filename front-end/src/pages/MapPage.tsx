@@ -9,7 +9,7 @@ import torinoGeo from '../assets/torino.geo.json';
 import * as turf from "@turf/turf";
 
 import { reportAPI } from '../api/reports';
-import type { ReportCategory } from './municipality/ReportsPage';
+import type { ReportCategory } from '../types/report';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import FileInput from '../components/FileInput';
@@ -43,9 +43,12 @@ const LocationMarker: React.FC<{ onLocationSelect: (loc: Location | null) => voi
       const boundaryGeometry = (geoObject as any)?.geometry;
       let inside = false;
 
-      if (boundaryGeometry) {
-          inside = turf.booleanPointInPolygon(point, boundaryGeometry as turf.Geometry);
-      }
+          if (boundaryGeometry) {
+            // boundaryGeometry can be Polygon/MultiPolygon Feature or raw geometry from the geojson file.
+            // Use `any` here to satisfy the turf runtime which accepts GeoJSON polygons; strict typing
+            // would require mapping Geometry -> Feature<Polygon|MultiPolygon>.
+            inside = turf.booleanPointInPolygon(point, boundaryGeometry as any);
+          }
 
       if (inside) {
           onLocationSelect({ lat, lng });
@@ -171,7 +174,7 @@ const MapPage: React.FC = () => {
 
         {/* Report Form - visible on the LEFT */}
         {isFormVisible && selectedLocation && (
-          <div className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
+          <div id="scrollableFormSubmitReport" className="w-1/3 p-6 border-r bg-gray-50 overflow-y-auto relative"> {/* Added relative for positioning the button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Report Details</h2>
               <button
@@ -341,6 +344,7 @@ const MapPage: React.FC = () => {
               </div> */}
 
               <button
+                id="submitReportBtn"
                 type="submit"
                 className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
@@ -353,6 +357,7 @@ const MapPage: React.FC = () => {
         {/* Map Container - dynamically sized with Tailwind */}
         <div className={`transition-all duration-300 ${isFormVisible ? 'w-2/3' : 'w-full'} h-full`}>
           <MapContainer
+            id="mapReport"
             center={TORINO_CENTER}
             zoom={13}
             scrollWheelZoom={true}

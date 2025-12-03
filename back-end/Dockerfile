@@ -20,6 +20,11 @@ RUN npm run build
 RUN mkdir -p database
 COPY database/tables_DDL.sql ./database/
 COPY database/tables_default_values.sql ./database/
+# Also copy SQL files to a separate folder so they remain available when a volume
+# is mounted on `/usr/src/app/database` (mount hides files copied into image).
+RUN mkdir -p sql
+COPY database/tables_DDL.sql ./sql/
+COPY database/tables_default_values.sql ./sql/
 
 EXPOSE 3001
 #Avvio il backend utilizzando la cartella dist creata dalla build

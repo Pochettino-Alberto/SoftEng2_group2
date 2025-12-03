@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { scrollToTop } from '../../utils';
 
 const Account: React.FC = () => {
+  useEffect(() => {
+    scrollToTop();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
@@ -18,7 +23,7 @@ const Account: React.FC = () => {
         <div className="space-y-4 sm:space-y-6">
           {/* Citizen Account Option */}
           <Link to="/auth/login/citizen" className="block">
-            <div className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-blue-400 rounded-lg shadow-md" style={{ backgroundColor: '#E8F4FD' }}>
+            <div id="SignIn_citizen" className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-blue-400 rounded-lg shadow-md" style={{ backgroundColor: '#E8F4FD' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div style={{ backgroundColor: '#5199CD' }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -37,7 +42,7 @@ const Account: React.FC = () => {
 
           {/* Admin Option */}
           <Link to="/auth/login/admin" className="block">
-            <div className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-purple-400 rounded-lg shadow-md" style={{ backgroundColor: '#F3E8FF' }}>
+            <div id="SignIn_admin" className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-purple-400 rounded-lg shadow-md" style={{ backgroundColor: '#F3E8FF' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div style={{ backgroundColor: '#9333EA' }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0">

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import { scrollToTop } from '../../utils';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -18,6 +19,10 @@ const Login: React.FC = () => {
 
   const isCitizenLogin = userType === 'citizen';
   const isAdminLogin = userType === 'admin';
+
+  useEffect(() => {
+    scrollToTop();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +100,7 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit}>
             <Input
+              id="InputUsername"
               label="Username"
               type="text"
               value={username}
@@ -104,6 +110,7 @@ const Login: React.FC = () => {
             />
 
             <Input
+              id="InputPassword"
               label="Password"
               type="password"
               value={password}
@@ -113,6 +120,7 @@ const Login: React.FC = () => {
             />
 
             <Button
+              id="loginBtnSubmit"
               type="submit"
               className="w-full"
               disabled={loading}

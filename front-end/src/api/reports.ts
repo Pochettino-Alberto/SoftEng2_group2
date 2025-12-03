@@ -24,12 +24,17 @@ export const reportAPI = {
   },
 
   createReport: async (reportData: FormData): Promise<Report> => {
-    const response = await apiClient.post('/reports/upload', reportData, {
+    const config = {
       headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    return response.data
+        // By setting Content-Type to undefined, Axios removes the header entirely.
+        // This forces the browser/Axios to correctly set the header to 'multipart/form-data'
+        // with the necessary boundary.
+        'Content-Type': undefined,
+      }
+    };
+
+    const response = await apiClient.post('/reports/upload', reportData, config);
+    return response.data;
   },
 
   getMyReports: async (): Promise<Report[]> => {

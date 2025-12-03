@@ -70,6 +70,12 @@ class Report {
 
     reporter_id?: number;
     reporter?: User;          // evaluated by reporter_id
+    
+    assigned_from_id?: number;
+    assigned_from?: User;          // evaluated by assigned_from_id
+    
+    maintainer_id?: number;
+    maintainer?: User;          // evaluated by maintainer_id
 
     updated_by?: number;
     updated?: User;           // evaluated by updated_by
@@ -104,6 +110,8 @@ class Report {
         status: ReportStatusType,
         is_public: boolean = false,
         reporter_id?: number,
+        assigned_from_id?: number,
+        maintainer_id?: number,
         updated_by?: number,
         description?: string,
         status_reason?: string,
@@ -116,8 +124,10 @@ class Report {
         this.category_id = category_id;
 
         this.reporter_id = reporter_id;
+        this.assigned_from_id = assigned_from_id;
+        this.maintainer_id = maintainer_id;
         this.updated_by = updated_by;
-
+        
         this.title = title;
         this.description = description;
 

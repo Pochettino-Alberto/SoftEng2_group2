@@ -19,7 +19,9 @@ let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
 
 // Allow running tests against an in-memory DB for speed. Enable by setting
 // the env var `TEST_DB_IN_MEMORY=true` when running tests.
-const useMemoryDb = env === 'test' && (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
+
+const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+const useMemoryDb = isTestEnv && (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
 
 // The database file path is determined based on the environment variable.
 // Use absolute path resolution so tests and helpers that create the test DB
@@ -81,7 +83,9 @@ function onOpen(err: Error | null) {
     } catch (e) {
         // ignore if mocked DB doesn't implement run
     }
-    if (process.env.NODE_ENV !== 'test') {
+    
+    const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+    if (!isTestEnv) {
         console.log(`Connected to database: ${dbFilePath}`);
     }
 
@@ -111,30 +115,70 @@ function onOpen(err: Error | null) {
     }
 
     if (shouldInitialize) {
-        if (process.env.NODE_ENV !== 'test') {
+        if (!isTestEnv) {
             console.log("Database not found (fresh install or test reset). Initializing tables...");
         }
         initializeDb();
     } else {
-        // No initialization required — signal readiness immediately
-        if (resolveDbReady) resolveDbReady()
+        // File exists — but it might be an empty or partial DB created by a
+        // previous failed startup. Check for an expected table (users) and
+        // initialize if missing.
+        try {
+            db.get("SELECT name FROM sqlite_master WHERE type='table' AND name=?", ['users'], (err: any, row: any) => {
+                if (err) {
+                    // If query fails, attempt initialization to be safe
+                    console.error('Error checking existing DB schema, will attempt initialization:', err.message || err);
+                    initializeDb();
+                    return;
+                }
+                if (!row) {
+                    if (!isTestEnv) {
+                        console.log('DB file exists but required tables are missing. Initializing tables...');
+                    }
+                    initializeDb();
+                } else {
+                    // Schema looks fine — signal readiness
+                    if (resolveDbReady) resolveDbReady()
+                }
+            });
+        } catch (e) {
+            // If anything unexpected happens, fall back to initialization
+            console.error('Unexpected error while validating DB schema, initializing DB:', (e as any).message || e);
+            initializeDb();
+        }
     }
 
 }
 
 function initializeDb() {
-    // Determine where the SQL files are located.
-    // If running in test mode with CI_USE_FILE_DB or DB_PATH pointing to repo database folder,
-    // use the local database folder. Otherwise use the container path.
-    let sqlDir: string;
-    if (process.env.CI_USE_FILE_DB === 'true' || process.env.DB_PATH?.includes('database')) {
-        // Running tests with file DB or on CI with DB_PATH set to repo location
-        sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
-    } else if (process.env.DB_PATH) {
-        // Docker environment with DB_PATH set to container path
-        sqlDir = '/usr/src/app/database';
-    } else {
-        // Local development
+    // Determine where the SQL files are located. In docker containers the DB folder
+    // may be a mounted volume which hides files bundled in the image. To handle this
+    // we try multiple candidate locations and pick the first one that contains the
+    // required SQL files.
+    const candidates: string[] = [];
+    // If DB_PATH points into container filesystem, prefer the mounted database folder
+    if (process.env.DB_PATH) {
+        candidates.push('/usr/src/app/database');
+    }
+    // Also check for SQL files bundled with the image in the repository location
+    candidates.push(path.resolve(__dirname, '..', '..', '..', 'database'));
+    // Also consider an alternative location where Dockerfile can place SQL files
+    candidates.push('/usr/src/app/sql');
+
+    let sqlDir: string | null = null;
+    for (const cand of candidates) {
+        try {
+            if (fs.existsSync(path.join(cand, 'tables_DDL.sql')) && fs.existsSync(path.join(cand, 'tables_default_values.sql'))) {
+                sqlDir = cand;
+                break;
+            }
+        } catch (e) {
+            // ignore and try next
+        }
+    }
+
+    if (!sqlDir) {
+        // fallback to repo database location (best-effort)
         sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
     }
 

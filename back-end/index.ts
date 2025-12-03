@@ -25,7 +25,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 initRoutes(app)
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test') {// allow development and test_ui
     app.listen(port, () => {
         console.log(`Server listening at http://localhost:${port}`);
     });
