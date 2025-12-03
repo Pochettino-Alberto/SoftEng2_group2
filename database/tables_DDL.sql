@@ -2,13 +2,13 @@
 
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS role_category_responsibility; -- NEW DROP
 DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS report_photos;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS report_categories;
+DROP TABLE IF EXISTS role_category_responsibility;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -30,10 +30,9 @@ CREATE TABLE users (
 -- ===============================
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    role_type TEXT CHECK (role_type IN ('publicRelations_officer','technical_officer', 'external_maintainer')) DEFAULT 'technical_officer',
     label TEXT UNIQUE NOT NULL,
     description TEXT,
-    role_type TEXT CHECK (role_type IN ('TOS', 'management')) DEFAULT 'TOS'
+    role_type TEXT CHECK (role_type IN ('publicRelations_officer','technical_officer', 'external_maintainer')) DEFAULT 'technical_officer'
 );
 
 -- ===============================
@@ -100,8 +99,8 @@ CREATE TABLE reports (
     FOREIGN KEY (reporter_id) REFERENCES users (id),
     FOREIGN KEY (assigned_from_id) REFERENCES users (id),
     FOREIGN KEY (maintainer_id) REFERENCES users (id),
-    FOREIGN KEY (updated_by) REFERENCES users (id)
-    FOREIGN KEY (assigned_to) REFERENCES users (id) -- NEW FK
+    FOREIGN KEY (updated_by) REFERENCES users (id),
+    FOREIGN KEY (assigned_to) REFERENCES users (id)
 );
 
 -- ===============================

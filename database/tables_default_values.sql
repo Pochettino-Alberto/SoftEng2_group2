@@ -27,21 +27,18 @@ INSERT INTO users (username, password_hash, salt, first_name, last_name, email, 
 
 -- Preload official roles based on the municipality structure
 INSERT INTO roles (role_type, label, description) VALUES
--- 'publicRelations_officer'
 ('publicRelations_officer', 'Municipal Public Relations Officer', 'Handles citizen communications and report approvals.'),
--- 'publicRelations_officer'
-('technical_officer', 'Municipal Administrator', 'Oversees system management and user permissions.'), --WHAT?? isn't this the ADMIN account (by Alberto)
+('publicRelations_officer', 'Municipal Administrator', 'Oversees system management and user permissions.'),
+
 ('technical_officer', 'Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.'),
 ('technical_officer', 'Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.'),
 ('technical_officer', 'Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and public health violations.'),
 ('technical_officer', 'Municipal Buildings Maintenance Technician', 'Coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.'),
--- 'publicRelations_officer'
+
 ('external_maintainer', 'Roads Maintainer', 'Responsible for carrying out maintenance and repairs on public roads, streets, and sidewalks as directed by the municipality.'),
 ('external_maintainer', 'Parks Maintainer', 'Performs upkeep, cleaning, and minor repairs in public parks, gardens, and green spaces.'),
 ('external_maintainer', 'Water/sewer Maintainer', 'Handles maintenance, inspections, and repairs of water supply and sewage systems in the municipality.'),
 ('external_maintainer', 'Internal Spaces Maintainer', 'Maintains and services internal public spaces, municipal offices, and community buildings under the guidance of the municipality.');
-
-
 
 
 INSERT INTO report_categories (name, icon, description) VALUES
@@ -53,16 +50,6 @@ INSERT INTO report_categories (name, icon, description) VALUES
 ('Road Signs & Traffic', '🚦', 'Problems involving traffic signs, signals, or traffic flow.'),
 ('Roads & Furnishings', '🏙️', 'Damages or issues related to roads, sidewalks, and urban furnishings.'),
 ('Green Areas & Playgrounds', '🌳', 'Maintenance of green spaces, parks, playgrounds, and public gardens.');
-
-
--- Preload official roles based on the municipality structure
-INSERT INTO roles (label, description, role_type) VALUES
-('Municipal Public Relations Officer', 'Handles citizen communications and report approvals.', 'management'),
-('Municipal Administrator', 'Oversees system management and user permissions.', 'management'),
-('Infrastructure Technician', 'Addresses reports related to public infrastructure, including roads, sidewalks, street lighting, traffic signals, and water/sewer networks.', 'TOS'),
-('Green Areas Technician', 'Manages and resolves reports concerning maintenance, damage, and upkeep of public parks, gardens, trees, and other municipal green spaces.', 'TOS'),
-('Environment Quality Technician', 'Investigates and resolves environmental compliance reports, such as illegal dumping, air/noise pollution, and waste management issues.', 'TOS'),
-('Municipal Buildings Maintenance Technician', 'Performs and coordinates corrective and preventative maintenance for city-owned facilities, public buildings, and urban furnishings.', 'TOS');
 
 -- ===============================
 -- ROLE TO CATEGORY ASSIGNMENTS
@@ -78,6 +65,8 @@ SELECT R.id, C.id FROM roles R, report_categories C WHERE R.label = 'Environment
 
 INSERT INTO role_category_responsibility (role_id, category_id)
 SELECT R.id, C.id FROM roles R, report_categories C WHERE R.label = 'Municipal Buildings Maintenance Technician' AND C.name = 'Architectural Barriers';
+
+
 -------------------------------------------------- Assign roles to the municipality users
 -- ============================================================
 -- ASSIGN ROLES TO DEMO MUNICIPALITY USERS

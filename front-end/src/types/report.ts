@@ -1,3 +1,13 @@
+import type {User} from "./user";
+
+export interface ReportPhoto {
+  id: number;
+  report_id: number;
+  position: number;
+  photo_path: string;
+  photo_public_url: string;
+}
+
 export const ReportStatus = {
   PENDING_APPROVAL: "Pending Approval",
   ASSIGNED: "Assigned",
@@ -14,7 +24,7 @@ export interface ReportCategory {
   name: string;
   icon: string;
   description: string;
-};
+}
 
 export interface Location {
   lat: number;
@@ -53,7 +63,7 @@ export interface Report {
 
   createdAt: string;
   updatedAt: string;
-    assigned_to?: string;
+  assigned_to?: string;
 }
 
 export interface CreateReportData {
