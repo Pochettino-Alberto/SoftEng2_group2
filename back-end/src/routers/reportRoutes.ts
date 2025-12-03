@@ -214,6 +214,29 @@ class ReportRoutes {
             }
         );
 
+        
+        /** GET /reports/assigned-to-techOfficer
+         *  Returns all reports assigned to the authenticated technical officer
+         * Error codes:
+         * 401 -> if the user that calls the api isn't a technical officer 
+         */
+        this.router.get(
+            "/assigned-to-techOfficer",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.hasRoleTechOff,
+            (req: any, res: any, next: any) => {
+                try {
+                    const techOfficerId = req.user.id;
+                    this.controller.getReportsAssignedToTechOfficer(techOfficerId)
+                        .then((reports: Report[]) => res.status(200).json(reports))
+                        .catch((err: any) => next(err));
+                } catch (err) {
+                    next(err);
+                }
+            }
+        );
+
     }
 }
 

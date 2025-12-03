@@ -94,6 +94,21 @@ class ReportController {
         });
     }
 
+    /**
+     * This controller function calls the reportDAO function in charge of getting all the reports with status
+     * "Assigned" and with a specific "assigned_from_id" (which correspons to the technical officer's id) 
+     * @param assigned_from_id 
+     * @returns Array of reports 
+     */
+    async getReportsAssignedToTechOfficer(assigned_from_id: number): Promise<Report[]> {
+        try {
+            return await this.dao.getReportsAssignedToTechOfficer(assigned_from_id);
+        } catch (error) {
+            console.error(`Error fetching reports assigned to technical officer ${assigned_from_id}:`, error);
+            throw error;
+        }
+    }
+
 
 }
 
