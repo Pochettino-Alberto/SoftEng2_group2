@@ -1,5 +1,6 @@
 import apiClient from './client'
 import type { Report, ReportStatus, ReportCategory } from '../types/report'
+import type { User } from '../types/user'
 
 export const reportAPI = {
   getAllReports: async (): Promise<Report[]> => {
@@ -57,6 +58,16 @@ export const reportAPI = {
     endDate?: string
   }): Promise<Report[]> => {
     const response = await apiClient.get('/reports', { params: filters })
+    return response.data
+  },
+
+  getTOSUsersByCategory: async (categoryId: number): Promise<User[]> => {
+    const response = await apiClient.get('/reports/tos-users', { params: { category_id: categoryId } })
+    return response.data
+  },
+
+  assignReportToUser: async (reportId: number, assignedToId: number): Promise<Report> => {
+    const response = await apiClient.patch(`/reports/report/${reportId}/assign`, { assigned_to: assignedToId })
     return response.data
   },
 }

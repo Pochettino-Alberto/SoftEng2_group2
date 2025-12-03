@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS report_photos;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS report_categories;
+DROP TABLE IF EXISTS role_category_responsibility;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -29,9 +30,9 @@ CREATE TABLE users (
 -- ===============================
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    role_type TEXT CHECK (role_type IN ('publicRelations_officer','technical_officer', 'external_maintainer')) DEFAULT 'technical_officer',
     label TEXT UNIQUE NOT NULL,
-    description TEXT
+    description TEXT,
+    role_type TEXT CHECK (role_type IN ('publicRelations_officer','technical_officer', 'external_maintainer')) DEFAULT 'technical_officer'
 );
 
 -- ===============================
@@ -47,7 +48,17 @@ CREATE TABLE user_roles (
 );
 
 
-
+-- ===============================
+-- ROLE-CATEGORY RESPONSIBILITY
+-- Links TOS roles to the categories they are responsible for.
+-- ===============================
+CREATE TABLE role_category_responsibility (
+    role_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    PRIMARY KEY (role_id, category_id),
+    FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES report_categories (id) ON DELETE CASCADE
+);
 
 
 -- ===============================
@@ -72,6 +83,7 @@ CREATE TABLE reports (
     assigned_from_id INTEGER,
     maintainer_id INTEGER,
     updated_by INTEGER,
+    assigned_to INTEGER,
 
     title TEXT NOT NULL,
     description TEXT,
@@ -87,7 +99,8 @@ CREATE TABLE reports (
     FOREIGN KEY (reporter_id) REFERENCES users (id),
     FOREIGN KEY (assigned_from_id) REFERENCES users (id),
     FOREIGN KEY (maintainer_id) REFERENCES users (id),
-    FOREIGN KEY (updated_by) REFERENCES users (id)
+    FOREIGN KEY (updated_by) REFERENCES users (id),
+    FOREIGN KEY (assigned_to) REFERENCES users (id)
 );
 
 -- ===============================
