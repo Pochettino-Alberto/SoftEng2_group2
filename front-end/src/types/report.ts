@@ -24,7 +24,7 @@ export interface ReportCategory {
   name: string;
   icon: string;
   description: string;
-};
+}
 
 export interface Location {
   lat: number;
@@ -35,42 +35,21 @@ export interface Report {
   id: number;
   title: string;
   description?: string;
-
-  category_id: number;
-  category: ReportCategory;
-
-  reporter_id?: number | null;
-  reporter?: User;
-
-  assigned_from_id?: number | null;
-  assigned_from?: User;
-
-  maintainer_id?: number | null;
-  maintainer?: User;
-
-  updated_by?: number | null;
-  updated?: User;
-
   is_public: boolean;
+  category: ReportCategory;
+  location: Location;
 
-  latitude: number;
-  longitude: number;
+  reporter_id?: number;
+  assigned_to?: number;
+  assigned_from?: number;
+  maintainer?: number;
+  updated_by?: number;
+
+  updatedAt: string;
+  createdAt: string;
 
   status: ReportStatus;
   status_reason?: string;
 
   photos: ReportPhoto[];
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateReportData {
-  title: string;
-  description: string;
-  categoryId: number;
-  latitude: number;
-  longitude: number;
-  is_public: boolean;
-  photos?: File[];
 }
