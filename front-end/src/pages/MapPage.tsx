@@ -109,6 +109,7 @@ const MapPage: React.FC = () => {
     else if (title == '') error = 'Report title cannot be empty';
     else if (description == '') error = 'Report description cannot be empty';
     else if (categoryId == 0) error = 'Please select a report category';
+    else if (photos == null) error = 'Please provide at least one photo';
 
     setFormWarning(error);
     return error == '';

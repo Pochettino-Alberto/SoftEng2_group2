@@ -66,6 +66,9 @@ class ReportRoutes {
                 if (req.files != null && ((req.files as any[]).length > 3)) {
                     return res.status(400).json({ error: "You can upload a maximum of 3 photos." });
                 }
+                if (req.files != null && ((req.files as any[]).length < 1)) {
+                    return res.status(400).json({ error: "You must upload at least one photo" });
+                }
                 next();
             },
             this.errorHandler.validateRequest,
