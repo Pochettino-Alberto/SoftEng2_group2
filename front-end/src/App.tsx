@@ -21,10 +21,8 @@ import ReportDetail from './pages/municipality/ReportDetail.tsx';
 import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
 import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
 
-console.log('App.tsx loaded');
 
 function App() {
-  console.log('App component rendering...');
   
   return (
     <Router>

@@ -34,7 +34,7 @@ export interface Location {
 export interface Report {
   id: number;
   title: string;
-  description?: string;
+  description: string;
   is_public: boolean;
   category: ReportCategory;
   location: Location;
