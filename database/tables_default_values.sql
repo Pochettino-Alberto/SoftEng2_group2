@@ -17,14 +17,14 @@ INSERT INTO users (username, password_hash, salt, first_name, last_name, email, 
 ('demo_Municipal_Water-sewer_Maintainer', X'92042E26CEFCF2F3A011B8DCB6FF8374', X'CE006AA045E421E559032DAF7D3421D4', 'demo_Municipal_Water-sewer_Maintainer', 'demo_Municipal_Water-sewer_Maintainer', 'demo_Municipal_Water-sewer_Maintainer@email.com', 'municipality'),
 ('demo_Municipal_Internal_Spaces_Maintainer', X'121BA5E3FE0EC4C854CF6C3620EF247E', X'2BD06A9DA373CF3CD7062874EFE16A39', 'demo_Municipal_Internal_Spaces_Maintainer', 'demo_Municipal_Internal_Spaces_Maintainer', 'demo_Municipal_Internal_Spaces_Maintainer@email.com', 'municipality');
 
--- Additional users
+-- Additional users mario.rossi, franco, luigi and francesco have password "password"
 INSERT INTO users (username, password_hash, salt, first_name, last_name, email, user_type) VALUES
 ('admin', X'80B4DC9201E01C955303467C88656756', X'27CE6E026F80F09999A6E573EC723E7F', 'admin', 'admin', 'admin.admin@email.com', 'admin'),
 ('johndoe', X'DC3339912A9BE643D12156772C853619', X'69A67927073D4FC1B3FACDFB2637CE45', 'John', 'Doe', 'John.Doe@email.com', 'citizen'),
 ('mario.rossi', X'3FE3DBE7D09FA0BC5ED806DD2BD99E80', X'4BEEDD8F75D7DCC14405056669EC8AAE', 'Mario', 'Rossi', 'mario.rossi@example.com', 'municipality'),
 ('franco', X'3B08F0E2AEF927CB9E5DFE1D9DA6DD0C', X'395957E7DE1342138365EEA06FB56A6B', 'Franco', 'Bianchi', 'franco@example.com', 'municipality'),
 ('luigi', X'6845DDC9E7559B47150BBE45224F369A', X'25F6DBEEE80373AA5DD238BA711256E1', 'Luigi', 'Verdi', 'luigi@example.com', 'municipality'),
-('francesco', X'A6F7CE29596481E0E01571D990563C12', X'29ADBED0CECB6B70D762D5191D8560D5', 'Francesco', 'Banfi', 'francesco.banfi@example.com', 'municipality');
+('francesco', X'AF4E1B6AF36A16477325E81925D18F69', X'BBB71A4C10345FC6F74D2E8512BE053B', 'Francesco', 'Banfi', 'francesco.banfi@example.com', 'municipality');
 
 -- Preload official roles based on the municipality structure
 INSERT INTO roles (role_type, label, description) VALUES
