@@ -2,6 +2,7 @@ import db from "./db"
 import { Report, ReportCategory, ReportStatusType } from "../components/report"
 import CommonDao from './commonDAO'
 import { Utility } from "../utilities";
+import {User} from "../components/user";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
@@ -247,6 +248,87 @@ class ReportDAO {
             } catch (err) {
                 reject(err);
             }
+        });
+    }
+
+    /**
+     * Get all reports assigned to a specific technical officer.
+     * A report is considered assigned to the technical officer when its `status` is 'Assigned'
+     * and `assigned_from_id` equals the provided id.
+     * @param assigned_from_id - id of the technical officer
+     */
+    async getReportsAssignedToTechOfficer(assigned_from_id: number): Promise<Report[]> {
+        return new Promise((resolve, reject) => {
+            try {
+                const sql = `SELECT * FROM reports WHERE status = ? AND assigned_from_id = ? ORDER BY updatedAt DESC`;
+                db.all(sql, ['Assigned', assigned_from_id], async (err, rows: any[]) => {
+                    if (err) return reject(err);
+
+                    const reports: Report[] = [];
+                    for (const r of rows) {
+                        reports.push(await this.commonDao.mapDBrowToReport(r, false));
+                    }
+
+                    resolve(reports);
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+
+    /**
+     * Retrieves all municipality users who have a 'TOS' role responsible for a given report category ID.
+     * @param categoryId - The ID of the report category.
+     * @returns A Promise that resolves to an array of matching User objects.
+     */
+    async getTOSUsersByCategory(categoryId: number): Promise<User[]> {
+        return new Promise<User[]>((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT u.*
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON ur.role_id = r.id
+                JOIN role_category_responsibility rcr ON r.id = rcr.role_id
+                WHERE rcr.category_id = ?
+                AND u.user_type = 'municipality'
+            `;
+            db.all(sql, [categoryId], (err: Error | null, rows: any) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const userArray = rows.map((row: any) => this.commonDao.mapDBrowToUserObject(row));
+                resolve(userArray);
+            });
+        });
+    }
+
+    /**
+     * Updates a report's status to ASSIGNED and sets the assigned_to user.
+     * @param reportId - The ID of the report to update.
+     * @param assignedToId - The ID of the technician to assign the report to.
+     * @returns Promise resolving when the update is complete.
+     */
+    async assignReportToUser(reportId: number, assignedToId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const updatedAt = Utility.now();
+            // This query attempts to save the assigned_to ID.
+            // If your DB doesn't have this column yet, this will error.
+            // Ensure you update your DDL or 'reports' table schema.
+            const sql = `
+                UPDATE reports 
+                SET status = 'Assigned', assigned_to = ?, updatedAt = ? 
+                WHERE id = ?
+            `;
+            db.run(sql, [assignedToId, updatedAt, reportId], function(err) {
+                if (err) return reject(err);
+                if (this.changes === 0) {
+                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                }
+                resolve();
+            });
         });
     }
 

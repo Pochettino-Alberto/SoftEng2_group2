@@ -159,52 +159,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-              Community Impact
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600">
-              Together, we're making Turin a better place
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-            <div className="text-center">
-              <div style={{ color: '#5199CD' }} className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">1,234</div>
-              <div className="text-sm sm:text-base text-gray-600">Reports Submitted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 mb-2">856</div>
-              <div className="text-sm sm:text-base text-gray-600">Issues Resolved</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 mb-2">567</div>
-              <div className="text-sm sm:text-base text-gray-600">Active Citizens</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 mb-2">95%</div>
-              <div className="text-sm sm:text-base text-gray-600">Satisfaction Rate</div>
-            </div>
-          </div>
-
-          <div className="text-center mt-8 sm:mt-12">
-            <Button 
-              variant="outline" 
-              size="lg" 
-              disabled 
-              className="cursor-not-allowed opacity-60"
-              title="Coming Soon"
-            >
-              View Detailed Statistics
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+  
       <section style={{ backgroundColor: '#5199CD' }} className="text-white py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">

@@ -10,43 +10,24 @@
 			"name": "auth",
 			"item": [
 				{
-					"name": "Register Citizen",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"John\",\n    \"surname\": \"Doe\",\n    \"username\": \"johndoe\",\n    \"password\": \"securePassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login",
+					"name": "login",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
 									"//TODO ADD in collection variable the token"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -67,7 +48,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"johndoe\",\n    \"password\": \"securePassword123\"\n}"
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"securePassword123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -83,9 +64,9 @@
 					"response": []
 				},
 				{
-					"name": "Logout",
+					"name": "logout",
 					"request": {
-						"method": "POST",
+						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/auth/logout",
@@ -103,225 +84,245 @@
 			]
 		},
 		{
-			"name": "admin",
+			"name": "users",
 			"item": [
 				{
-					"name": "Search Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/admin/search-users?name&surname&user_type=municipality&page_size=20&page_num=1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"admin",
-								"search-users"
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": null
+					"name": "admin powers",
+					"item": [
+						{
+							"name": "register-user",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"user\",\n    \"surname\": \"user\",\n    \"username\": \"user\",\n    \"password\": \"securePassword123\",\n    \"email\":\"user@email.com\",\n    \"role\": \"citizen\"\n}"
 								},
-								{
-									"key": "surname",
-									"value": null
-								},
-								{
-									"key": "user_type",
-									"value": "municipality"
-								},
-								{
-									"key": "page_size",
-									"value": "20"
-								},
-								{
-									"key": "page_num",
-									"value": "1"
+								"url": {
+									"raw": "{{base_url}}/users/register-user",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"register-user"
+									]
 								}
-							]
+							},
+							"response": []
+						},
+						{
+							"name": "search-users",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/users/search-users?name&surname&user_type=municipality&page_size=20&page_num=1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"search-users"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": null
+										},
+										{
+											"key": "surname",
+											"value": null
+										},
+										{
+											"key": "user_type",
+											"value": "municipality"
+										},
+										{
+											"key": "page_size",
+											"value": "20"
+										},
+										{
+											"key": "page_num",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get-roles",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users/get-roles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"get-roles"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create-municipality-user",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"user\",\r\n    \"surname\": \"user\",\r\n    \"username\": \"user\",\r\n    \"password\": \"securePassword123\",\r\n    \"email\":\"user@email.com\",\r\n    \"rolesArray\": null\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users/admin/create-municipality-user",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"admin",
+										"create-municipality-user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "assign-roles",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"userId\":3,\r\n    \"rolesArray\": [4,5]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users/admin/assign-roles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"admin",
+										"assign-roles"
+									]
+								}
+							},
+							"response": []
 						}
+					],
+					"auth": {
+						"type": "bearer"
 					},
-					"response": []
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						}
+					]
 				},
 				{
-					"name": "Register Municipality User",
+					"name": "register-citizen",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
 								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{admin_token}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Anna\",\n    \"surname\": \"Bianchi\",\n    \"username\": \"abianchi\",\n    \"password\": \"municipalityPass!\"\n}"
+							"raw": "{\n    \"name\": \"Rossana\",\n    \"surname\": \"Rosso\",\n    \"username\": \"Rossana\",\n    \"password\": \"securePassword123\",\n    \"email\": \"Rossana.Rosso@email.com\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/admin/user",
+							"raw": "{{base_url}}/users/register-citizen",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"admin",
-								"user"
+								"users",
+								"register-citizen"
 							]
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "Delete Municipality User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/admin/user?id=",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"admin",
-								"user"
-							],
-							"query": [
-								{
-									"key": "id",
-									"value": ""
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Municipality Roles",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/admin/municipality-roles",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"admin",
-								"municipality-roles"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Assign Role to User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/admin/user/role?user_id=&role_id=",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"admin",
-								"user",
-								"role"
-							],
-							"query": [
-								{
-									"key": "user_id",
-									"value": ""
-								},
-								{
-									"key": "role_id",
-									"value": ""
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Role from User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/admin/user/role?user_id=&role_id=",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"admin",
-								"user",
-								"role"
-							],
-							"query": [
-								{
-									"key": "user_id",
-									"value": ""
-								},
-								{
-									"key": "role_id",
-									"value": ""
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"auth": {
-				"type": "bearer"
-			},
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"type": "text/javascript",
-						"packages": {},
-						"requests": {},
-						"exec": [
-							""
-						]
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"packages": {},
-						"requests": {},
-						"exec": [
-							""
-						]
-					}
 				}
 			]
 		},
 		{
-			"name": "citizen",
-			"item": []
-		},
-		{
-			"name": "municipality",
-			"item": []
+			"name": "reports",
+			"item": [
+				{
+					"name": "categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -352,6 +353,13 @@
 		{
 			"key": "base_url",
 			"value": "http://127.0.0.1:3001"
+		},
+		{
+			"key": "citizen_token",
+			"value": ""
+		},
+		{
+			"value": ""
 		}
 	]
 }

@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type {User, LoginData, RegisterData, MunicipalityUser, Role} from '../types/user';
+import type {User, LoginData, RegisterData, MunicipalityUser, UserRole} from '../types/user';
 
 export const authAPI = {
   // Login a user
@@ -66,7 +66,7 @@ export const authAPI = {
     return response.data;
   },
 
-  getRoles: async (): Promise<Role[]> => {
+  getRoles: async (): Promise<UserRole[]> => {
     const response = await apiClient.get('/users/get-roles');
     return response.data;
   },
@@ -82,7 +82,7 @@ export const authAPI = {
     return response.data?.items || [];
   },
 
-  getUserRoles: async (userId: number): Promise<Role[]> => {
+  getUserRoles: async (userId: number): Promise<UserRole[]> => {
     const response = await apiClient.get(`/users/get-roles/${userId}`);
     return response.data.map((r: any) => ({
       id: r.RoleID,

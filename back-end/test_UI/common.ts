@@ -15,6 +15,66 @@ export class CommonData {
     type: "citizen"
   };
 
+  static readonly USER_MUNICIPAL_PUBLIC_RELATIONS_OFFICER = {
+    username: "demo_Municipal_Public_Relations_Officer",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_ADMINISTRATOR = {
+    username: "demo_Municipal_Administrator",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN = {
+    username: "demo_Municipal_Infrastructure_Technician",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_GREEN_AREAS_TECHNICIAN = {
+    username: "demo_Municipal_Green_Areas_Technician",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_ENVIRONMENT_QUALITY_TECHNICIAN = {
+    username: "demo_Municipal_Environment_Quality_Technician",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_BUILDINGS_MAINTENANCE_TECHNICIAN = {
+    username: "demo_Municipal_Buildings_Maintenance_Technician",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_ROADS_MAINTAINER = {
+    username: "demo_Municipal_Roads_Maintainer",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_PARKS_MAINTAINER = {
+    username: "demo_Municipal_Parks_Maintainer",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_WATER_SEWER_MAINTAINER = {
+    username: "demo_Municipal_Water-sewer_Maintainer",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
+  static readonly USER_MUNICIPAL_INTERNAL_SPACES_MAINTAINER = {
+    username: "demo_Municipal_Internal_Spaces_Maintainer",
+    password: "YOOO_demo_!",
+    type: "municipality"
+  };
+
 }
 
 

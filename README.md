@@ -24,13 +24,13 @@ code documentation:
 
 ### Default sample users credentials
 
-| Username    | Password          | User Type    |
-| ----------- | ----------------- | ------------ |
-| johndoe     | securePassword123 | citizen      |
-| admin       | securePassword123 | admin        |
-| mario.rossi | password          | municipality |
-| franco      | password          | municipality |
-| luigi       | password          | municipality |
+| Username    | Password          | User Type    | role_type {role_label_list} |
+| ----------- | ----------------- | ------------ | - |
+| johndoe     | securePassword123 | citizen      | - |
+| admin       | securePassword123 | admin        | technical_officer {Municipal Administrator} |
+| mario.rossi | password          | municipality | publicRelations_officer {Municipal Public Relations Officer} |
+| franco      | password          | municipality | technical_officer {Infrastructure Technician} |
+| luigi       | password          | municipality | technical_officer {Green Areas Technician, Environment Quality Technician} |
 ## Participium — Schematic summary
 
 ---

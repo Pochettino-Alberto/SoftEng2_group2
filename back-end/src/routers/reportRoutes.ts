@@ -10,6 +10,7 @@ import { supabaseService } from "../services/supabaseService";
 import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
 import { SERVER_CONFIG } from "../config";
+import {User} from "../components/user";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -42,10 +43,6 @@ class ReportRoutes {
 
     /**
      * Initializes the routes for the user router.
-     * 
-     * @remarks
-     * This method sets up the HTTP routes for creating, retrieving, updating, and deleting user data.
-     * It can (and should!) apply authentication, authorization, and validation middlewares to protect the routes.
      */
     initRoutes() {
         const upload = multer({ storage: multer.memoryStorage() });
@@ -53,18 +50,11 @@ class ReportRoutes {
 
         /**
          * POST /report/upload
-         * Create a new report
-         * Body params (JSON):
-         * - title: string
-         * - description: string (optional)
-         * - category_id: number
-         * - latitude: number
-         * - longitude: number
          */
         this.router.post(
             "/upload",
             this.authService.isLoggedIn,
-            this.authService.isCitizen,    
+            this.authService.isCitizen,
             upload.array("photos", 3),
             body("title").isString().notEmpty(),
             body("description").optional().isString(),
@@ -72,7 +62,6 @@ class ReportRoutes {
             body("latitude").toFloat().isFloat(),
             body("longitude").toFloat().isFloat(),
             body("is_public").toBoolean().isBoolean(),
-            // custom file check middleware
             (req: any, res: any, next: any) => {
                 if (req.files != null && ((req.files as any[]).length > 3)) {
                     return res.status(400).json({ error: "You can upload a maximum of 3 photos." });
@@ -83,7 +72,7 @@ class ReportRoutes {
             async (req: any, res: any, next: any) => {
                 try {
                     const { title, description, category_id, latitude, longitude, is_public } = req.body;
-                    
+
                     const report = new Report(
                         0,
                         Number(category_id),
@@ -92,7 +81,6 @@ class ReportRoutes {
                         parseFloat(longitude),
                         ReportStatus.PENDING_APPROVAL,
                         Boolean(is_public),
-                        //req.user.id, // reporter_id
                         req.user.id,
                         undefined,
                         description,
@@ -103,17 +91,14 @@ class ReportRoutes {
 
                     const savedReport = await this.controller.saveReport(report);
 
-                    // At this point, the report is correctly stored on database, we can proceed to upload the photos
                     let file_ids: { publicUrl: string, filePath: string }[] = []
                     if((req.files as any[]).length > 0){
-                        // File path: /reports/{report_category_id}/{report_id}
                         file_ids = await supabaseService.uploadFiles(
                             `${savedReport.category_id}/${savedReport.id}`,
                             req.files as Express.Multer.File[],
                             SupabaseBucket.REPORT_PHOTOS_BUCKET
                         );
                     }
-                    // Create a ReportPhoto[] array object, add it inside the Report object, then save the uploaded images urls on DB
                     let reportPhotos: ReportPhoto[] = [];
                     file_ids.forEach((elm, index) => reportPhotos.push(new ReportPhoto(
                         0, report.id, index + 1, elm.publicUrl, elm.filePath
@@ -131,7 +116,6 @@ class ReportRoutes {
         );
 
 
-        // GET /report-categories
         this.router.get(
             "/categories",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
@@ -147,7 +131,7 @@ class ReportRoutes {
             "/report/:id",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
-            this.authService.isAdmin,
+            this.authService.isAdminOrMunicipality,
             (req: any, res: any, next: any) => {
                 const reportId = Number(req.params.id);
                 this.controller.getReportById(reportId)
@@ -164,7 +148,6 @@ class ReportRoutes {
             param("id").toInt().isInt({ min: 1 }),
             body("status").isString().isIn([ReportStatus.ASSIGNED, ReportStatus.REJECTED]),
             body("status_reason").optional().isString().trim(),
-            // Custom check: if status is REJECTED, status_reason is required and cannot be empty
             body("status_reason").custom((value, { req }) => {
                 if (req.body.status === ReportStatus.REJECTED && (!value || value.trim() === '')) {
                     throw new Error("Status reason is required when rejecting a report.");
@@ -179,7 +162,6 @@ class ReportRoutes {
 
                     await this.controller.updateReportStatus(reportId, status as ReportStatusType, status_reason);
 
-                    // Fetch the updated report to return a complete, fresh representation
                     const updatedReport = await this.controller.getReportById(reportId);
 
                     res.status(200).json(updatedReport);
@@ -209,8 +191,70 @@ class ReportRoutes {
                     req.query.is_public ?? null,
                     req.query.category_id || null
                 )
-                .then((pagReports: PaginatedResult<Report>) => res.status(200).json(pagReports))
-                .catch((err: any) => next(err));
+                    .then((pagReports: PaginatedResult<Report>) => res.status(200).json(pagReports))
+                    .catch((err: any) => next(err));
+            }
+        );
+
+        this.router.get(
+            "/tos-users",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.isAdminOrMunicipality,
+            query("category_id").toInt().isInt({ min: 1 }),
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => {
+                this.controller.getTOSUsersByCategory(Number(req.query.category_id))
+                    .then((users: User[]) => res.status(200).json(users))
+                    .catch((err: any) => next(err));
+            }
+        );
+
+        // NEW: ASSIGN REPORT ENDPOINT
+        this.router.patch(
+            "/report/:id/assign",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.isAdminOrMunicipality,
+            param("id").toInt().isInt({ min: 1 }),
+            body("assigned_to").toInt().isInt({ min: 1 }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.id);
+                    const assignedToId = Number(req.body.assigned_to);
+
+                    const updatedReport = await this.controller.assignReportToUser(reportId, assignedToId);
+
+                    res.status(200).json(updatedReport);
+                } catch (err) {
+                    console.error('REPORT ASSIGNMENT ERROR:', err);
+                    next(err);
+                }
+            }
+        );
+
+        
+        /** GET /reports/assigned-to-techOfficer
+         *  Returns all reports assigned to the authenticated technical officer
+         * Error codes:
+         * 401 -> if the user that calls the api isn't a technical officer
+         * 500 -> for other errors
+         */
+        this.router.get(
+            "/report/assigned-to-techOfficer",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.hasRoleTechOff,
+            (req: any, res: any, next: any) => {
+                try {
+                    const techOfficerId = req.user.id;
+                    this.controller.getReportsAssignedToTechOfficer(techOfficerId)
+                        .then((reports: Report[]) => res.status(200).json(reports))
+                        .catch((err: any) => next(err));
+                } catch (err) {
+                    next(err);
+                }
             }
         );
 

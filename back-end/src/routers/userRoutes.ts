@@ -229,7 +229,6 @@ class UserRoutes {
         )
 
 
-
         this.router.get(
             "/search-users",
             this.authService.isAdmin,
