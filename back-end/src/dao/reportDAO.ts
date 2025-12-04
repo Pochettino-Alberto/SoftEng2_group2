@@ -239,7 +239,7 @@ class ReportDAO {
 
                         const reports: Report[] = [];
                         for (const r of rows) {
-                            reports.push(await this.commonDao.mapDBrowToReport(r, false)); // include subclasses
+                            reports.push(await this.commonDao.mapDBrowToReport(r, true)); // include subclasses
                         }
 
                         resolve({ reports, totalCount });

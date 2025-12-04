@@ -37,9 +37,14 @@ export const reportAPI = {
     return response.data;
   },
 
-  getMyReports: async (): Promise<Report[]> => {
-    const response = await apiClient.get('/reports/my-reports')
-    return response.data
+  getTechnicalOfficerReports: async (): Promise<Report[]> => {
+    const response = await apiClient.get('/report/assigned-to-techOfficer');
+    console.log('assigned-to-techOfficer response: ', response.data);
+    return response.data;
+  },
+
+  getExternalMaintainerReports: async (): Promise<void> => {
+    console.log('This API is yet to be implemented on the backend.');
   },
 
   updateReportStatus: async (

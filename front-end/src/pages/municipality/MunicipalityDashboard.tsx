@@ -40,14 +40,12 @@ const MunicipalityDashboard: React.FC = () => {
                 )}
 
                 {userRoles.map((role, index) => (
-                  <>
                     <span
                       key={index}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 shadow-sm hover:bg-gray-300 transition-colors"
                     >
                       {role.label}
                     </span>
-                  </>
                 ))}
               </div>
             </div>

@@ -13,7 +13,7 @@ export default function ReportsPage() {
   const [pageSize] = useState(5)
   const [paginated, setPaginated] = useState({ page_num: 1, page_size: pageSize, total_pages: 1, total_items: 0, items: [] as Report[] })
   const [loading, setLoading] = useState(false)
-  const [onlyPending, setOnlyPending] = useState(false)
+  const [onlyPending, setOnlyPending] = useState(true)
   const [categoriesMap, setCategoriesMap] = useState<Record<number, string>>({})
   const navigate = useNavigate()
 
@@ -22,13 +22,25 @@ export default function ReportsPage() {
     try {
       const params: any = { page_num: p, page_size: pageSize }
       if (onlyPending) params.status = ReportStatus.PENDING_APPROVAL
+      let res = [];
 
-      // Only shows reports for the current municipality staff user
-      // TODO: adjust when roles are implemented
-      //if(user?.userRoles?.some((r) => r.label === 'Municipality Staff'))
+      // Shows all reports if the user has the 'Public Relationship municipal officer' role
+      if(user?.userRoles.some((r) => r.role_type === 'publicRelations_officer')){
+        res = await reportAPI.searchReportsPaginated(params)
+        //console.log('Municipal Public Relations Officer - can see all reports');
+      } else if(user?.userRoles.some((r) => r.role_type === 'technical_officer')){
+        res = await reportAPI.getTechnicalOfficerReports();
+        //console.log('Municipal Technical Officer - can see only assigned reports');
+      } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
+        // Shows reports assigned to the external maintainer
+        // TODO API endpoint to get reports assigned to external maintainer
+        await reportAPI.getExternalMaintainerReports();
+        console.log('External Maintainer - can see only assigned reports');
+      } else {
+        console.warn('No valid municipal role found - no reports to show');
+      }
 
-      const res = await reportAPI.searchReportsPaginated(params)
-      setPaginated(res)
+      setPaginated(res);
     } catch (err) {
       console.error('Failed to load reports', err)
     } finally {
@@ -62,13 +74,13 @@ export default function ReportsPage() {
 
   const columns: Column<Report>[] = [
     // 1. New 'Photo' column with Thumbnail and ID
-    {
+    /*{
       header: 'Photo',
       accessor: (r: Report) => (
         <div className="flex items-center space-x-3">
           {r.photos && r.photos.length > 0 ? (
             <img 
-              src={r.photos[0]} 
+              src={r.photos[0].photo_public_url} 
               alt={`Report ${r.id} thumbnail`} 
               className="w-16 h-16 object-cover rounded-md shadow-md flex-shrink-0"
               onError={(e) => { 
@@ -85,7 +97,7 @@ export default function ReportsPage() {
           )}
         </div>
       ),
-    },
+    },*/
     { header: 'Title', accessor: (r: Report) => r.title },
     // Truncated Description column
     {
@@ -96,7 +108,7 @@ export default function ReportsPage() {
         </p>
       )
     },
-    { header: 'Category', accessor: (r: Report) => r.category?.name || (r.category_id ? categoriesMap[r.category_id] || '' : '') },
+    { header: 'Category', accessor: (r: Report) => (r.category_id ? categoriesMap[r.category_id] || '' : '') },
     {
       header: 'Status', accessor: (r: Report) => (
         <span className={`px-2 py-1 rounded text-xs font-semibold ${r.status === ReportStatus.RESOLVED ? 'bg-green-100 text-green-700' : r.status === ReportStatus.IN_PROGRESS ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{r.status}</span>

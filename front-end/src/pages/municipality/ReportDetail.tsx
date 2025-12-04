@@ -82,7 +82,7 @@ const ReportDetail: React.FC = () => {
 
     useEffect(() => {
         if (!report) return
-
+        console.log(report);
         setEditingStatus(!(report.status === 'Assigned' || report.status === 'Rejected'))
 
         if (selectedAction === 'accept' && report.status !== 'Assigned' && report.status !== 'Rejected' && report.category_id) {
@@ -124,14 +124,6 @@ const ReportDetail: React.FC = () => {
 
         if (!copy.reporter && copy.reporter_id) {
             copy.reporter = `User #${copy.reporter_id}`
-        }
-
-        if (Array.isArray(copy.photos) && copy.photos.length > 0 && typeof copy.photos[0] === 'object') {
-            try {
-                copy.photos = copy.photos.map((ph: any) => ph.photo_public_url || ph.photo || '')
-            } catch (e) {
-                // ignore
-            }
         }
 
         return copy as Report
@@ -204,7 +196,7 @@ const ReportDetail: React.FC = () => {
                 <div className="mb-4">
                     <p className="text-sm text-gray-600">Category: {report.category?.name}</p>
                     <p className="text-sm text-gray-600">Location: {report.location && typeof report.location.lat === 'number' && typeof report.location.lng === 'number' ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
-                    <p className="text-sm text-gray-600">Reporter: {report.anonymous ? 'Anonymous' : report.reporter || '—'}</p>
+                    <p className="text-sm text-gray-600">Reporter: {!report.is_public ? 'Anonymous' : report.reporter_id || '—'}</p>
                     {report.status === 'Rejected' && report.status_reason && (
                         <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
                     )}
@@ -216,7 +208,7 @@ const ReportDetail: React.FC = () => {
                 {report.photos && report.photos.length > 0 && (
                     <div className="mb-4 grid grid-cols-2 gap-2">
                         {report.photos.map((p, idx) => (
-                            <img key={idx} src={p} alt={`photo-${idx}`} className="w-full h-40 object-cover rounded" />
+                            <img key={idx} src={p.photo_public_url} alt={`photo-${idx}`} className="w-64 h-64 object-cover rounded" />
                         ))}
                     </div>
                 )}

@@ -80,9 +80,12 @@ CREATE TABLE reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_id INTEGER NOT NULL,
     reporter_id INTEGER,
+    -- The user who assigned the report (Must have Public Relations Officer role)
     assigned_from_id INTEGER,
+    -- The external maintainer assigned to the report (Must have External Maintainer role)
     maintainer_id INTEGER,
     updated_by INTEGER,
+    -- The user currently assigned to handle the report (Must have Technical Officer role)
     assigned_to INTEGER,
 
     title TEXT NOT NULL,

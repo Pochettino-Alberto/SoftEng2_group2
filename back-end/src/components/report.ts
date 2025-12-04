@@ -81,7 +81,7 @@ class Report {
     updated?: User;           // evaluated by updated_by
 
     title: string;
-    description?: string;
+    description: string;
 
     is_public: boolean;
     latitude: number;

@@ -73,6 +73,8 @@ class CommonDao {
             dbRow.status,
             dbRow.is_public === 1 || dbRow.is_public === true,
             dbRow.reporter_id,
+            dbRow.assigned_from_id,
+            dbRow.maintainer_id,
             dbRow.updated_by,
             dbRow.description,
             dbRow.status_reason,

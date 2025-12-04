@@ -1,4 +1,3 @@
-import type {User} from "./user";
 
 export interface ReportPhoto {
   id: number;
@@ -36,7 +35,8 @@ export interface Report {
   title: string;
   description: string;
   is_public: boolean;
-  category: ReportCategory;
+  category: ReportCategory; // [used for GET reports] Contains the full category object
+  category_id: number;  // [used for UPLOAD a report] can be evaluated to category name by a separate API call
   location: Location;
 
   reporter_id?: number;
