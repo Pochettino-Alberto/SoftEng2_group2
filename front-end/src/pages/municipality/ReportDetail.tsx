@@ -143,7 +143,7 @@ const ReportDetail: React.FC = () => {
 
                 const updatedReport = await reportAPI.assignReportToUser(report.id, selectedTechnicianId)
 
-                setReport((prev) => prev ? { ...prev, status: updatedReport.status, status_reason: updatedReport.status_reason, assigned_to: updatedReport.assigned_to } : null)
+                setReport((prev) => prev ? { ...prev, status: updatedReport.status, status_reason: updatedReport.status_reason, assigned_from: updatedReport.assigned_from } : null)
                 setToast({ message: 'Report assigned successfully', type: 'success' })
 
             } else {
@@ -195,13 +195,13 @@ const ReportDetail: React.FC = () => {
 
                 <div className="mb-4">
                     <p className="text-sm text-gray-600">Category: {report.category?.name}</p>
-                    <p className="text-sm text-gray-600">Location: {report.location && typeof report.location.lat === 'number' && typeof report.location.lng === 'number' ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
-                    <p className="text-sm text-gray-600">Reporter: {!report.is_public ? 'Anonymous' : report.reporter_id || '—'}</p>
+                    <p className="text-sm text-gray-600">Location: {report.location ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
+                    <p className="text-sm text-gray-600">Reporter: {!report.is_public ? 'Anonymous' : report.reporter.first_name + ' ' +  report.reporter.last_name + ' [' + report.reporter.username + ']'  || '—'}</p>
                     {report.status === 'Rejected' && report.status_reason && (
                         <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
                     )}
                     {report.status === 'Assigned' && (
-                        <p className="text-sm text-gray-600">Assigned To ID: {report.assigned_to || '—'}</p>
+                        <p className="text-sm text-gray-600">Assigned To: {report.assigned_from.first_name +  report.assigned_from.last_name + ' [' + report.assigned_from.username + ']' || '—'}</p>
                     )}
                 </div>
 

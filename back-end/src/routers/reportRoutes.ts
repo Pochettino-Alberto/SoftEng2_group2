@@ -215,7 +215,6 @@ class ReportRoutes {
             }
         );
 
-        // NEW: ASSIGN REPORT ENDPOINT
         this.router.patch(
             "/report/:id/assign",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),

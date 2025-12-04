@@ -1,3 +1,4 @@
+import type {User} from "./user.ts";
 
 export interface ReportPhoto {
   id: number;
@@ -34,15 +35,22 @@ export interface Report {
   id: number;
   title: string;
   description: string;
+  location: Location;
   is_public: boolean;
+
   category: ReportCategory; // [used for GET reports] Contains the full category object
   category_id: number;  // [used for UPLOAD a report] can be evaluated to category name by a separate API call
-  location: Location;
 
+  reporter: User;
   reporter_id?: number;
-  assigned_to?: number;
-  assigned_from?: number;
-  maintainer?: number;
+
+  assigned_from: User;
+  assigned_from_id?: number;
+
+  maintainer?: User;
+  maintainer_id?: number;
+
+  updated?: User;
   updated_by?: number;
 
   updatedAt: string;

@@ -319,7 +319,7 @@ class ReportDAO {
             // Ensure you update your DDL or 'reports' table schema.
             const sql = `
                 UPDATE reports 
-                SET status = 'Assigned', assigned_to = ?, updatedAt = ? 
+                SET status = 'Assigned', assigned_from_id = ?, updatedAt = ? 
                 WHERE id = ?
             `;
             db.run(sql, [assignedToId, updatedAt, reportId], function(err) {
