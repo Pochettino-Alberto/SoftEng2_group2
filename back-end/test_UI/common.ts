@@ -233,6 +233,25 @@ export class CommonSteps {
 
     await this.demoSleep(msSleep);
   }
+
+  async scrollToElementGlobal(targetElement: By, msSleep: number = 200) {
+    if (!this.demoWait) return;
+
+    const target = await this.driver.wait(
+      until.elementLocated(targetElement),
+      5000,
+      `Target element not found: ${targetElement.toString()}`
+    ) as WebElement;
+
+    await this.driver.executeScript(`
+      const target = arguments[0];
+      const rect = target.getBoundingClientRect();
+      const offset = rect.top - (window.innerHeight * 0.75) + (rect.height / 2);
+      window.scrollBy({ top: offset, behavior: 'smooth' });
+    `, target);
+
+    await this.demoSleep(msSleep);
+  }
     
   async moveMap(
     movableElement: By,
@@ -296,7 +315,7 @@ export class CommonSteps {
   }
 
   
-  async login(user: { username: string; password: string; type: string }, is_fast=false) {
+  async login(user: { username: string; password: string; type: string }, is_fast=true) {
 
     if(is_fast && this.demoWait){
       if (user.type === 'citizen') {

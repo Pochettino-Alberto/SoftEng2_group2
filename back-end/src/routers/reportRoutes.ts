@@ -168,7 +168,7 @@ class ReportRoutes {
                     await this.controller.updateReportStatus(reportId, status as ReportStatusType, status_reason);
 
                     const updatedReport = await this.controller.getReportById(reportId);
-
+                    
                     res.status(200).json(updatedReport);
                 } catch (err) {
                     console.error('REPORT STATUS UPDATE ERROR:', err);

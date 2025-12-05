@@ -22,6 +22,7 @@ export interface PaginatedTableProps<T> {
   onPageChange?: (newPage: number) => void;
   onRowClick?: (row: T) => void;
   className?: string;
+  tableId?: string;
 }
 
 function PaginatedTable<T>({
@@ -30,6 +31,7 @@ function PaginatedTable<T>({
   onPageChange,
   onRowClick,
   className = '',
+  tableId = '',
 }: PaginatedTableProps<T>) {
   const { page_num, total_pages, total_items, items } = paginatedData;
 
@@ -43,7 +45,7 @@ function PaginatedTable<T>({
         Showing page {page_num} of {total_pages} — Total items: {total_items}
       </div>
 
-      <table className="min-w-full border-collapse text-sm text-left text-gray-700">
+      <table id={tableId} className="min-w-full border-collapse text-sm text-left text-gray-700">
         <thead className="bg-gray-100">
           <tr>
             {columns.map((col, idx) => (
@@ -60,6 +62,7 @@ function PaginatedTable<T>({
           {items.length > 0 ? (
             items.map((row: T, rowIndex: number) => (
               <tr
+                id={(row as any).id ?? ""}
                 key={(row as any).id ?? rowIndex}
                 className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 onClick={onRowClick ? (e) => {
@@ -87,7 +90,7 @@ function PaginatedTable<T>({
               </tr>
             ))
           ) : (
-            <tr>
+            <tr id="no-data-in-table">
               <td
                 colSpan={columns.length}
                 className="text-center text-gray-500 py-6"

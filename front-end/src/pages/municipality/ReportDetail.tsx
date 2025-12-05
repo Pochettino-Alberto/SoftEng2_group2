@@ -217,6 +217,7 @@ const ReportDetail: React.FC = () => {
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center space-x-2">
                             <Button
+                                id="acceptAssignAction"
                                 variant={selectedAction === 'accept' ? 'primary' : 'outline'}
                                 size="md"
                                 onClick={() => setSelectedAction('accept')}
@@ -226,6 +227,7 @@ const ReportDetail: React.FC = () => {
                                 Accept & Assign
                             </Button>
                             <Button
+                                id="rejectAction"
                                 variant={selectedAction === 'reject' ? 'primary' : 'outline'}
                                 size="md"
                                 onClick={() => setSelectedAction('reject')}
@@ -252,7 +254,7 @@ const ReportDetail: React.FC = () => {
                                     ) : (
                                         tosUsers.map(user => (
                                             <option key={user.id} value={user.id}>
-                                                {user.first_name} {user.last_name} ({user.id})
+                                                {user.username}
                                             </option>
                                         ))
                                     )}
@@ -270,12 +272,13 @@ const ReportDetail: React.FC = () => {
 
                         {selectedAction === 'reject' && (
                             <div className="mt-2">
-                                <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="w-full p-2 border rounded" placeholder="Provide rejection reason" rows={4} />
+                                <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="w-full p-2 border rounded" id="rejectReasonInput" placeholder="Provide rejection reason" rows={4} />
                             </div>
                         )}
 
                         <div className="mt-4 flex justify-end">
                             <Button
+                                id="submmitChoice"
                                 style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { backgroundColor: '#dc2626' }}
                                 disabled={
                                     loading ||

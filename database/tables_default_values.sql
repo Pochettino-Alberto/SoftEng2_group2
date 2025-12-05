@@ -184,3 +184,17 @@ SELECT u.id, r.id
 FROM users u, roles r
 WHERE u.username = 'francesco'
   AND r.label = 'Municipal Buildings Maintenance Technician';
+
+
+-- ===============================
+-- LOAD REPORTS
+-- ===============================
+
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(3, 1, NULL, NULL, NULL, NULL, 'Sewer Issue in Downtown', 'Sewer leacking in Downtown', 1, 45.065629634939995, 7.688378609556113, 'Pending Approval', NULL, '2025-12-05', '2025-12-05'),
+(3, 1, NULL, NULL, NULL, NULL, 'Sewer Issue in Downtown', 'Sewer leacking in Downtown', 1, 45.065629634939995, 7.688378609556113, 'Pending Approval', NULL, '2025-12-05', '2025-12-05');
+INSERT INTO report_photos
+(report_id, "position", photo_path, photo_public_url)
+VALUES(1, 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');

@@ -89,7 +89,7 @@ describe('Citizen usages: ', () => {
 
 
   test('Citizen usage submitting report', async () => {
-    await steps.login(CommonData.USER_CITIZEN, true);
+    await steps.login(CommonData.USER_CITIZEN, false);
 
     await steps.custumClick(By.id('createNewReportBtn'))
     
@@ -118,7 +118,7 @@ describe('Citizen usages: ', () => {
     await steps.scrollToElement(By.id('scrollableFormSubmitReport'), By.id('submitReportBtn'))
     await steps.custumClick(By.id('submitReportBtn'));
     
-    await steps.assertExists(By.id('toast_message'));
+    await steps.assertExists(By.id('toast_message_success'));
     
     await steps.demoSleep()
   }, 60000);
