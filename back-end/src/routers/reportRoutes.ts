@@ -253,14 +253,16 @@ class ReportRoutes {
             (req: any, res: any, next: any) => {
                 try {
                     const techOfficerId = req.user.id;
+                    // debugging
                     console.log('[GET /reports/assigned-to-techOfficer] user:', req.user);
                     this.controller.getReportsAssignedToTechOfficer(techOfficerId)
                         .then((reports: Report[]) => res.status(200).json(reports))
-                        .catch((err: any) => {
+                        .catch((err: any) => { // debugging
                             console.error('[GET /reports/assigned-to-techOfficer] controller error:', err);
                             next(err);
                         });
                 } catch (err) {
+                    // debugging
                     console.error('[GET /reports/assigned-to-techOfficer] unexpected error:', err);
                     next(err);
                 }

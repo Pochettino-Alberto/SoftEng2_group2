@@ -31,7 +31,7 @@ class ErrorHandler {
      */
     static registerErrorHandler(router: express.Application) {
         router.use((err: any, req: any, res: any, next: any) => {
-            // Log the full error so 500s are visible during debugging/run
+            // debugging 500 error
             console.error('Error handler caught:', err);
             const statusCode = err.customCode || 500;
             // In test mode include the real error message to help debugging

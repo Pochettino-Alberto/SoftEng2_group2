@@ -262,7 +262,7 @@ class ReportDAO {
             try {
                 const sql = `SELECT * FROM reports WHERE status = ? AND assigned_to = ? ORDER BY updatedAt DESC`;
                 db.all(sql, ['Assigned', assigned_to], async (err, rows: any[]) => {
-                    if (err) {
+                    if (err) { // debugging
                         console.error('SQL ERROR getReportsAssignedToTechOfficer', err, { assigned_to });
                         return reject(err);
                     }
