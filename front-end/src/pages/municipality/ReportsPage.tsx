@@ -13,7 +13,7 @@ export default function ReportsPage() {
   const [pageSize] = useState(5)
   const [paginated, setPaginated] = useState({ page_num: 1, page_size: pageSize, total_pages: 1, total_items: 0, items: [] as Report[] })
   const [loading, setLoading] = useState(false)
-  const [onlyPending, setOnlyPending] = useState(true)
+  const [selectedStatus, setSelectedStatus] = useState<string>(ReportStatus.PENDING_APPROVAL)
   const [categoriesMap, setCategoriesMap] = useState<Record<number, string>>({})
   const navigate = useNavigate()
 
@@ -21,7 +21,7 @@ export default function ReportsPage() {
     setLoading(true)
     try {
       const params: any = { page_num: p, page_size: pageSize }
-      if (onlyPending) params.status = ReportStatus.PENDING_APPROVAL
+      if (selectedStatus && selectedStatus !== 'all') params.status = selectedStatus
       const toPaginated = (items: Report[]) => ({
         page_num: 1,
         page_size: pageSize,
@@ -70,7 +70,7 @@ export default function ReportsPage() {
       }
     }
     loadCategories()
-  }, [onlyPending])
+  }, [selectedStatus])
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= paginated.total_pages) fetchPage(p)
@@ -140,25 +140,55 @@ export default function ReportsPage() {
     },
   ]
 
+  const handleReload = () => {
+    fetchPage(paginated.page_num)
+  }
+
   return (
-    <div className="max-w-3xl mx-auto mt-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Reports</h2>
-        <div className="flex items-center space-x-4">
+    <div className="max-w-6xl mx-auto mt-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">Reports Management</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Click on any row to review the report details. You can then approve and assign it to a technician, or reject it with a reason.
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+              Filter by Status:
+            </label>
+            <select
+              id="status-filter"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+              disabled={loading}
+            >
+              <option value="all">All Statuses</option>
+              <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>
+              <option value={ReportStatus.ASSIGNED}>Assigned</option>
+              <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
+              <option value={ReportStatus.SUSPENDED}>Suspended</option>
+              <option value={ReportStatus.REJECTED}>Rejected</option>
+              <option value={ReportStatus.RESOLVED}>Resolved</option>
+            </select>
+          </div>
           <Button
-            variant={onlyPending ? 'primary' : 'outline'}
+            variant="outline"
             size="md"
-            onClick={() => setOnlyPending((v) => !v)}
-            aria-pressed={onlyPending}
-            className="ml-2"
+            onClick={handleReload}
+            disabled={loading}
+            className="flex items-center space-x-2"
           >
-            Pending
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Reload</span>
           </Button>
         </div>
       </div>
 
       <PaginatedTable
-        paginatedData={{ ...paginated, items: (onlyPending ? paginated.items.filter((r) => r.status === ReportStatus.PENDING_APPROVAL) : paginated.items) }}
+        paginatedData={paginated}
         columns={columns}
         onPageChange={handlePageChange}
         onRowClick={(r) => navigate(`/municipality/report/${(r as Report).id}`, { state: { report: r } })}
