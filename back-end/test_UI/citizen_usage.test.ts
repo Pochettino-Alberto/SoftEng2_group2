@@ -47,12 +47,12 @@ describe('Citizen usages: ', () => {
 
   
   test('Register citizen', async () => {
-    const user={
-      username: "angryCitizen",
+    const user = {
+      username: "angryCitizen_"+String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
       firstName: "Mario",
       lastName: "Rossi",
       email: "Mario.Rossi@email.it",
-      password: "newCitizen1_yey!"
+      password: "SE2_group2_password!"
     };
 
     driver.get(CommonData.BASE_URL_FE+"/auth/register");
@@ -87,10 +87,8 @@ describe('Citizen usages: ', () => {
     await steps.custumClick(By.id('registerBtnSubmit'));
 
     await steps.demoSleep()
-    try {
-        await steps.custumClick(By.id("logoutBtn"));
-    } catch (e) {}
-
+    await steps.custumClick(By.id("logoutBtn"));
+    
   }, 60000);
 
 

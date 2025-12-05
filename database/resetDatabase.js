@@ -1,7 +1,7 @@
 // database/resetDatabase.js
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // ---- Fixes ESM paths ----
 const __filename = fileURLToPath(import.meta.url);
@@ -11,10 +11,10 @@ const __dirname = path.dirname(__filename);
 const backendPath = path.resolve(__dirname, "../back-end");
 
 // ---- Add backend/node_modules to module search path ----
-import { createRequire } from "module";
+import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 process.env.NODE_PATH = path.join(backendPath, "node_modules");
-require("module").Module._initPaths();
+require("node:module").Module._initPaths();
 
 // ---- Now we can require sqlite3 from back-end ----
 const sqlite3 = require("sqlite3").verbose();

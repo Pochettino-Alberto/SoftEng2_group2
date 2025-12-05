@@ -24,13 +24,25 @@ code documentation:
 
 ### Default sample users credentials
 
-| Username    | Password          | User Type    | role_type {role_label_list} |
-| ----------- | ----------------- | ------------ | - |
-| johndoe     | securePassword123 | citizen      | - |
-| admin       | securePassword123 | admin        | Municipal Administrator |
-| mario.rossi | password          | municipality | publicRelations_officer {Municipal Public Relations Officer} |
-| franco      | password          | municipality | technical_officer {Infrastructure Technician} |
-| luigi       | password          | municipality | technical_officer {Green Areas Technician, Environment Quality Technician} |
+| Username  | Password             | User Type    | role_type {role_label_list}                                                               |
+| --------- | -------------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| johndoe   | SE2_group2_password! | citizen      | -                                                                                         |
+| d.costa   | SE2_group2_password! | citizen      | -                                                                                         |
+| m.moretti | SE2_group2_password! | citizen      | -                                                                                         |
+| l.russo   | SE2_group2_password! | citizen      | -                                                                                         |
+| admin     | SE2_group2_password! | admin        | publicRelations_officer {Municipal Administrator}                                         |
+| m.rossi   | SE2_group2_password! | municipality | publicRelations_officer {Municipal Public Relations Officer}                              |
+| f.bianchi | SE2_group2_password! | municipality | technical_officer {Infrastructure Technician, Municipal Buildings Maintenance Technician} |
+| l.verdi   | SE2_group2_password! | municipality | technical_officer {Green Areas Technician, Environment Quality Technician}                |
+| f.banfi   | SE2_group2_password! | municipality | technical_officer {Municipal Buildings Maintenance Technician}                            |
+| r.rosso   | SE2_group2_password! | municipality | -                                                                                         |
+| m.bianchi | SE2_group2_password! | municipality | external_maintainer {Roads Maintainer, Parks Maintainer}                                  |
+| g.verdi   | SE2_group2_password! | municipality | -                                                                                         |
+| l.neri    | SE2_group2_password! | municipality | external_maintainer {Parks Maintainer}                                                    |
+| s.gallo   | SE2_group2_password! | municipality | external_maintainer {Water/sewer Maintainer, Roads Maintainer}                            |
+| p.fontana | SE2_group2_password! | municipality | external_maintainer {Internal Spaces Maintainer}                                          |
+| e.ricci   | SE2_group2_password! | municipality | technical_officer {Infrastructure Technician, Municipal Buildings Maintenance Technician} |
+
 ## Participium — Schematic summary
 
 ---
