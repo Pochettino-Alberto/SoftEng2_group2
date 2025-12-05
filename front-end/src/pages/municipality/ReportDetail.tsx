@@ -17,7 +17,6 @@ const ReportDetail: React.FC = () => {
     const [error, setError] = useState('')
     const [reason, setReason] = useState('')
     const [selectedAction, setSelectedAction] = useState<'accept' | 'reject'>('reject')
-    const [editingStatus, setEditingStatus] = useState(true)
     const [categoriesCache, setCategoriesCache] = useState<ReportCategory[] | null>(null)
 
     const [tosUsers, setTosUsers] = useState<User[]>([])
@@ -83,20 +82,19 @@ const ReportDetail: React.FC = () => {
     useEffect(() => {
         if (!report) return
         console.log(report);
-        setEditingStatus(!(report.status === 'Assigned' || report.status === 'Rejected'))
 
-        if (selectedAction === 'accept' && report.status !== 'Assigned' && report.status !== 'Rejected' && report.category_id) {
+        if (selectedAction === 'accept' && report.status === 'Pending Approval' && report.category_id) {
             fetchTosUsers(report.category_id)
         }
     }, [report, selectedAction, fetchTosUsers])
 
     useEffect(() => {
         if (!report) return
-        if (editingStatus && report.status === 'Rejected') {
+        if (report.status === 'Rejected') {
             setSelectedAction('reject')
             setReason(report.status_reason || '')
         }
-    }, [editingStatus, report])
+    }, [report])
 
     async function augmentReportFromList(r: Report): Promise<Report> {
         const copy: any = { ...r }
@@ -152,7 +150,6 @@ const ReportDetail: React.FC = () => {
                 setReason('')
                 setToast({ message: 'Report rejected', type: 'success' })
             }
-            setEditingStatus(false)
 
         } catch (err) {
             console.error(err)
@@ -215,73 +212,68 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex flex-col gap-3">
-                    <div className="flex items-center space-x-2">
-                        {editingStatus ? (
-                            <>
-                                <Button
-                                    variant={selectedAction === 'accept' ? 'primary' : 'outline'}
-                                    size="md"
-                                    onClick={() => setSelectedAction('accept')}
-                                    disabled={loading}
-                                    style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { borderColor: '#16a34a', color: '#16a34a' }}
-                                >
-                                    Accept & Assign
-                                </Button>
-                                <Button
-                                    variant={selectedAction === 'reject' ? 'primary' : 'outline'}
-                                    size="md"
-                                    onClick={() => setSelectedAction('reject')}
-                                    disabled={loading}
-                                    style={selectedAction === 'reject' ? { backgroundColor: '#dc2626' } : { borderColor: '#dc2626', color: '#dc2626' }}
-                                >
-                                    Reject
-                                </Button>
-                            </>
-                        ) : (
-                            <Button variant="outline" onClick={() => setEditingStatus(true)} disabled={report.status === 'In Progress'}>Edit report status</Button>
-                        )}
-                    </div>
-
-                    {selectedAction === 'accept' && editingStatus && (
-                        <div className="mt-2">
-                            <label htmlFor="technician-select" className="block text-sm font-medium text-gray-700 mb-1">Assign to Technician:</label>
-
-                            <select
-                                id="technician-select"
-                                value={selectedTechnicianId || ''}
-                                onChange={(e) => setSelectedTechnicianId(Number(e.target.value))}
-                                className="w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500"
-                                disabled={loading || tosLoading || tosUsers.length === 0}
+                {/* Only show action buttons for Pending Approval reports */}
+                {report.status === 'Pending Approval' && (
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant={selectedAction === 'accept' ? 'primary' : 'outline'}
+                                size="md"
+                                onClick={() => setSelectedAction('accept')}
+                                disabled={loading}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { borderColor: '#16a34a', color: '#16a34a' }}
                             >
-                                {tosUsers.length === 0 ? (
-                                    <option value="">{tosLoading ? 'Loading technicians...' : 'No technicians found for this category'}</option>
-                                ) : (
-                                    tosUsers.map(user => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.first_name} {user.last_name} ({user.id})
-                                        </option>
-                                    ))
+                                Accept & Assign
+                            </Button>
+                            <Button
+                                variant={selectedAction === 'reject' ? 'primary' : 'outline'}
+                                size="md"
+                                onClick={() => setSelectedAction('reject')}
+                                disabled={loading}
+                                style={selectedAction === 'reject' ? { backgroundColor: '#dc2626' } : { borderColor: '#dc2626', color: '#dc2626' }}
+                            >
+                                Reject
+                            </Button>
+                        </div>
+
+                        {selectedAction === 'accept' && (
+                            <div className="mt-2">
+                                <label htmlFor="technician-select" className="block text-sm font-medium text-gray-700 mb-1">Assign to Technician:</label>
+
+                                <select
+                                    id="technician-select"
+                                    value={selectedTechnicianId || ''}
+                                    onChange={(e) => setSelectedTechnicianId(Number(e.target.value))}
+                                    className="w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500"
+                                    disabled={loading || tosLoading || tosUsers.length === 0}
+                                >
+                                    {tosUsers.length === 0 ? (
+                                        <option value="">{tosLoading ? 'Loading technicians...' : 'No technicians found for this category'}</option>
+                                    ) : (
+                                        tosUsers.map(user => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.first_name} {user.last_name} ({user.id})
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+
+                                {!tosLoading && tosUsers.length === 0 && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                        No TOS users found for this category. Cannot assign.
+                                    </p>
                                 )}
-                            </select>
 
-                            {!tosLoading && tosUsers.length === 0 && (
-                                <p className="text-red-500 text-sm mt-1">
-                                    No TOS users found for this category. Cannot assign.
-                                </p>
-                            )}
+                                {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+                            </div>
+                        )}
 
-                            {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
-                        </div>
-                    )}
+                        {selectedAction === 'reject' && (
+                            <div className="mt-2">
+                                <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="w-full p-2 border rounded" placeholder="Provide rejection reason" rows={4} />
+                            </div>
+                        )}
 
-                    {selectedAction === 'reject' && editingStatus && (
-                        <div className="mt-2">
-                            <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="w-full p-2 border rounded" placeholder="Provide rejection reason" rows={4} />
-                        </div>
-                    )}
-
-                    {editingStatus && (
                         <div className="mt-4 flex justify-end">
                             <Button
                                 style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { backgroundColor: '#dc2626' }}
@@ -295,8 +287,8 @@ const ReportDetail: React.FC = () => {
                                 Submit {selectedAction === 'accept' ? 'Assignment' : 'Rejection'}
                             </Button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </Card>
         </div>
     )
