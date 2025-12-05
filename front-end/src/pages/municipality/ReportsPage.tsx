@@ -10,6 +10,8 @@ import { useAuth } from '../../context/AuthContext'
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const isPublicRelationsOfficer = user?.userRoles.some((r) => r.role_type === 'publicRelations_officer') ?? false;
+  const isTechnicalOfficer = user?.userRoles.some((r) => r.role_type === 'technical_officer') ?? false;
   const [pageSize] = useState(5)
   const [paginated, setPaginated] = useState({ page_num: 1, page_size: pageSize, total_pages: 1, total_items: 0, items: [] as Report[] })
   const [loading, setLoading] = useState(false)
@@ -32,10 +34,10 @@ export default function ReportsPage() {
       let res: any;
 
       // Shows all reports if the user has the 'Public Relationship municipal officer' role
-      if(user?.userRoles.some((r) => r.role_type === 'publicRelations_officer')){
+      if(isPublicRelationsOfficer){
         res = await reportAPI.searchReportsPaginated(params)
         //console.log('Municipal Public Relations Officer - can see all reports');
-      } else if(user?.userRoles.some((r) => r.role_type === 'technical_officer')){
+      } else if(isTechnicalOfficer){
         res = toPaginated(await reportAPI.getTechnicalOfficerReports());
         //console.log('Municipal Technical Officer - can see only assigned reports');
       } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
@@ -70,7 +72,7 @@ export default function ReportsPage() {
       }
     }
     loadCategories()
-  }, [selectedStatus])
+  }, [selectedStatus, isPublicRelationsOfficer, isTechnicalOfficer])
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= paginated.total_pages) fetchPage(p)
@@ -147,31 +149,39 @@ export default function ReportsPage() {
   return (
     <div className="max-w-6xl mx-auto mt-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Reports Management</h2>
+        <h2 className="text-2xl font-bold mb-2">
+          {isPublicRelationsOfficer ? 'Reports Management' : isTechnicalOfficer ? 'Assigned Reports' : 'Reports'}
+        </h2>
         <p className="text-sm text-gray-600 mb-4">
-          Click on any row to review the report details. You can then approve and assign it to a technician, or reject it with a reason.
+          {isPublicRelationsOfficer
+            ? 'Click a row to review details, approve and assign, or reject with a reason.'
+            : isTechnicalOfficer
+              ? 'These are the reports assigned to you. Click a row to see details.'
+              : 'Reports overview.'}
         </p>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-              Filter by Status:
-            </label>
-            <select
-              id="status-filter"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-              disabled={loading}
-            >
-              <option value="all">All Statuses</option>
-              <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>
-              <option value={ReportStatus.ASSIGNED}>Assigned</option>
-              <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
-              <option value={ReportStatus.SUSPENDED}>Suspended</option>
-              <option value={ReportStatus.REJECTED}>Rejected</option>
-              <option value={ReportStatus.RESOLVED}>Resolved</option>
-            </select>
-          </div>
+          {isPublicRelationsOfficer ? (
+            <div className="flex items-center space-x-3">
+              <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                Filter by Status:
+              </label>
+              <select
+                id="status-filter"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                disabled={loading}
+              >
+                <option value="all">All Statuses</option>
+                <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>
+                <option value={ReportStatus.ASSIGNED}>Assigned</option>
+                <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
+                <option value={ReportStatus.SUSPENDED}>Suspended</option>
+                <option value={ReportStatus.REJECTED}>Rejected</option>
+                <option value={ReportStatus.RESOLVED}>Resolved</option>
+              </select>
+            </div>
+          ) : <div />}
           <Button
             variant="outline"
             size="md"

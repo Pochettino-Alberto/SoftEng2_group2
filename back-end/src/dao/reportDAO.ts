@@ -269,7 +269,8 @@ class ReportDAO {
 
                     const reports: Report[] = [];
                     for (const r of rows) {
-                        reports.push(await this.commonDao.mapDBrowToReport(r, false));
+                        
+                        reports.push(await this.commonDao.mapDBrowToReport(r, true));
                     }
 
                     resolve(reports);
