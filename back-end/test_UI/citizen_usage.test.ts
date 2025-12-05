@@ -85,6 +85,12 @@ describe('Citizen usages: ', () => {
 
     // Click sign-in button
     await steps.custumClick(By.id('registerBtnSubmit'));
+
+    await steps.demoSleep()
+    try {
+        await steps.custumClick(By.id("logoutBtn"));
+    } catch (e) {}
+
   }, 60000);
 
 

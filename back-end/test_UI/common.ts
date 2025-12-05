@@ -1,4 +1,4 @@
-import { WebDriver, until, By, error, WebElement  } from 'selenium-webdriver';
+import { WebDriver, until, By, WebElement  } from 'selenium-webdriver';
 
 
 export class CommonData {
@@ -180,7 +180,7 @@ export class CommonSteps {
 
   async uploadPhotos(element: By, filePaths: string[]) {
     // Selenium requires absolute paths
-    const absolutePaths = filePaths.map(p => require("path").resolve(p));
+    const absolutePaths = filePaths.map(p => require("node:path").resolve(p));
 
     const fileInput = await this.driver.wait(
       until.elementLocated(element),

@@ -26,11 +26,11 @@ jobs:
 
       # 3. Install dependencies and run client-server
       - name: Install dependencies Backend
-        run: npm ci
+        run: npm i
         working-directory: back-end
 
       - name: Install dependencies Frontend
-        run: npm ci
+        run: npm i
         working-directory: front-end
 
 

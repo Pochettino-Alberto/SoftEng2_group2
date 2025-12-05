@@ -49,6 +49,7 @@ const Navbar: React.FC = () => {
                   My Profile
                 </Link>
                 <button
+                  id="logoutBtn"
                   onClick={handleLogout}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
@@ -56,7 +57,6 @@ const Navbar: React.FC = () => {
                 </button>
               </>
             ) : (
-              <>
                 <Link
                   id="SignIn_SignUp"
                   to="/auth/account"
@@ -68,7 +68,6 @@ const Navbar: React.FC = () => {
                   </svg>
                   Sign In / Sign Up
                 </Link>
-              </>
             )}
           </div>
 
@@ -81,13 +80,13 @@ const Navbar: React.FC = () => {
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
-              {!isMenuOpen ? (
+              {isMenuOpen ? (
                 <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
                 <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
               )}
             </button>
@@ -119,19 +118,17 @@ const Navbar: React.FC = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  to="/auth/account"
-                  onClick={closeMenu}
-                  style={{ backgroundColor: '#5199CD' }}
-                  className="flex items-center justify-center gap-2 text-white hover:opacity-90 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Sign In / Sign Up
-                </Link>
-              </>
+              <Link
+                to="/auth/account"
+                onClick={closeMenu}
+                style={{ backgroundColor: '#5199CD' }}
+                className="flex items-center justify-center gap-2 text-white hover:opacity-90 px-3 py-2 rounded-md text-base font-medium transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Sign In / Sign Up
+              </Link>
             )}
           </div>
         </div>
