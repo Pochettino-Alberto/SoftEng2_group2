@@ -82,11 +82,16 @@ class CommonDao {
             dbRow.updated_at
         );
 
+        // Populate assignment target (technical officer) even if subclasses are not fetched
+        report.assigned_to_id = dbRow.assigned_to;
+
         if(getSubClasses){
             if (dbRow.category_id) 
                 report.category = await this.getById('report_categories', dbRow.category_id, this.mapDBrowToReportCategoryObject);
             if (dbRow.reporter_id) 
                 report.reporter = await this.getById('users', dbRow.reporter_id, this.mapDBrowToUserObject);
+            if (dbRow.assigned_to) 
+                report.assigned_to = await this.getById('users', dbRow.assigned_to, this.mapDBrowToUserObject);
             if (dbRow.assigned_from_id) 
                 report.assigned_from = await this.getById('users', dbRow.assigned_from_id, this.mapDBrowToUserObject);
             if (dbRow.maintainer_id) 

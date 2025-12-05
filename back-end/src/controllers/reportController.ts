@@ -125,14 +125,16 @@ class ReportController {
     }
 
     /**
-     * Assigns a report to a specific user and sets status to 'Assigned'.
+     * Assigns a report to a specific user, records who performed the assignment,
+     * and sets status to 'Assigned'.
      * @param reportId - The ID of the report.
      * @param assignedToId - The ID of the technician to assign the report to.
+     * @param assignedFromId - The ID of the municipal officer performing the assignment.
      * @returns A Promise that resolves to the updated Report object.
      */
-    async assignReportToUser(reportId: number, assignedToId: number): Promise<Report> {
+    async assignReportToUser(reportId: number, assignedToId: number, assignedFromId: number): Promise<Report> {
         try {
-            await this.dao.assignReportToUser(reportId, assignedToId);
+            await this.dao.assignReportToUser(reportId, assignedToId, assignedFromId);
             // Return the updated report so the frontend can update its state
             return await this.dao.getReportById(reportId);
         } catch (error) {

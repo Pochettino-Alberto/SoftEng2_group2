@@ -44,7 +44,10 @@ export interface Report {
   reporter: User;
   reporter_id?: number;
 
-  assigned_from: User;
+  assigned_to?: User;
+  assigned_to_id?: number;
+
+  assigned_from?: User;
   assigned_from_id?: number;
 
   maintainer?: User;

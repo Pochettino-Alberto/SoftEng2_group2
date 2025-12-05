@@ -227,8 +227,8 @@ class ReportRoutes {
                 try {
                     const reportId = Number(req.params.id);
                     const assignedToId = Number(req.body.assigned_to);
-
-                    const updatedReport = await this.controller.assignReportToUser(reportId, assignedToId);
+                    const assignedFromId = Number(req.user.id);
+                    const updatedReport = await this.controller.assignReportToUser(reportId, assignedToId, assignedFromId);
 
                     res.status(200).json(updatedReport);
                 } catch (err) {

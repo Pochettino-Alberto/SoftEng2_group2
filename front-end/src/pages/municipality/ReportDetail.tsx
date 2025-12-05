@@ -143,7 +143,7 @@ const ReportDetail: React.FC = () => {
 
                 const updatedReport = await reportAPI.assignReportToUser(report.id, selectedTechnicianId)
 
-                setReport((prev) => prev ? { ...prev, status: updatedReport.status, status_reason: updatedReport.status_reason, assigned_from: updatedReport.assigned_from } : null)
+                setReport((prev) => prev ? { ...prev, status: updatedReport.status, status_reason: updatedReport.status_reason, assigned_from: updatedReport.assigned_from, assigned_to: updatedReport.assigned_to } : null)
                 setToast({ message: 'Report assigned successfully', type: 'success' })
 
             } else {
@@ -201,7 +201,9 @@ const ReportDetail: React.FC = () => {
                         <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
                     )}
                     {report.status === 'Assigned' && (
-                        <p className="text-sm text-gray-600">Assigned To: {report.assigned_from.first_name +  report.assigned_from.last_name + ' [' + report.assigned_from.username + ']' || '—'}</p>
+                        <p className="text-sm text-gray-600">
+                            Assigned To: {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name} [${report.assigned_to.username}]` : '—'}
+                        </p>
                     )}
                 </div>
 

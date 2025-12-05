@@ -309,23 +309,21 @@ class ReportDAO {
     }
 
     /**
-     * Updates a report's status to ASSIGNED and sets the assigned_to user.
+     * Updates a report's status to ASSIGNED, sets the assigned_to user, and records who assigned it.
      * @param reportId - The ID of the report to update.
      * @param assignedToId - The ID of the technician to assign the report to.
+     * @param assignedFromId - The ID of the municipal officer performing the assignment.
      * @returns Promise resolving when the update is complete.
      */
-    async assignReportToUser(reportId: number, assignedToId: number): Promise<void> {
+    async assignReportToUser(reportId: number, assignedToId: number, assignedFromId: number): Promise<void> {
         return new Promise((resolve, reject) => {
             const updatedAt = Utility.now();
-            // This query attempts to save the assigned_to ID.
-            // Previously the code updated `assigned_from_id` by mistake.
-            // It should update `assigned_to` so the technical officer is correctly recorded.
             const sql = `
                 UPDATE reports 
-                SET status = 'Assigned', assigned_to = ?, updatedAt = ? 
+                SET status = 'Assigned', assigned_to = ?, assigned_from_id = ?, updatedAt = ? 
                 WHERE id = ?
             `;
-            db.run(sql, [assignedToId, updatedAt, reportId], function(err) {
+            db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function(err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
                     return reject(new Error(`Report with ID ${reportId} not found.`));

@@ -70,6 +70,9 @@ class Report {
 
     reporter_id?: number;
     reporter?: User;          // evaluated by reporter_id
+
+    assigned_to_id?: number;
+    assigned_to?: User;       // evaluated by assigned_to
     
     assigned_from_id?: number;
     assigned_from?: User;          // evaluated by assigned_from_id
