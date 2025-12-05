@@ -22,22 +22,30 @@ export default function ReportsPage() {
     try {
       const params: any = { page_num: p, page_size: pageSize }
       if (onlyPending) params.status = ReportStatus.PENDING_APPROVAL
-      let res = [];
+      const toPaginated = (items: Report[]) => ({
+        page_num: 1,
+        page_size: pageSize,
+        total_pages: 1,
+        total_items: items.length,
+        items,
+      });
+      let res: any;
 
       // Shows all reports if the user has the 'Public Relationship municipal officer' role
       if(user?.userRoles.some((r) => r.role_type === 'publicRelations_officer')){
         res = await reportAPI.searchReportsPaginated(params)
         //console.log('Municipal Public Relations Officer - can see all reports');
       } else if(user?.userRoles.some((r) => r.role_type === 'technical_officer')){
-        res = await reportAPI.getTechnicalOfficerReports();
+        res = toPaginated(await reportAPI.getTechnicalOfficerReports());
         //console.log('Municipal Technical Officer - can see only assigned reports');
       } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
         // Shows reports assigned to the external maintainer
         // TODO API endpoint to get reports assigned to external maintainer
-        await reportAPI.getExternalMaintainerReports();
+        res = toPaginated([]);
         console.log('External Maintainer - can see only assigned reports');
       } else {
         console.warn('No valid municipal role found - no reports to show');
+        res = toPaginated([]);
       }
 
       setPaginated(res);

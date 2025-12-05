@@ -254,15 +254,18 @@ class ReportDAO {
     /**
      * Get all reports assigned to a specific technical officer.
      * A report is considered assigned to the technical officer when its `status` is 'Assigned'
-     * and `assigned_from_id` equals the provided id.
-     * @param assigned_from_id - id of the technical officer
+     * and `assigned_to` equals the provided id.
+     * @param assigned_to - id of the technical officer
      */
-    async getReportsAssignedToTechOfficer(assigned_from_id: number): Promise<Report[]> {
+    async getReportsAssignedToTechOfficer(assigned_to: number): Promise<Report[]> {
         return new Promise((resolve, reject) => {
             try {
-                const sql = `SELECT * FROM reports WHERE status = ? AND assigned_from_id = ? ORDER BY updatedAt DESC`;
-                db.all(sql, ['Assigned', assigned_from_id], async (err, rows: any[]) => {
-                    if (err) return reject(err);
+                const sql = `SELECT * FROM reports WHERE status = ? AND assigned_to = ? ORDER BY updatedAt DESC`;
+                db.all(sql, ['Assigned', assigned_to], async (err, rows: any[]) => {
+                    if (err) {
+                        console.error('SQL ERROR getReportsAssignedToTechOfficer', err, { assigned_to });
+                        return reject(err);
+                    }
 
                     const reports: Report[] = [];
                     for (const r of rows) {
@@ -315,11 +318,11 @@ class ReportDAO {
         return new Promise((resolve, reject) => {
             const updatedAt = Utility.now();
             // This query attempts to save the assigned_to ID.
-            // If your DB doesn't have this column yet, this will error.
-            // Ensure you update your DDL or 'reports' table schema.
+            // Previously the code updated `assigned_from_id` by mistake.
+            // It should update `assigned_to` so the technical officer is correctly recorded.
             const sql = `
                 UPDATE reports 
-                SET status = 'Assigned', assigned_from_id = ?, updatedAt = ? 
+                SET status = 'Assigned', assigned_to = ?, updatedAt = ? 
                 WHERE id = ?
             `;
             db.run(sql, [assignedToId, updatedAt, reportId], function(err) {

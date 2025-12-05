@@ -164,15 +164,15 @@ class Authenticator {
         return res.status(401).json({ error: "User is not a municipality officer", status: 401 })
     }
     
-    hasRoleMaintainer(req: any, res: any, next: any) {
+    hasRoleMaintainer = (req: any, res: any, next: any) => {
         return this.hasRoleType(req, res, next, RoleType.MAINTAINER);
     }
     
-    hasRolePublicRelOff(req: any, res: any, next: any) {
+    hasRolePublicRelOff = (req: any, res: any, next: any) => {
         return this.hasRoleType(req, res, next, RoleType.REL_OFFICER);
     }
     
-    hasRoleTechOff(req: any, res: any, next: any) {
+    hasRoleTechOff = (req: any, res: any, next: any) => {
         return this.hasRoleType(req, res, next, RoleType.TECH_OFFICER);
     }
 

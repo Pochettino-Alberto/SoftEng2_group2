@@ -38,7 +38,7 @@ export const reportAPI = {
   },
 
   getTechnicalOfficerReports: async (): Promise<Report[]> => {
-    const response = await apiClient.get('/report/assigned-to-techOfficer');
+    const response = await apiClient.get('/reports/assigned-to-techOfficer');
     console.log('assigned-to-techOfficer response: ', response.data);
     return response.data;
   },
