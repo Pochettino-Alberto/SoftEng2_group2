@@ -334,6 +334,32 @@ class ReportDAO {
         });
     }
 
+    /**
+     * Assigns a report to an external maintainer without changing the status.
+     * Records the technical officer who performed the update in 'updated_by'.
+     * @param reportId - The ID of the report.
+     * @param maintainerId - The ID of the external maintainer.
+     * @param updatedBy - The ID of the technical officer performing the action.
+     * @returns Promise resolving when the update is complete.
+     */
+    async assignReportToMaintainer(reportId: number, maintainerId: number, updatedBy: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const updatedAt = Utility.now();
+            const sql = `
+                UPDATE reports
+                SET maintainer_id = ?, updated_by = ?, updatedAt = ?
+                WHERE id = ?
+            `;
+            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function(err) {
+                if (err) return reject(err);
+                if (this.changes === 0) {
+                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                }
+                resolve();
+            });
+        });
+    }
+
 }
 
 export default ReportDAO

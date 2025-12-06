@@ -143,6 +143,23 @@ class ReportController {
         }
     }
 
+    /**
+     * Assigns a report to an external maintainer.
+     * @param reportId - The ID of the report.
+     * @param maintainerId - The ID of the maintainer user.
+     * @param techOfficerId - The ID of the technical officer (used for updated_by).
+     * @returns A Promise that resolves to the updated Report object.
+     */
+    async assignReportToMaintainer(reportId: number, maintainerId: number, techOfficerId: number): Promise<Report> {
+        try {
+            await this.dao.assignReportToMaintainer(reportId, maintainerId, techOfficerId);
+            return await this.dao.getReportById(reportId);
+        } catch (error) {
+            console.error(`Error assigning report ${reportId} to maintainer ${maintainerId}:`, error);
+            throw error;
+        }
+    }
+
 }
 
 export default ReportController

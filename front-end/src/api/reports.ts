@@ -75,4 +75,9 @@ export const reportAPI = {
     const response = await apiClient.patch(`/reports/report/${reportId}/assign`, { assigned_to: assignedToId })
     return response.data
   },
+
+  assignReportToMaintainer: async (reportId: number, maintainerId: number): Promise<Report> => {
+    const response = await apiClient.patch(`/reports/report/${reportId}/assign-maintainer`, { maintainer_id: maintainerId })
+    return response.data
+  },
 }
