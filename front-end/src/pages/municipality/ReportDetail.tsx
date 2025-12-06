@@ -26,6 +26,9 @@ const ReportDetail: React.FC = () => {
     const fetchedCategoriesRef = useRef<Set<number>>(new Set())
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+    // Photo carousel state
+    const [isCarouselOpen, setIsCarouselOpen] = useState(false)
+    const [carouselIndex, setCarouselIndex] = useState(0)
 
     const fetchReport = useCallback(async (reportId: number) => {
         setLoading(true)
@@ -159,6 +162,36 @@ const ReportDetail: React.FC = () => {
         }
     }
 
+    const openCarouselAt = (index: number) => {
+        setCarouselIndex(index)
+        setIsCarouselOpen(true)
+    }
+
+    const closeCarousel = () => {
+        setIsCarouselOpen(false)
+    }
+
+    const showPrev = () => {
+        if (!report || !report.photos) return
+        setCarouselIndex((i) => (i - 1 + report.photos!.length) % report.photos!.length)
+    }
+
+    const showNext = () => {
+        if (!report || !report.photos) return
+        setCarouselIndex((i) => (i + 1) % report.photos!.length)
+    }
+
+    useEffect(() => {
+        if (!isCarouselOpen) return
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') showPrev()
+            if (e.key === 'ArrowRight') showNext()
+            if (e.key === 'Escape') closeCarousel()
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [isCarouselOpen, report])
+
     if (error && !loading && !report) {
         return <div className="max-w-3xl mx-auto mt-8 text-red-600">{error}</div>
     }
@@ -205,10 +238,34 @@ const ReportDetail: React.FC = () => {
                 </div>
 
                 {report.photos && report.photos.length > 0 && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                        {report.photos.map((p, idx) => (
-                            <img key={idx} src={p.photo_public_url} alt={`photo-${idx}`} className="w-64 h-64 object-cover rounded" />
-                        ))}
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Photos</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {report.photos.map((p, idx) => (
+                                <button key={idx} onClick={() => openCarouselAt(idx)} className="block w-full h-40 overflow-hidden rounded shadow-sm focus:outline-none" aria-label={`Open photo ${idx + 1}`}>
+                                    <img src={p.photo_public_url} alt={`photo-${idx}`} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-200" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Photo Carousel Modal */}
+                {isCarouselOpen && report && report.photos && (
+                    <div onClick={closeCarousel} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+                        <div onClick={(e) => e.stopPropagation()} className="relative max-w-4xl w-full mx-4">
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeCarousel(); }} aria-label="Close carousel" className="absolute top-2 right-2 z-50 text-white bg-gray-800 bg-opacity-40 rounded-full p-2 hover:bg-opacity-60">✕</button>
+                            <div className="bg-black rounded">
+                                <div className="relative">
+                                    <img src={report.photos[carouselIndex].photo_public_url} alt={`photo-${carouselIndex}`} className="w-full max-h-[70vh] object-contain mx-auto" />
+                                    <button onClick={(e) => { e.stopPropagation(); showPrev(); }} aria-label="Previous photo" className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-gray-800 bg-opacity-40 p-3 rounded-full hover:bg-opacity-60 z-40">◀</button>
+                                    <button onClick={(e) => { e.stopPropagation(); showNext(); }} aria-label="Next photo" className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-gray-800 bg-opacity-40 p-3 rounded-full hover:bg-opacity-60 z-40">▶</button>
+                                </div>
+                                <div className="text-center text-sm text-white py-2">
+                                    {carouselIndex + 1} / {report.photos.length}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
