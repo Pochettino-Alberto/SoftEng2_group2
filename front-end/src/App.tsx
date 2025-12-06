@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -22,10 +23,27 @@ import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUs
 import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
 
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const isFirst = useRef(true);
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+  return null;
+}
+
 function App() {
-  
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <DynamicMeta />
         <div className="flex flex-col min-h-screen">
