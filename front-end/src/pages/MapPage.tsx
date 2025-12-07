@@ -7,6 +7,7 @@ import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import torinoGeo from '../assets/torino.geo.json';
 import * as turf from "@turf/turf";
+import { useMemo } from 'react';
 
 import { reportAPI } from '../api/reports';
 import type { ReportCategory } from '../types/report';
@@ -346,16 +347,54 @@ const MapPage: React.FC = () => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-              {/* Torino borders */}
-              <GeoJSON
-                  data={torinoGeo as any}
-                  style={{
-                      color: "green",
-                      weight: 2,
-                      fillColor: "#3b82f6",
-                      fillOpacity: 0.15
-              }}
-              />
+              {/* Inverted mask: dark overlay outside Torino, and thin green border for allowed area */}
+              {useMemo(() => {
+                const geo: any = torinoGeo as any;
+                // collect holes from torino geometry (supports FeatureCollection, Feature, Polygon, MultiPolygon)
+                const holes: number[][][] = []
+
+                const pushPolygonRings = (coords: any[]) => {
+                  // coords is [ [lng,lat], ... ] or [ [ [lng,lat], ... ], [ ... holes ] ]
+                  // For Polygon: coords is array of linear rings
+                  coords.forEach((ring: any[]) => {
+                    // ensure ring closes
+                    holes.push(ring as number[][])
+                  })
+                }
+
+                if (geo.type === 'FeatureCollection') {
+                  geo.features.forEach((f: any) => {
+                    if (f.geometry.type === 'Polygon') pushPolygonRings(f.geometry.coordinates)
+                    if (f.geometry.type === 'MultiPolygon') f.geometry.coordinates.forEach((poly: any) => pushPolygonRings(poly))
+                  })
+                } else if (geo.type === 'Feature') {
+                  if (geo.geometry.type === 'Polygon') pushPolygonRings(geo.geometry.coordinates)
+                  if (geo.geometry.type === 'MultiPolygon') geo.geometry.coordinates.forEach((poly: any) => pushPolygonRings(poly))
+                } else if (geo.type === 'Polygon') {
+                  pushPolygonRings(geo.coordinates)
+                } else if (geo.type === 'MultiPolygon') {
+                  geo.coordinates.forEach((poly: any) => pushPolygonRings(poly))
+                }
+
+                // world-sized outer ring (lng,lat) - make slightly larger than world bbox to avoid edge artifacts
+                const outer = [[-195, -95], [195, -95], [195, 95], [-195, 95], [-195, -95]]
+
+                const maskFeature: any = {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [outer, ...holes]
+                  }
+                }
+
+                return (
+                  <>
+                    <GeoJSON data={maskFeature} style={{ color: 'transparent', weight: 0, fillColor: '#000000', fillOpacity: 0.45 }} />
+                    <GeoJSON data={torinoGeo as any} style={{ color: 'green', weight: 2, fillOpacity: 0 }} />
+                  </>
+                )
+              }, [])}
 
             <LocationMarker
               onLocationSelect={handleLocationSelect}
