@@ -215,6 +215,19 @@ class ReportRoutes {
             }
         );
 
+        this.router.get(
+            "/maintainer-users",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.hasRoleTechOff,
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => {
+                this.controller.getAllMaintainers()
+                    .then((users: User[]) => res.status(200).json(users))
+                    .catch((err: any) => next(err));
+            }
+        );
+
         this.router.patch(
             "/report/:id/assign",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
@@ -264,6 +277,41 @@ class ReportRoutes {
                 } catch (err) {
                     // debugging
                     console.error('[GET /reports/assigned-to-techOfficer] unexpected error:', err);
+                    next(err);
+                }
+            }
+        );
+
+        /**
+         * PATCH /report/:id/assign-maintainer
+         * Assigns a report to an external maintainer.
+         * - Status remains 'Assigned' (or current status).
+         * - maintainer_id is updated.
+         * - updated_by is set to the Tech Officer's ID.
+         */
+        this.router.patch(
+            "/report/:id/assign-maintainer",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.hasRoleTechOff,
+            param("id").toInt().isInt({ min: 1 }),
+            body("maintainer_id").toInt().isInt({ min: 1 }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.id);
+                    const maintainerId = Number(req.body.maintainer_id);
+                    const techOfficerId = Number(req.user.id);
+
+                    const updatedReport = await this.controller.assignReportToMaintainer(
+                        reportId,
+                        maintainerId,
+                        techOfficerId
+                    );
+
+                    res.status(200).json(updatedReport);
+                } catch (err) {
+                    console.error('REPORT MAINTAINER ASSIGNMENT ERROR:', err);
                     next(err);
                 }
             }

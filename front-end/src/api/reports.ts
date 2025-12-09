@@ -71,8 +71,18 @@ export const reportAPI = {
     return response.data
   },
 
+  getAllMaintainers: async (): Promise<User[]> => {
+    const response = await apiClient.get('/reports/maintainer-users')
+    return response.data
+  },
+
   assignReportToUser: async (reportId: number, assignedToId: number): Promise<Report> => {
     const response = await apiClient.patch(`/reports/report/${reportId}/assign`, { assigned_to: assignedToId })
+    return response.data
+  },
+
+  assignReportToMaintainer: async (reportId: number, maintainerId: number): Promise<Report> => {
+    const response = await apiClient.patch(`/reports/report/${reportId}/assign-maintainer`, { maintainer_id: maintainerId })
     return response.data
   },
 }

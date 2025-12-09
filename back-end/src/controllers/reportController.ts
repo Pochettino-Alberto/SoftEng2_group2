@@ -124,6 +124,15 @@ class ReportController {
         }
     }
 
+    async getAllMaintainers(): Promise<User[]> {
+        try {
+            return await this.dao.getAllMaintainers();
+        } catch (error) {
+            console.error("Error fetching maintainers:", error);
+            throw error;
+        }
+    }
+
     /**
      * Assigns a report to a specific user, records who performed the assignment,
      * and sets status to 'Assigned'.
@@ -139,6 +148,23 @@ class ReportController {
             return await this.dao.getReportById(reportId);
         } catch (error) {
             console.error(`Error assigning report ${reportId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Assigns a report to an external maintainer.
+     * @param reportId - The ID of the report.
+     * @param maintainerId - The ID of the maintainer user.
+     * @param techOfficerId - The ID of the technical officer (used for updated_by).
+     * @returns A Promise that resolves to the updated Report object.
+     */
+    async assignReportToMaintainer(reportId: number, maintainerId: number, techOfficerId: number): Promise<Report> {
+        try {
+            await this.dao.assignReportToMaintainer(reportId, maintainerId, techOfficerId);
+            return await this.dao.getReportById(reportId);
+        } catch (error) {
+            console.error(`Error assigning report ${reportId} to maintainer ${maintainerId}:`, error);
             throw error;
         }
     }

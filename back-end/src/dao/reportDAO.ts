@@ -310,6 +310,30 @@ class ReportDAO {
     }
 
     /**
+     * Retrieves all users who have the 'external_maintainer' role.
+     * @returns A Promise that resolves to an array of User objects.
+     */
+    async getAllMaintainers(): Promise<User[]> {
+        return new Promise<User[]>((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT u.*
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_type = 'external_maintainer'
+            `;
+            db.all(sql, [], (err: Error | null, rows: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                // Map database rows to User objects
+                const userArray = rows.map((row: any) => this.commonDao.mapDBrowToUserObject(row));
+                resolve(userArray);
+            });
+        });
+    }
+
+    /**
      * Updates a report's status to ASSIGNED, sets the assigned_to user, and records who assigned it.
      * @param reportId - The ID of the report to update.
      * @param assignedToId - The ID of the technician to assign the report to.
@@ -325,6 +349,32 @@ class ReportDAO {
                 WHERE id = ?
             `;
             db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function(err) {
+                if (err) return reject(err);
+                if (this.changes === 0) {
+                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                }
+                resolve();
+            });
+        });
+    }
+
+    /**
+     * Assigns a report to an external maintainer without changing the status.
+     * Records the technical officer who performed the update in 'updated_by'.
+     * @param reportId - The ID of the report.
+     * @param maintainerId - The ID of the external maintainer.
+     * @param updatedBy - The ID of the technical officer performing the action.
+     * @returns Promise resolving when the update is complete.
+     */
+    async assignReportToMaintainer(reportId: number, maintainerId: number, updatedBy: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const updatedAt = Utility.now();
+            const sql = `
+                UPDATE reports
+                SET maintainer_id = ?, updated_by = ?, updatedAt = ?
+                WHERE id = ?
+            `;
+            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function(err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
                     return reject(new Error(`Report with ID ${reportId} not found.`));
