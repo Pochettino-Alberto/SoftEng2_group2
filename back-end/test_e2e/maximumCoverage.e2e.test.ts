@@ -46,6 +46,7 @@ describe('E2E Maximum Coverage Tests', () => {
             .field('latitude', '45.0')
             .field('longitude', '7.0')
             .field('is_public', 'false')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
         
         expect(res.status).toBe(201)
         expect(res.body.is_public).toBe(false)
@@ -134,6 +135,7 @@ describe('E2E Maximum Coverage Tests', () => {
             .field('latitude', '45.123')
             .field('longitude', '7.456')
             .field('is_public', 'true')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
         
         expect(res.status).toBe(201)
         const report = res.body

@@ -95,6 +95,7 @@ describe('E2E Report Routes', () => {
             .field('latitude', '45.0')
             .field('longitude', '7.0')
             .field('is_public', 'false')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
         expect(resPrivate.status).toBe(201)
         const privateReport = resPrivate.body
 
@@ -133,6 +134,7 @@ describe('E2E Report Routes', () => {
                 .field('latitude', '45.0')
                 .field('longitude', '7.0')
                 .field('is_public', 'true')
+                .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
 
             expect(res.status).toBe(201)
             const savedReport = res.body
@@ -165,6 +167,7 @@ describe('E2E Report Routes', () => {
                 .field('latitude', '45.0')
                 .field('longitude', '7.0')
                 .field('is_public', 'true')
+                .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
 
             expect(res.status).toBe(201)
             const savedReport = res.body
