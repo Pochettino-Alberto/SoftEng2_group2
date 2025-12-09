@@ -161,4 +161,65 @@ describe('CommonDao', () => {
     expect(report.photos).toBeUndefined()
     expect(report.category).toBeUndefined()
   })
+
+  test('mapDBrowToUserRoleObject builds UserRole correctly', () => {
+    const dao = new CommonDao()
+    const row = { id: 1, role_type: 'technical_officer', label: 'Tech', description: 'Technician' }
+    const role = dao.mapDBrowToUserRoleObject(row)
+    expect(role.id).toBe(1)
+    expect(role.role_type).toBe('technical_officer')
+    expect(role.label).toBe('Tech')
+    expect(role.description).toBe('Technician')
+  })
+
+  test('mapDBrowToUserObjectWithRoles builds User with roles', async () => {
+    const dao = new CommonDao()
+    const row = { id: 1, username: 'u', first_name: 'F', last_name: 'L', email: 'e@e', user_type: 'citizen' }
+    const roles = [{ id: 1, role_type: 'r', label: 'l', description: 'd' }]
+    
+    // Mock getUserRolesByUserId
+    const mockGetRoles = jest.spyOn(dao, 'getUserRolesByUserId').mockResolvedValue(roles as any)
+    
+    const user = await dao.mapDBrowToUserObjectWithRoles(row)
+    expect(user.id).toBe(1)
+    expect(user.userRoles).toBe(roles)
+    expect(mockGetRoles).toHaveBeenCalledWith(1)
+  })
+
+  test('getUserRolesByUserId resolves with mapped roles', async () => {
+    const dao = new CommonDao()
+    const rows = [{ id: 1, role_type: 'r', label: 'l', description: 'd' }]
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, rows) })
+
+    const roles = await dao.getUserRolesByUserId(10)
+    expect(roles).toHaveLength(1)
+    expect(roles[0].id).toBe(1)
+  })
+
+  test('getUserRolesByUserId resolves empty array when no rows', async () => {
+    const dao = new CommonDao()
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, []) })
+    const roles = await dao.getUserRolesByUserId(10)
+    expect(roles).toEqual([])
+  })
+
+  test('getUserRolesByUserId rejects on db error', async () => {
+    const dao = new CommonDao()
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(new Error('db-fail')) })
+    await expect(dao.getUserRolesByUserId(10)).rejects.toThrow('db-fail')
+  })
+
+  test('mapDBrowToReport handles missing optional sub-objects', async () => {
+    const dao = new CommonDao()
+    const dbRow: any = { id: 1, title: 'T' } // Missing category_id, reporter_id, etc.
+    
+    // Mock getBy to return empty photos
+    db.all.mockImplementation((sql: string, params: any[], cb: Function) => { cb(null, []) })
+    
+    const report = await dao.mapDBrowToReport(dbRow, true)
+    expect(report.id).toBe(1)
+    expect(report.category).toBeUndefined()
+    expect(report.reporter).toBeUndefined()
+    expect(report.updated).toBeUndefined()
+  })
 })

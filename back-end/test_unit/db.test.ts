@@ -226,4 +226,65 @@ describe('db module', () => {
 
     expect(result).toBeUndefined();
   });
+
+  it('throws error when opening database fails', async () => {
+    jest.doMock('sqlite3', () => ({
+      Database: function (filePath: string, cb: any) {
+        // Simulate sync error to catch it easily
+        cb(new Error('open-fail'));
+        return { run: jest.fn() };
+      },
+    }));
+
+    const consoleErrSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    expect(() => {
+        require('../src/dao/db');
+    }).toThrow('open-fail');
+    
+    expect(consoleErrSpy).toHaveBeenCalledWith('Error opening database:', 'open-fail');
+  });
+
+  it('logs error when DDL execution fails', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    jest.doMock('fs', () => {
+        const mockFs = {
+            existsSync: () => false,
+            readFileSync: () => 'PRAGMA foreign_keys = OFF;',
+            unlinkSync: () => {},
+        };
+        return {
+            __esModule: true,
+            default: mockFs,
+            ...mockFs
+        };
+    });
+
+    jest.doMock('sqlite3', () => ({
+      Database: function (filePath: string, cb: any) {
+        setTimeout(() => cb(null), 0);
+        return {
+          run: jest.fn(),
+          exec: (sql: string, cb: any) => {
+             if (sql.includes('PRAGMA foreign_keys = OFF')) cb(new Error('ddl-fail'));
+             else cb(null);
+          },
+          serialize: (fn: any) => fn(),
+        };
+      },
+    }));
+
+    const consoleErrSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    require('../src/dao/db');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(consoleErrSpy).toHaveBeenCalledWith('Error executing DDL script:', 'ddl-fail');
+    
+    process.env.NODE_ENV = originalEnv;
+  });
+
+
+
+
 });
