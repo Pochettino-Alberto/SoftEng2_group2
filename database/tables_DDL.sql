@@ -2,13 +2,13 @@
 
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS roles;
-DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS report_photos;
 DROP TABLE IF EXISTS reports;
-DROP TABLE IF EXISTS report_categories;
 DROP TABLE IF EXISTS role_category_responsibility;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS report_categories;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -49,6 +49,18 @@ CREATE TABLE user_roles (
 
 
 -- ===============================
+-- REPORT_CATEGORIES
+-- ===============================
+CREATE TABLE report_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    description TEXT,
+    active INTEGER NOT NULL CHECK (active IN (0,1)) DEFAULT 1
+);
+
+
+-- ===============================
 -- ROLE-CATEGORY RESPONSIBILITY
 -- Links TOS roles to the categories they are responsible for.
 -- ===============================
@@ -58,18 +70,6 @@ CREATE TABLE role_category_responsibility (
     PRIMARY KEY (role_id, category_id),
     FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES report_categories (id) ON DELETE CASCADE
-);
-
-
--- ===============================
--- REPORT_CATEGORIES
--- ===============================
-CREATE TABLE report_categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    icon TEXT NOT NULL,
-    description TEXT,
-    active INTEGER NOT NULL CHECK (active IN (0,1)) DEFAULT 1
 );
 
 

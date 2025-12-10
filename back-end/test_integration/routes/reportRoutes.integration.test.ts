@@ -18,7 +18,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -41,7 +42,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -64,7 +66,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -92,7 +95,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => { req.user = { id: 2 }; return next() },
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -118,7 +122,7 @@ describe('ReportRoutes integration', () => {
     expect(res.body.error || res.text).toBeDefined()
   })
 
-  it('POST /report/upload succeeds with no photos (controller + supabase mocked)', async () => {
+  it('POST /report/upload succeeds with valid payload (controller + supabase mocked)', async () => {
     const MockController = jest.fn().mockImplementation(() => ({
       saveReport: async (report: any) => ({ ...report, id: 555 }),
       saveReportPhotos: async (report: any) => report,
@@ -134,7 +138,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => { req.user = { id: 2 }; return next() },
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -144,11 +149,13 @@ describe('ReportRoutes integration', () => {
 
     const res = await request(app)
       .post('/report/upload')
-      .field('title', 'NoPhotos')
+      .field('title', 'ValidReport')
+      .field('description', 'desc')
       .field('category_id', '1')
       .field('latitude', '1.1')
       .field('longitude', '2.2')
       .field('is_public', 'true')
+      .attach('photos', Buffer.from('fake'), 'photo.jpg')
 
     expect(res.status).toBe(201)
     expect(res.body).toBeDefined()
@@ -165,7 +172,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -188,7 +196,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -215,7 +224,8 @@ describe('ReportRoutes integration', () => {
       isLoggedIn: (req: any, res: any, next: any) => next(),
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
-      isAdminOrMunicipality: (req: any, res: any, next: any) => next()
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -234,5 +244,192 @@ describe('ReportRoutes integration', () => {
     // rejecting without status_reason should be 422
     const res3 = await request(app).patch('/report/report/6/status').send({ status: 'Rejected' })
     expect(res3.status).toBe(422)
+  })
+
+  it('PATCH /report/:id/assign succeeds when payload valid', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      assignReportToUser: async (reportId: number, assignedToId: number, assignedFromId: number) => ({
+        id: reportId,
+        assigned_to: assignedToId,
+        status: 'Assigned'
+      })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => { req.user = { id: 99 }; return next() },
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .patch('/report/report/10/assign')
+      .send({ assigned_to: 5 })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ id: 10, assigned_to: 5, status: 'Assigned' })
+  })
+
+  it('PATCH /report/:id/assign returns 422 when id or assigned_to invalid', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({}))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    // invalid id
+    const res1 = await request(app).patch('/report/report/abc/assign').send({ assigned_to: 5 })
+    expect(res1.status).toBe(422)
+
+    // invalid assigned_to
+    const res2 = await request(app).patch('/report/report/10/assign').send({ assigned_to: 'nobody' })
+    expect(res2.status).toBe(422)
+
+    // missing assigned_to
+    const res3 = await request(app).patch('/report/report/10/assign').send({})
+    expect(res3.status).toBe(422)
+  })
+
+  it('PATCH /report/:id/assign handles controller errors', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      assignReportToUser: async () => { throw new Error('Controller error') }
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app).patch('/report/report/10/assign').send({ assigned_to: 5 })
+    expect(res.status).toBe(500)
+  })
+
+  it('GET /tos-users returns users from controller', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      getTOSUsersByCategory: async (catId: number) => ([{ id: 1, username: 'tos' }])
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app).get('/report/tos-users?category_id=1')
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([{ id: 1, username: 'tos' }])
+  })
+
+  it('GET /maintainer-users returns users from controller', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      getAllMaintainers: async () => ([{ id: 2, username: 'maint' }])
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app).get('/report/maintainer-users')
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([{ id: 2, username: 'maint' }])
+  })
+
+  it('GET /assigned-to-techOfficer returns reports from controller', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      getReportsAssignedToTechOfficer: async (id: number) => ([{ id: 100, title: 'Assigned Report' }])
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() }
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app).get('/report/assigned-to-techOfficer')
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([{ id: 100, title: 'Assigned Report' }])
+  })
+
+  it('PATCH /report/:id/assign-maintainer succeeds when payload valid', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      assignReportToMaintainer: async (reportId: number, maintainerId: number, techId: number) => ({
+        id: reportId,
+        maintainer_id: maintainerId,
+        updated_by: techId
+      })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => MockController)
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() }
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .patch('/report/report/10/assign-maintainer')
+      .send({ maintainer_id: 7 })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ id: 10, maintainer_id: 7, updated_by: 55 })
   })
 })

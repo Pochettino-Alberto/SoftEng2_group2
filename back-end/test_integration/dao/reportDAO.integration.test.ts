@@ -184,7 +184,7 @@ describe('ReportDAO integration', () => {
     expect(totalCount).toBeGreaterThanOrEqual(1)
   })
 
-  test('getPaginatedReports does not populate subclasses (reporter/category) when called for listing', async () => {
+  test('getPaginatedReports populates subclasses (reporter/category) when called for listing', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const UserDAO = require('../../src/dao/userDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
@@ -202,8 +202,8 @@ describe('ReportDAO integration', () => {
     // find by saved id to avoid reliance on ordering
     const foundById = reports.find((r: any) => r.id === savedRpt.id)
     expect(foundById).toBeDefined()
-    expect((foundById as any).reporter).toBeUndefined()
-    expect((foundById as any).category).toBeUndefined()
+    expect((foundById as any).reporter).toBeDefined()
+    expect((foundById as any).category).toBeDefined()
   })
 
   test('saveReportPhotos rejects when prepared statement run throws synchronously', async () => {
@@ -421,5 +421,159 @@ describe('ReportDAO integration', () => {
     expect(spyErr).toHaveBeenCalled()
 
     spyErr.mockRestore()
+  })
+
+  test('updateReportStatus updates status and reason (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('sqlite3')
+    jest.unmock('fs')
+    
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+    
+    const dao = new ReportDAO()
+
+    const rpt = new Report(0, 1, 'Status Update', 1, 1, ReportStatus.PENDING_APPROVAL, false)
+    const saved = await dao.saveReport(rpt)
+
+    await dao.updateReportStatus(saved.id, ReportStatus.RESOLVED, 'Fixed')
+    
+    const updated = await dao.getReportById(saved.id)
+    expect(updated.status).toBe(ReportStatus.RESOLVED)
+    expect(updated.status_reason).toBe('Fixed')
+  })
+
+  test('updateReportStatus throws if report not found (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('sqlite3')
+    jest.unmock('fs')
+
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { ReportStatus } = require('../../src/components/report')
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
+    const dao = new ReportDAO()
+
+    await expect(dao.updateReportStatus(999999, ReportStatus.RESOLVED)).rejects.toThrow(/not found/)
+  })
+
+  test('getTOSUsersByCategory returns correct users (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('sqlite3')
+    jest.unmock('fs')
+
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const dbModule = require('../../src/dao/db')
+    const db = dbModule.default
+    await dbModule.dbReady
+    
+    const dao = new ReportDAO()
+    const udao = new UserDAO()
+
+    // 1. Create User
+    const user = await udao.createUser('tos_test', 'T', 'O', 'tos@test.com', 'pw', 'municipality')
+
+    // 2. Create Role
+    const roleId = await new Promise((resolve, reject) => {
+        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)", 
+            ['technical_officer', 'Test Tech', 'Desc'], function(err: any) {
+            if (err) reject(err); else resolve(this.lastID);
+        })
+    })
+
+    // 3. Assign Role to User
+    await udao.assignRoles(user.id, [roleId])
+
+    // 4. Create Category
+    const catId = await new Promise((resolve, reject) => {
+         db.run("INSERT INTO report_categories (name, icon, description) VALUES (?, ?, ?)", 
+            ['Test Cat', 'X', 'Desc'], function(err: any) {
+            if (err) reject(err); else resolve(this.lastID);
+        })
+    })
+
+    // 5. Assign Responsibility
+    await new Promise((resolve, reject) => {
+        db.run("INSERT INTO role_category_responsibility (role_id, category_id) VALUES (?, ?)", 
+            [roleId, catId], function(err: any) {
+            if (err) reject(err); else resolve(undefined);
+        })
+    })
+
+    // 6. Test
+    const users = await dao.getTOSUsersByCategory(catId)
+    expect(users.length).toBeGreaterThan(0)
+    expect(users.some((u: any) => u.id === user.id)).toBe(true)
+  })
+
+  test('getAllMaintainers returns users with external_maintainer role', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const db = require('../../src/dao/db').default
+    const dao = new ReportDAO()
+    const udao = new UserDAO()
+
+    // 1. Create User (username, name, surname, email, password, type)
+    const user = await udao.createUser('maint_test', 'Test', 'User', 'maint@test.com', 'pass', 'municipality')
+
+    // 2. Create Role
+    const roleId = await new Promise((resolve, reject) => {
+        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)", 
+            ['external_maintainer', 'Ext Maint', 'Desc'], function(err: any) {
+            if (err) reject(err); else resolve(this.lastID);
+        })
+    })
+
+    // 3. Assign Role to User
+    await udao.assignRoles(user.id, [roleId])
+
+    const maintainers = await dao.getAllMaintainers()
+    expect(maintainers.some((u: any) => u.id === user.id)).toBe(true)
+  })
+
+  test('getReportsAssignedToTechOfficer returns assigned reports', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const udao = new UserDAO()
+
+    // Create users for assignment
+    const techUser = await udao.createUser('tech_assign', 'Tech', 'User', 'tech@test.com', 'pass', 'municipality')
+    const fromUser = await udao.createUser('from_assign', 'From', 'User', 'from@test.com', 'pass', 'municipality')
+
+    // Create a report
+    const report = new Report(0, 1, 'Assigned Report', 0, 0, ReportStatus.ASSIGNED, true)
+    const saved = await dao.saveReport(report)
+
+    await dao.assignReportToUser(saved.id, techUser.id, fromUser.id)
+
+    const reports = await dao.getReportsAssignedToTechOfficer(techUser.id)
+    expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+  })
+
+  test('assignReportToMaintainer updates maintainer_id and updated_by', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const udao = new UserDAO()
+
+    // Create users
+    const maintainer = await udao.createUser('maint_assign', 'Maint', 'User', 'maint2@test.com', 'pass', 'municipality')
+    const techUser = await udao.createUser('tech_updater', 'Tech', 'User', 'tech2@test.com', 'pass', 'municipality')
+
+    const report = new Report(0, 1, 'Maint Report', 0, 0, ReportStatus.PENDING_APPROVAL, true)
+    const saved = await dao.saveReport(report)
+
+    await dao.assignReportToMaintainer(saved.id, maintainer.id, techUser.id)
+
+    const updated = await dao.getReportById(saved.id)
+    expect(updated.maintainer_id).toBe(maintainer.id)
+    expect(updated.updated_by).toBe(techUser.id)
   })
 })
