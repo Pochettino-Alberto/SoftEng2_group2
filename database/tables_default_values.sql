@@ -155,9 +155,9 @@ INSERT INTO reports
 (category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
  title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
-(7, (SELECT id FROM users WHERE username='johndoe'), NULL, NULL, NULL, NULL,
+(7, (SELECT id FROM users WHERE username='johndoe'), (SELECT id FROM users WHERE username='m.rossi'), NULL, NULL, (SELECT id FROM users WHERE username='e.ricci'),
  'Damaged Pavement', 'The sidewalk pavement is cracked and poses a danger to pedestrians.',
- 1, 45.070500, 7.689800, 'Pending Approval', NULL, '2025-12-04', '2025-12-05');
+ 1, 45.070500, 7.689800, 'Assigned', NULL, '2025-12-04', '2025-12-05');
 
 INSERT INTO report_photos
 (report_id, position, photo_path, photo_public_url)

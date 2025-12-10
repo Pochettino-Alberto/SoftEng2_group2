@@ -41,8 +41,12 @@ describe('Citizen usages: ', () => {
 
   }, 120000);
 
-  afterAll(async () => {
+  afterEach(async ()=>{
     await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep()
+  })
+
+  afterAll(async () => {
     if (driver) await driver.quit();
   });
 
