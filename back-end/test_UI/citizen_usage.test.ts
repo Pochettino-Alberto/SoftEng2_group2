@@ -84,6 +84,7 @@ describe('Citizen usages: ', () => {
 
     // Click sign-in button
     await steps.custumClick(By.id('registerBtnSubmit'));
+    await steps.scrollToTop();
 
     await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
@@ -123,6 +124,7 @@ describe('Citizen usages: ', () => {
     await steps.custumClick(By.id('submitReportBtn'));
     
     await steps.assertExists(By.id('toast_message_success'));
+    await steps.scrollToTop();
     
     await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));

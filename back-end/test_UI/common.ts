@@ -1,5 +1,6 @@
 import { WebDriver, until, By, WebElement } from 'selenium-webdriver';
 
+// for all 'npm run test_ui'
 
 export class CommonData {
   
@@ -245,6 +246,29 @@ export class CommonSteps {
     `, target);
 
     await this.demoSleep(msSleep);
+  }
+
+  async scrollToTop(duration: number = 1000) {
+    await this.driver.executeScript(`
+      const durationMs = arguments[0];
+      const start = performance.now();
+      const initialY = window.scrollY;
+
+      function step(timestamp) {
+        const progress = Math.min((timestamp - start) / durationMs, 1);
+        const ease = progress < 0.5
+          ? 2 * progress * progress
+          : -1 + (4 - 2 * progress) * progress; // nice easing
+
+        window.scrollTo(0, initialY * (1 - ease));
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+
+      requestAnimationFrame(step);
+    `, duration);
   }
     
   async moveMap(

@@ -8,10 +8,6 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Show profile button only on landing page (/)
-  const showProfileButton = location.pathname === '/';
-  
-  // Determine profile button label based on user type
   const getProfileButtonLabel = () => {
     if (user?.user_type === 'admin' || user?.user_type === 'municipality') {
       return 'Dashboard';
@@ -50,18 +46,23 @@ const Navbar: React.FC = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
 
-
             {isAuthenticated ? (
               <>
-                {showProfileButton && (
-                  <Link 
-                    to={`/${user?.user_type}`} 
-                    style={{ color: '#5199CD' }}
-                    className="hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  >
-                    {getProfileButtonLabel()}
-                  </Link>
-                )}
+                <Link 
+                  id="gotoDashboardBtn"
+                  to={`/${user?.user_type}`} 
+                  style={{ color: '#5199CD' }}
+                  className={`
+                    px-3 py-2 rounded-md text-sm font-medium transition-colors
+                    ${location.pathname === `/${user?.user_type}`
+                      ? "opacity-40 pointer-events-none cursor-not-allowed" 
+                      : "hover:opacity-80 text-[#5199CD]"
+                    }
+                  `}
+                >
+                  {getProfileButtonLabel()}
+                </Link>
+                    
                 <button
                   id="logoutBtn"
                   onClick={handleLogout}
@@ -113,19 +114,24 @@ const Navbar: React.FC = () => {
         <div className="md:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
 
-
             {isAuthenticated ? (
               <>
-                {showProfileButton && (
-                  <Link 
-                    to={`/${user?.user_type}`} 
-                    onClick={closeMenu}
-                    style={{ color: '#5199CD' }}
-                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors"
-                  >
-                    {getProfileButtonLabel()}
-                  </Link>
-                )}
+
+                <Link 
+                  id="gotoDashboardBtn"
+                  to={`/${user?.user_type}`} 
+                  style={{ color: '#5199CD' }}
+                  className={`
+                    px-3 py-2 rounded-md text-sm font-medium transition-colors
+                    ${location.pathname === `/${user?.user_type}`
+                      ? "opacity-40 pointer-events-none cursor-not-allowed" 
+                      : "hover:opacity-80 text-[#5199CD]"
+                    }
+                  `}
+                >
+                  {getProfileButtonLabel()}
+                </Link>
+
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
@@ -135,6 +141,7 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <Link
+                id="SignIn_SignUp"
                 to="/auth/account"
                 onClick={closeMenu}
                 style={{ backgroundColor: '#5199CD' }}

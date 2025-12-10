@@ -66,9 +66,14 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(By.id("submmitChoice"));
   
     await steps.assertExists(By.id('toast_message_success'));
+    await steps.demoSleep();
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
     
     await steps.demoSleep();
-    
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
+    await steps.demoSleep();
+    await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
   }, 60000);
@@ -88,6 +93,11 @@ describe('Municipality usages: ', () => {
 
     await steps.custumSendKeys(By.id("rejectReasonInput"), "Issue already reported, maintenance in progress");
     await steps.custumClick(By.id("submmitChoice"));
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
+
+    await steps.demoSleep();
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
 
     await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
@@ -118,10 +128,16 @@ describe('Municipality usages: ', () => {
     
     await steps.custumClick(By.id("assignMaintainer"));
     await steps.assertExists(By.id('toast_message_success'));
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
+
+    await steps.demoSleep();
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
 
     await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
+    
   }, 60000);
 
 
