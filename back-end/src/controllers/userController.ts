@@ -26,13 +26,13 @@ class UserController {
      * @returns A Promise that resolves to true if the user has been created.
      */
     async createUser(username: string, name: string, surname: string, email: string, password: string, type: string) /**:Promise<Boolean> */ {
-        return new Promise<User>(async (resolve, reject) => {
-            const userExists = await this.usernameAlreadyInUse(username);
-            if (userExists)
-                reject(new UserAlreadyExistsError());
-            else
-                resolve(await this.dao.createUser(username, name, surname, email, password, type));
-        });
+
+        const userExists = await this.usernameAlreadyInUse(username);
+        if (userExists)
+            throw new UserAlreadyExistsError();
+        else
+            return await this.dao.createUser(username, name, surname, email, password, type);
+
     }
 
     /**
@@ -40,41 +40,35 @@ class UserController {
      * This will add any roleIDs in rolesArray that are missing and remove any existing roles not present in rolesArray.
      * Only admins should call this at route level (enforced in routes).
      */
-    async setUserRoles(userId: number, rolesArray: Array<number>) : Promise<void> {
+    async setUserRoles(userId: number, rolesArray: Array<number>): Promise<void> {
         // Reuse the same logic used in updateUserInfo
         // The DAO methods are assignRoles(userId, roleIds) and removeRoles(userId, roleIds)
-        return new Promise<void>(async (resolve, reject) => {
-            try {
-                // get current roles for user (db returns [{RoleID, RoleName}, ...])
-                const currentRolesDB: {RoleID: number; RoleName: string}[] = await this.getRoles(userId);
-                const currentRoles = currentRolesDB.map(r => r.RoleID);
+        try {
+            // get current roles for user (db returns [{RoleID, RoleName}, ...])
+            const currentRolesDB: { RoleID: number; RoleName: string }[] = await this.getRoles(userId);
+            const currentRoles = currentRolesDB.map(r => r.RoleID);
 
-                // compute to add and to remove
-                const toAdd = rolesArray.filter(r => !currentRoles.includes(r));
-                const toRemove = currentRoles.filter(r => !rolesArray.includes(r));
+            // compute to add and to remove
+            const toAdd = rolesArray.filter(r => !currentRoles.includes(r));
+            const toRemove = currentRoles.filter(r => !rolesArray.includes(r));
 
-                await this.dao.assignRoles(userId, toAdd);
-                await this.dao.removeRoles(userId, toRemove);
+            await this.dao.assignRoles(userId, toAdd);
+            await this.dao.removeRoles(userId, toRemove);
 
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
      * Convenience wrapper to only add roles to a user (does not remove existing roles)
      */
-    async assignRolesToUser(userId: number, rolesArray: Array<number>) : Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
-            try {
-                await this.dao.assignRoles(userId, rolesArray || []);
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
+    async assignRolesToUser(userId: number, rolesArray: Array<number>): Promise<void> {
+        try {
+            await this.dao.assignRoles(userId, rolesArray || []);
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -91,40 +85,38 @@ class UserController {
      * @returns A Promise that resolves to the updated user
      */
     async updateUserInfo(user: User, id: number, username?: string, name?: string, surname?: string, email?: string, user_type?: string, rolesArray?: Array<number>) {
-        return new Promise<User>(async (resolve, reject) => {
-            try {
-                let userToUpdate = await this.dao.getUserById(id);
-                const fetchedUsername = userToUpdate.username;
+        try {
+            let userToUpdate = await this.dao.getUserById(id);
+            const fetchedUsername = userToUpdate.username;
 
-                if (Utility.isAdmin(user) || user.username == fetchedUsername) {
+            if (Utility.isAdmin(user) || user.username == fetchedUsername) {
 
-                    if (username) userToUpdate.username = username;
-                    if (name) userToUpdate.first_name = name;
-                    if (surname) userToUpdate.last_name = surname;
-                    if (email) userToUpdate.email = email;
-                    if (user_type) userToUpdate.user_type = User.getUserType(user_type);
+                if (username) userToUpdate.username = username;
+                if (name) userToUpdate.first_name = name;
+                if (surname) userToUpdate.last_name = surname;
+                if (email) userToUpdate.email = email;
+                if (user_type) userToUpdate.user_type = User.getUserType(user_type);
 
-                    // Update user roles
-                    if(rolesArray) {
-                        // Getting current user roles
-                        const currentRolesDB: {RoleID: number; RoleName: string}[] = await this.getRoles(id);
-                        let currentRoles = currentRolesDB.map(role => role.RoleID);
-                        // Getting new roles to INSERT
-                        let newRoles = rolesArray.filter(r => !currentRoles.includes(r));
-                        await this.dao.assignRoles(id, newRoles);
-                        // Getting old roles to DELETE
-                        let oldRolesToRemove = currentRoles.filter(r => !rolesArray.includes(r));
-                        await this.dao.removeRoles(id, oldRolesToRemove);
-                    }
-
-                    // Update user attributes
-                    resolve(this.dao.updateUserInfo(id, userToUpdate));
+                // Update user roles
+                if (rolesArray) {
+                    // Getting current user roles
+                    const currentRolesDB: { RoleID: number; RoleName: string }[] = await this.getRoles(id);
+                    let currentRoles = currentRolesDB.map(role => role.RoleID);
+                    // Getting new roles to INSERT
+                    let newRoles = rolesArray.filter(r => !currentRoles.includes(r));
+                    await this.dao.assignRoles(id, newRoles);
+                    // Getting old roles to DELETE
+                    let oldRolesToRemove = currentRoles.filter(r => !rolesArray.includes(r));
+                    await this.dao.removeRoles(id, oldRolesToRemove);
                 }
-                else reject(new UnauthorizedUserError);
-            } catch (err) {
-                reject(err);
+
+                // Update user attributes
+                return this.dao.updateUserInfo(id, userToUpdate);
             }
-        });
+            else throw new UnauthorizedUserError;
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -132,13 +124,11 @@ class UserController {
      * @returns [{RoleID, RoleName}, {...}, ...]
      */
     async getRoles(userid?: number): Promise<{ RoleID: number; RoleName: string }[]> {
-        return new Promise(async (resolve, reject) => {
-            try {
-                resolve(await this.dao.getRoles(userid));
-            } catch(err) {
-                reject(err);
-            }
-        });
+        try {
+            return await this.dao.getRoles(userid);
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -155,7 +145,7 @@ class UserController {
      * @returns A Promise that resolves to an array of users with the specified role.
      */
 
-    
+
     /*async getUsersByRole(role: string) {
         return new Promise<User[]>((resolve, reject) => {
             this.dao.getUsers().then(userArray => {
@@ -179,12 +169,10 @@ class UserController {
      * @returns A Promise that resolves to the user with the specified username.
      */
     async getUserByUsername(user: User, username: string) /**:Promise<User> */ {
-        return new Promise<User>((resolve, reject) => {
-            // User is admin || User wants to see his personal information
-            if (Utility.isAdmin(user) || user.username == username)
-                resolve(this.dao.getUserByUsername(username));
-            else reject(new UserNotAdminError)
-        });
+        // User is admin || User wants to see his personal information
+        if (Utility.isAdmin(user) || user.username == username)
+            return this.dao.getUserByUsername(username);
+        else throw new UserNotAdminError;
     }
     /**
      * Same function as the previous one, but does not require any User object.
@@ -193,18 +181,16 @@ class UserController {
      * @returns A Promise that resolves to true if the provided username exists
      */
     async usernameAlreadyInUse(username: string) /**:Promise<Boolean> */ {
-        return new Promise<Boolean>(async (resolve, reject) => {
-            try {
-                await this.dao.getUserByUsername(username);
-                resolve(true);
-            } catch (error) {
-                if (error instanceof UserNotFoundError) {
-                    resolve(false);
-                } else {
-                    reject(error);
-                }
+        try {
+            await this.dao.getUserByUsername(username);
+            return true;
+        } catch (error) {
+            if (error instanceof UserNotFoundError) {
+                return false;
+            } else {
+                throw error;
             }
-        });
+        }
     }
 
     /**
@@ -253,7 +239,7 @@ class UserController {
      * @param id - the id of the user
      * @returns A Promise that resolves to a user object.
      */
-    async getUserById(requester: User, id: number){
+    async getUserById(requester: User, id: number) {
         // Only the Admin can see any user infos; normal users can see only infos about themselves
         if (!Utility.isAdmin(requester) && requester.id !== id) {
             throw new UserNotAdminError();
@@ -317,23 +303,21 @@ class UserController {
         email: string | null,
         role: string | null
     ): Promise<PaginatedResult<User>> {
-        return new Promise<PaginatedResult<User>>(async (resolve, reject) => {
-            try {
-                const page = page_num ? Number(page_num) : 1;
-                const size = page_size ? Number(page_size) : 10;
-                const offset = (page - 1) * size;
-                
-                const { users, totalCount } = await this.dao.getPaginatedUsers(
-                    first_name, last_name, email, role, size, offset
-                );
+        try {
+            const page = page_num ? Number(page_num) : 1;
+            const size = page_size ? Number(page_size) : 10;
+            const offset = (page - 1) * size;
 
-                const pagUsers = new PaginatedResult<User>(page, size, totalCount, users);
+            const { users, totalCount } = await this.dao.getPaginatedUsers(
+                first_name, last_name, email, role, size, offset
+            );
 
-                resolve(pagUsers);
-            } catch (err) {
-                reject(err);
-            }
-        });
+            const pagUsers = new PaginatedResult<User>(page, size, totalCount, users);
+
+            return pagUsers;
+        } catch (err) {
+            throw err;
+        }
     }
 
 

@@ -1,7 +1,7 @@
 import { Report, ReportCategory, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
-import {User} from "../components/user";
+import { User } from "../components/user";
 
 /**
  * Represents a controller for managing users.
@@ -15,7 +15,7 @@ class ReportController {
     }
 
 
-    async saveReport(report: Report): Promise<Report>  {
+    async saveReport(report: Report): Promise<Report> {
         try {
             return await this.dao.saveReport(report);
         } catch (error) {
@@ -72,27 +72,25 @@ class ReportController {
         is_public: boolean | null,
         category_id: number | null
     ): Promise<PaginatedResult<Report>> {
-        return new Promise<PaginatedResult<Report>>(async (resolve, reject) => {
-            try {
-                const page = page_num ? Number(page_num) : 1;
-                const size = page_size ? Number(page_size) : 10;
-                const offset = (page - 1) * size;
+        try {
+            const page = page_num ? Number(page_num) : 1;
+            const size = page_size ? Number(page_size) : 10;
+            const offset = (page - 1) * size;
 
-                const { reports, totalCount } = await this.dao.getPaginatedReports(
-                    status,
-                    is_public,
-                    category_id,
-                    size,
-                    offset
-                );
+            const { reports, totalCount } = await this.dao.getPaginatedReports(
+                status,
+                is_public,
+                category_id,
+                size,
+                offset
+            );
 
-                const pagReports = new PaginatedResult<Report>(page, size, totalCount, reports);
+            const pagReports = new PaginatedResult<Report>(page, size, totalCount, reports);
 
-                resolve(pagReports);
-            } catch (err) {
-                reject(err);
-            }
-        });
+            return pagReports;
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**

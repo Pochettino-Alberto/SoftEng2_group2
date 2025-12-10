@@ -6,11 +6,13 @@ import type { User } from '../../types/user'
 import Button from '../../components/Button'
 import Card from '../../components/Card'
 import Toast from '../../components/Toast'
+import { useAuth } from '../../context/AuthContext'
 
 const ReportDetail: React.FC = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
+    const { user } = useAuth()
 
     const [report, setReport] = useState<Report | null>(null)
     const [loading, setLoading] = useState(false)
@@ -22,6 +24,12 @@ const ReportDetail: React.FC = () => {
     const [tosUsers, setTosUsers] = useState<User[]>([])
     const [selectedTechnicianId, setSelectedTechnicianId] = useState<number | null>(null)
     const [tosLoading, setTosLoading] = useState(false)
+
+    const [maintainers, setMaintainers] = useState<User[]>([])
+    const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null)
+    const [loadingMaintainers, setLoadingMaintainers] = useState(false)
+    const [assigningMaintainer, setAssigningMaintainer] = useState(false)
+    const [showMaintainerDropdown, setShowMaintainerDropdown] = useState(false)
 
     const fetchedCategoriesRef = useRef<Set<number>>(new Set())
 
@@ -63,6 +71,23 @@ const ReportDetail: React.FC = () => {
             setSelectedTechnicianId(null)
         } finally {
             setTosLoading(false)
+        }
+    }, [])
+
+    const fetchMaintainers = useCallback(async () => {
+        setLoadingMaintainers(true)
+        try {
+            const users = await reportAPI.getAllMaintainers()
+            setMaintainers(users)
+            if (users.length > 0) {
+                setSelectedMaintainerId(users[0].id)
+            }
+        } catch (err) {
+            console.error('Error fetching maintainers:', err)
+            setMaintainers([])
+            setSelectedMaintainerId(null)
+        } finally {
+            setLoadingMaintainers(false)
         }
     }, [])
 
@@ -162,6 +187,22 @@ const ReportDetail: React.FC = () => {
         }
     }
 
+    const handleAssignMaintainer = async (maintainerId: number) => {
+        if (!report) return
+        setAssigningMaintainer(true)
+        try {
+            const updatedReport = await reportAPI.assignReportToMaintainer(report.id, maintainerId)
+            setReport((prev) => prev ? { ...prev, maintainer_id: updatedReport.maintainer_id, maintainer: updatedReport.maintainer, status: updatedReport.status } : null)
+            setToast({ message: 'Maintainer assigned successfully', type: 'success' })
+            setShowMaintainerDropdown(false)
+        } catch (err) {
+            console.error('Error assigning maintainer:', err)
+            setToast({ message: 'Failed to assign maintainer', type: 'error' })
+        } finally {
+            setAssigningMaintainer(false)
+        }
+    }
+
     const openCarouselAt = (index: number) => {
         setCarouselIndex(index)
         setIsCarouselOpen(true)
@@ -231,9 +272,16 @@ const ReportDetail: React.FC = () => {
                         <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
                     )}
                     {report.status === 'Assigned' && (
-                        <p className="text-sm text-gray-600">
-                            Assigned To: {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name} [${report.assigned_to.username}]` : '—'}
-                        </p>
+                        <>
+                            <p className="text-sm text-gray-600">
+                                Assigned To: {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name} [${report.assigned_to.username}]` : '—'}
+                            </p>
+                            {report.maintainer_id && (
+                                <p className="text-sm text-gray-600">
+                                    Assigned Maintainer: {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                </p>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -347,6 +395,110 @@ const ReportDetail: React.FC = () => {
                                 Submit {selectedAction === 'accept' ? 'Assignment' : 'Rejection'}
                             </Button>
                         </div>
+                    </div>
+                )}
+
+                {/* Assign/Edit Maintainer section for Technical Officers */}
+                {report.status === 'Assigned' && user?.userRoles.some((r) => r.role_type === 'technical_officer') && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                        {!report.maintainer_id ? (
+                            <>
+                                <p className="text-sm text-gray-600 mb-3">
+                                    Assign this report to a maintainer for execution.
+                                </p>
+                                <Button
+                                    onClick={() => {
+                                        setShowMaintainerDropdown(true)
+                                        fetchMaintainers()
+                                    }}
+                                    variant="primary"
+                                    className="flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                    </svg>
+                                    Assign Maintainer
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-green-800 mb-1">✓ Maintainer Assigned</p>
+                                    <p className="text-sm text-green-700">
+                                        {report.maintainer ? `${report.maintainer.first_name} ${report.maintainer.last_name}` : 'Maintainer'}
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        setShowMaintainerDropdown(true)
+                                        fetchMaintainers()
+                                    }}
+                                    variant="outline"
+                                    size="md"
+                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                >
+                                    Edit
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Maintainer Selection Dropdown */}
+                        {showMaintainerDropdown && (
+                            <div className="mt-4 p-4 border border-gray-300 rounded-lg bg-white">
+                                <div className="mb-4">
+                                    <label htmlFor="maintainer-dropdown" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Select Maintainer
+                                    </label>
+                                    {loadingMaintainers ? (
+                                        <p className="text-gray-500 text-sm">Loading maintainers...</p>
+                                    ) : maintainers.length === 0 ? (
+                                        <p className="text-red-500 text-sm">No maintainers available</p>
+                                    ) : (
+                                        <select
+                                            id="maintainer-dropdown"
+                                            value={selectedMaintainerId || ''}
+                                            onChange={(e) => setSelectedMaintainerId(Number(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                            disabled={assigningMaintainer}
+                                        >
+                                            {maintainers.map((maintainer) => (
+                                                <option key={maintainer.id} value={maintainer.id}>
+                                                    {maintainer.first_name} {maintainer.last_name} ({maintainer.username})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Button
+                                        onClick={() => setShowMaintainerDropdown(false)}
+                                        variant="outline"
+                                        size="md"
+                                        disabled={assigningMaintainer}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            if (selectedMaintainerId) {
+                                                handleAssignMaintainer(selectedMaintainerId)
+                                            }
+                                        }}
+                                        variant="primary"
+                                        size="md"
+                                        disabled={
+                                            assigningMaintainer ||
+                                            loadingMaintainers ||
+                                            maintainers.length === 0 ||
+                                            !selectedMaintainerId
+                                        }
+                                    >
+                                        {assigningMaintainer ? 'Assigning...' : 'Assign'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </Card>
