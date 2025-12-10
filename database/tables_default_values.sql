@@ -148,18 +148,127 @@ JOIN roles r ON r.label IN (
 )
 WHERE u.username = 'p.fontana';
 
+-- ===========================
+-- REPORT 1 — bad_pavement
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(7, (SELECT id FROM users WHERE username='johndoe'), NULL, NULL, NULL, NULL,
+ 'Damaged Pavement', 'The sidewalk pavement is cracked and poses a danger to pedestrians.',
+ 1, 45.070500, 7.689800, 'Pending Approval', NULL, '2025-12-04', '2025-12-05');
 
--- Load reports 
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1,
+ '3/1/3d76371bd93a.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+
+
+-- ===========================
+-- REPORT 2 — road_broken
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(7, (SELECT id FROM users WHERE username='d.costa'), NULL, NULL, NULL, NULL,
+ 'Road Surface Broken', 'A large section of asphalt is broken, creating a hazardous bump.',
+ 1, 45.068900, 7.688200, 'Pending Approval', NULL, '2025-12-03', '2025-12-05');
+
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1,
+ '1/6/96a090b9c33f.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/96a090b9c33f.jpg');
+
+
+-- ===========================
+-- REPORT 3 — scooter_on_bush
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(8, (SELECT id FROM users WHERE username='m.moretti'), NULL, NULL, NULL, NULL,
+ 'Scooter Abandoned in Bushes', 'An electric scooter has been thrown into the bushes near the park.',
+ 1, 45.069300, 7.690500, 'Pending Approval', NULL, '2025-12-05', '2025-12-05');
+
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1,
+ '1/6/f8028028444f.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/f8028028444f.jpg');
+
+
+-- ===========================
+-- REPORT 4 — traffic_lights_not_working
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(4, (SELECT id FROM users WHERE username='l.russo'), NULL, NULL, NULL, NULL,
+ 'Traffic Lights Not Working', 'The traffic signal at the intersection is malfunctioning.',
+ 1, 45.071000, 7.692000, 'Pending Approval', NULL, '2025-12-01', '2025-12-05');
+
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1,
+ '4/7/60ab5f468a28.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/60ab5f468a28.jpg');
+
+
+-- ===========================
+-- REPORT 5 — waste_sidewalk
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(5, (SELECT id FROM users WHERE username='johndoe'), NULL, NULL, NULL, NULL,
+ 'Waste Left on Sidewalk', 'Garbage bags have been left unattended on the sidewalk.',
+ 1, 45.067800, 7.686900, 'Pending Approval', NULL, '2025-12-02', '2025-12-05');
+
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1,
+ '4/7/220520f56738.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/220520f56738.jpg');
+
+
+-- ===========================
+-- REPORT 6 — fountain_not_working
+-- ===========================
 INSERT INTO reports
 (category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
-(1, (SELECT id FROM users where username='johndoe'), NULL, NULL, NULL, NULL, 'Drinking Fountain Broken', 'The public drinking fountain near Central Park is not working.', 1, 45.070123, 7.689456, 'Pending Approval', NULL, '2025-12-04', '2025-12-05'),
-(2, (SELECT id FROM users where username='johndoe'), NULL, NULL, NULL, NULL, 'Ramp Blocked', 'The ramp at Main Library entrance is blocked by construction materials.', 1, 45.066789, 7.685432, 'Pending Approval', NULL, '2025-12-03', '2025-12-05'),
-(4, (SELECT id FROM users where username='d.costa'), NULL, NULL, NULL, NULL, 'Street Light Out', 'Several street lights along Elm Street are not functioning.', 1, 45.068234, 7.687890, 'Pending Approval', NULL, '2025-12-02', '2025-12-05'),
-(5, (SELECT id FROM users where username='m.moretti'), NULL, NULL, NULL, NULL, 'Illegal Dumping', 'Someone dumped trash in the park near the river.', 1, 45.069876, 7.690123, 'Pending Approval', NULL, '2025-12-05', '2025-12-05'),
-(8, (SELECT id FROM users where username='l.russo'), NULL, NULL, NULL, NULL, 'Playground Broken', 'Swing set is damaged in Riverside Park.', 1, 45.071234, 7.692345, 'Pending Approval', NULL, '2025-12-01', '2025-12-05');
-
+(1, (SELECT id FROM users WHERE username='johndoe'), NULL, NULL, NULL, NULL,
+ 'Fountain Not Working', 'The public drinking fountain (turet) near Piazza Castello is not dispensing water.',
+ 1, 45.070800, 7.686500, 'Pending Approval', NULL, '2025-12-06', '2025-12-06');
 
 INSERT INTO report_photos
-(report_id, "position", photo_path, photo_public_url)
-VALUES(1, 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1, '2/8/5ac7f8360ea7.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/2/8/5ac7f8360ea7.jpg');
+
+-- ===========================
+-- REPORT 7 — sewer_system_overflowing
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(3, (SELECT id FROM users WHERE username='d.costa'), NULL, NULL, NULL, NULL,
+ 'Sewer System Overflowing', 'A manhole near Corso Vittorio Emanuele has overflowed, spilling wastewater onto the street.',
+ 1, 45.072100, 7.689900, 'Pending Approval', NULL, '2025-12-06', '2025-12-06');
+
+INSERT INTO report_photos
+(report_id, position, photo_path, photo_public_url)
+VALUES
+(last_insert_rowid(), 1, '4/9/994ef438a4e0.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/9/994ef438a4e0.jpg');

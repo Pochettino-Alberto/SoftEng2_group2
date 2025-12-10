@@ -42,6 +42,7 @@ describe('Citizen usages: ', () => {
   }, 120000);
 
   afterAll(async () => {
+    await steps.custumClick(By.id("logoutBtn"));
     if (driver) await driver.quit();
   });
 
@@ -87,7 +88,6 @@ describe('Citizen usages: ', () => {
     await steps.custumClick(By.id('registerBtnSubmit'));
 
     await steps.demoSleep()
-    await steps.custumClick(By.id("logoutBtn"));
     
   }, 60000);
 

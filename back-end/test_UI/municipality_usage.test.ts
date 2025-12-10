@@ -41,6 +41,7 @@ describe('Municipality usages: ', () => {
   }, 120000);
 
   afterAll(async () => {
+    await steps.custumClick(By.id("logoutBtn"));
     if (driver) await driver.quit();
   });
 
