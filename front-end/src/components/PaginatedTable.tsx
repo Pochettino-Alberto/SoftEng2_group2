@@ -40,64 +40,65 @@ function PaginatedTable<T>({
   };
 
   return (
-    <div className={`overflow-x-auto bg-white rounded-lg shadow-md p-4 ${className}`}>
-      <div className="mb-2 text-gray-600 text-sm">
+    <div className={`bg-white rounded-lg shadow-md p-3 sm:p-4 overflow-hidden ${className}`}>
+      <div className="mb-2 text-gray-600 text-xs sm:text-sm">
         Showing page {page_num} of {total_pages} — Total items: {total_items}
       </div>
 
-      <table id={tableId} className="min-w-full border-collapse text-sm text-left text-gray-700">
-        <thead className="bg-gray-100">
-          <tr>
-            {columns.map((col, idx) => (
-              <th
-                key={`${col.header ?? 'col'}-${idx}`}
-                className={`px-4 py-2 font-semibold border-b ${col.className || ''}`}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {items.length > 0 ? (
-            items.map((row: T, rowIndex: number) => (
-              <tr
-                id={(row as any).id ?? ""}
-                key={(row as any).id ?? rowIndex}
-                className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                onClick={onRowClick ? (e) => {
-                  // don't trigger row click when the user clicked an interactive element (link, button, input, etc.)
-                  const el = (e.target as HTMLElement).closest('a,button,input,textarea,select,label');
-                  if (el) return;
-                  onRowClick(row)
-                } : undefined}
-                role={onRowClick ? 'button' : undefined}
-              >
-                {columns.map((col, colIndex) => {
-                  const value =
-                    typeof col.accessor === 'function'
-                      ? col.accessor(row)
-                      : (row[col.accessor] as React.ReactNode);
-                  return (
-                    <td
-                      key={colIndex}
-                      className={`px-4 py-2 border-b ${col.className || ''}`}
-                    >
-                      {value}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))
-          ) : (
-            <tr id="no-data-in-table">
-              <td
-                colSpan={columns.length}
-                className="text-center text-gray-500 py-6"
-              >
-                No data available
-              </td>
+      <div className="overflow-x-auto">
+        <table id={tableId} className="w-full border-collapse text-xs sm:text-sm text-left text-gray-700">
+          <thead className="bg-gray-100">
+            <tr>
+              {columns.map((col, idx) => (
+                <th
+                  key={`${col.header ?? 'col'}-${idx}`}
+                  className={`px-3 sm:px-4 py-2 font-semibold border-b text-xs sm:text-sm whitespace-nowrap ${col.className || ''}`}
+                >
+                  {col.header}
+                </th>
+              ))}
             </tr>
+          </thead>
+          <tbody>
+            {items.length > 0 ? (
+              items.map((row: T, rowIndex: number) => (
+                <tr
+                  id={(row as any).id ?? ""}
+                  key={(row as any).id ?? rowIndex}
+                  className={`hover:bg-gray-50 transition-colors text-xs sm:text-sm ${onRowClick ? 'cursor-pointer' : ''}`}
+                  onClick={onRowClick ? (e) => {
+                    // don't trigger row click when the user clicked an interactive element (link, button, input, etc.)
+                    const el = (e.target as HTMLElement).closest('a,button,input,textarea,select,label');
+                    if (el) return;
+                    onRowClick(row)
+                  } : undefined}
+                  role={onRowClick ? 'button' : undefined}
+                >
+                  {columns.map((col, colIndex) => {
+                    const value =
+                      typeof col.accessor === 'function'
+                        ? col.accessor(row)
+                        : (row[col.accessor] as React.ReactNode);
+                    return (
+                      <td
+                        key={colIndex}
+                        className={`px-3 sm:px-4 py-2 border-b ${col.className || ''}`}
+                      >
+                        {value}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            ) : (
+              <tr id="no-data-in-table">
+                <td
+                  colSpan={columns.length}
+                  className="text-center text-gray-500 py-6"
+                >
+                  No data available
+                </td>
+              </tr>
           )}
         </tbody>
       </table>
@@ -128,6 +129,7 @@ function PaginatedTable<T>({
           </Button>
         </div>
       )}
+      </div>
     </div>
   );
 }
