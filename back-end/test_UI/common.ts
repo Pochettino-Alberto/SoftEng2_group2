@@ -22,7 +22,7 @@ export class CommonData {
   };
 
   static readonly USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN = {
-    username: "f.bianchi",
+    username: "e.ricci",
     password: "SE2_group2_password!",
     type: "municipality"
   };

@@ -2,7 +2,6 @@ import chromedriver from 'chromedriver';
 import { Builder, WebDriver, By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import { CommonSteps, CommonData } from './common';
-import { afterEach } from 'node:test';
 
 // npm test -- test_UI/municipality_usage.test.ts
 
@@ -41,11 +40,6 @@ describe('Municipality usages: ', () => {
 
   }, 120000);
 
-  afterEach(async ()=>{
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep()
-  })
-  
   afterAll(async () => {
     if (driver) await driver.quit();
   });
@@ -61,7 +55,7 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(firstRow);
 
     await steps.custumClick(By.id("acceptAssignAction"));
-    await steps.scrollToElementGlobal(By.id("submmitChoice"))
+    await steps.scrollToElementGlobal(By.id("submmitChoice"));
 
     const select = By.id("technician-select");
     const selectEl = await steps.driver.findElement(select);
@@ -73,9 +67,10 @@ describe('Municipality usages: ', () => {
   
     await steps.assertExists(By.id('toast_message_success'));
     
-    await steps.demoSleep()
+    await steps.demoSleep();
     
-
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
   }, 60000);
       
 
@@ -87,14 +82,44 @@ describe('Municipality usages: ', () => {
     expect(noData.length).toBe(0);
     await steps.custumClick(By.css("#report-table tbody tr:first-child"));
 
-    await steps.demoSleep()
+    await steps.demoSleep();
     await steps.custumClick(By.id("rejectAction"));
-    await steps.scrollToElementGlobal(By.id("submmitChoice"))
+    await steps.scrollToElementGlobal(By.id("submmitChoice"));
 
     await steps.custumSendKeys(By.id("rejectReasonInput"), "I do not care");
     await steps.custumClick(By.id("submmitChoice"));
-    await steps.demoSleep()
+
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
   }, 60000);
 
+/*
+  test('Assign report to mainteiners', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+
+    await steps.demoSleep();
+    await steps.custumClick(By.id("assignMaintainerAction"));
+    await steps.demoSleep();
+
+    const select = By.id("maintainer-dropdown");
+    const selectEl = await steps.driver.findElement(select);
+    const options = await selectEl.findElements(By.tagName("option"));
+    const firstValue = await options[0].getAttribute("value");
+    await steps.selectDropdownByValue(select, firstValue);
+    await steps.demoSleep();
+    
+    await steps.custumClick(By.id("assignMaintainer"));
+    
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
+  }, 60000);
+*/
 
 });
