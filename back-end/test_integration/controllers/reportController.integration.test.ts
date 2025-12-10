@@ -1,5 +1,5 @@
 // Integration tests for ReportController using real sqlite test DB
-const { resetTestDB } = require('../helpers/resetTestDB')
+import { resetTestDB } from '../helpers/resetTestDB';
 
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
