@@ -38,7 +38,11 @@ export default function ReportsPage() {
         res = await reportAPI.searchReportsPaginated(params)
         //console.log('Municipal Public Relations Officer - can see all reports');
       } else if(isTechnicalOfficer){
-        res = toPaginated(await reportAPI.getTechnicalOfficerReports());
+        let reports = await reportAPI.getTechnicalOfficerReports();
+        if (selectedStatus && selectedStatus !== 'all') {
+          reports = reports.filter(r => r.status === selectedStatus);
+        }
+        res = toPaginated(reports);
         //console.log('Municipal Technical Officer - can see only assigned reports');
       } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
         // Shows reports assigned to the external maintainer
@@ -57,6 +61,12 @@ export default function ReportsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (isTechnicalOfficer && selectedStatus === ReportStatus.PENDING_APPROVAL) {
+      setSelectedStatus('all');
+    }
+  }, [isTechnicalOfficer]);
 
   useEffect(() => {
     fetchPage(1)
@@ -179,6 +189,23 @@ export default function ReportsPage() {
                 <option value={ReportStatus.SUSPENDED}>Suspended</option>
                 <option value={ReportStatus.REJECTED}>Rejected</option>
                 <option value={ReportStatus.RESOLVED}>Resolved</option>
+              </select>
+            </div>
+          ) : isTechnicalOfficer ? (
+            <div className="flex items-center space-x-3">
+              <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                Filter by Status:
+              </label>
+              <select
+                id="status-filter"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                disabled={loading}
+              >
+                <option value="all">All Statuses</option>
+                <option value={ReportStatus.ASSIGNED}>Assigned</option>
+                <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
               </select>
             </div>
           ) : <div />}
