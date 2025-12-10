@@ -7,7 +7,7 @@ import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import torinoGeo from '../assets/torino.geo.json';
 import * as turf from "@turf/turf";
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { reportAPI } from '../api/reports';
 import type { ReportCategory } from '../types/report';
@@ -82,6 +82,25 @@ const MapPage: React.FC = () => {
   const [formSuccessMessage, setFormSuccessMessage] = useState('');
   const [categories, setCategories] = useState<ReportCategory[]>([]);
   const [boundaryWarning, setBoundaryWarning] = useState(false);
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+  const formScrollRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll event to show/hide scroll indicator
+  const handleFormScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 10;
+    setIsScrolledToBottom(isAtBottom);
+  };
+
+  // Scroll to bottom of form when arrow is clicked
+  const scrollToBottom = () => {
+    if (formScrollRef.current) {
+      formScrollRef.current.scrollTo({
+        top: formScrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // When this component is mounted for the first time, call the server api for loading the report categories
   useEffect(() => {
@@ -197,17 +216,17 @@ const MapPage: React.FC = () => {
       {/* Success toast (auto hides itself and consumes the message, setting it to empty string) */}
       <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
 
-      <div className="flex h-[calc(100vh-64px)] w-full">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] w-full">
 
-        {/* Animated Report Form - visible on the LEFT */}
-        <div
-          id="scrollableFormSubmitReport"
-          className={`transition-all duration-500 ease-in-out overflow-hidden relative
-            ${isFormVisible && selectedLocation 
-              ? 'w-1/3 opacity-100 pointer-events-auto bg-gray-50 border-r p-6 overflow-y-auto' 
-              : 'w-0 opacity-0 pointer-events-none'
-            }`}
-          style={{ minWidth: isFormVisible && selectedLocation ? 320 : 0 }}
+        {/* Animated Report Form - LEFT on desktop (1/3 width), BOTTOM on mobile (max-h with scroll) */}
+        {isFormVisible && selectedLocation && (
+        <div className="relative flex flex-col md:w-1/3 md:h-full w-full max-h-[60vh] border-t md:border-t-0 md:border-r border-gray-200 bg-gray-50">
+          {/* Form container with scroll */}
+          <div
+            ref={formScrollRef}
+            id="scrollableFormSubmitReport"
+            onScroll={handleFormScroll}
+            className={`transition-all duration-500 ease-in-out overflow-y-auto relative p-6`}
         >
           {/* Only render form content if visible, to avoid tab order issues */}
           {isFormVisible && selectedLocation && (
@@ -355,11 +374,26 @@ const MapPage: React.FC = () => {
               </form>
             </div>
           )}
+          </div>
+          
+          {/* Scroll indicator - at bottom of form container, hidden when scrolled to bottom */}
+          {!isScrolledToBottom && isFormVisible && selectedLocation && (
+            <button
+              onClick={scrollToBottom}
+              className="w-full flex justify-center items-center py-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent border-b border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+              title="Scroll to bottom of form"
+            >
+              <svg className="w-5 h-5 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          )}
         </div>
+        )}
 
         {/* Map - visible on the RIGHT, takes remaining space, animates width */}
         <div
-          className={`transition-all duration-500 ease-in-out h-full ${isFormVisible && selectedLocation ? 'w-2/3' : 'w-full'}`}
+          className={`transition-all duration-500 ease-in-out flex-1 ${isFormVisible && selectedLocation ? 'md:flex-[2]' : ''}`}
           style={{ minWidth: 0 }}
         >
           <MapContainer
