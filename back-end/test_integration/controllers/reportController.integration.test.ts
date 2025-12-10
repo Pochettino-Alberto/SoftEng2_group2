@@ -295,6 +295,7 @@ describe('ReportController error branches (mocked DAO)', () => {
     const updated = await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
     expect(updated.maintainer_id).toBe(maint.id)
     expect(updated.updated_by).toBe(tech.id)
+    expect(updated.status).toBe(ReportStatus.IN_PROGRESS)
   })
 
   test('Controller methods log and rethrow errors (mocked DAO)', async () => {

@@ -359,7 +359,7 @@ class ReportDAO {
     }
 
     /**
-     * Assigns a report to an external maintainer without changing the status.
+     * Assigns a report to an external maintainer and updates status to 'In Progress'.
      * Records the technical officer who performed the update in 'updated_by'.
      * @param reportId - The ID of the report.
      * @param maintainerId - The ID of the external maintainer.
@@ -371,7 +371,7 @@ class ReportDAO {
             const updatedAt = Utility.now();
             const sql = `
                 UPDATE reports
-                SET maintainer_id = ?, updated_by = ?, updatedAt = ?
+                SET maintainer_id = ?, updated_by = ?, updatedAt = ?, status = 'In Progress'
                 WHERE id = ?
             `;
             db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function(err) {
