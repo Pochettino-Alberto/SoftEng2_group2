@@ -14,6 +14,7 @@ import type { ReportCategory } from '../types/report';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import FileInput from '../components/FileInput';
+import { reverseGeocode } from '../utils';
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -84,6 +85,8 @@ const MapPage: React.FC = () => {
   const [boundaryWarning, setBoundaryWarning] = useState(false);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
   const formScrollRef = useRef<HTMLDivElement>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   // Handle scroll event to show/hide scroll indicator
   const handleFormScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -117,6 +120,35 @@ const MapPage: React.FC = () => {
     setSelectedLocation(loc);
     setIsFormVisible(loc !== null);
   };
+
+  // When a location is selected, try to reverse-geocode it to get a human-readable address
+  useEffect(() => {
+    let mounted = true;
+    if (!selectedLocation) {
+      setAddress(null);
+      setAddressLoading(false);
+      return;
+    }
+
+    const { lat, lng } = selectedLocation;
+    setAddressLoading(true);
+    reverseGeocode(lat, lng)
+      .then((addr) => {
+        if (!mounted) return;
+        setAddress(addr);
+      })
+      .catch((err) => {
+        console.warn('reverseGeocode failed in MapPage', err);
+        if (!mounted) return;
+        setAddress(null);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setAddressLoading(false);
+      });
+
+    return () => { mounted = false };
+  }, [selectedLocation]);
 
   const handleCloseForm = () => {
     setSelectedLocation(null);
@@ -267,6 +299,17 @@ const MapPage: React.FC = () => {
                   <input
                     type="text"
                     value={selectedLocation.lng.toFixed(6)}
+                    readOnly
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
+                  />
+                </div>
+
+                {/* Address (reverse-geocoded) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <input
+                    type="text"
+                    value={addressLoading ? 'Resolving address...' : (address ?? 'Not available')}
                     readOnly
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 p-2 text-sm"
                   />

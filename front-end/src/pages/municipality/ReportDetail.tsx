@@ -7,6 +7,7 @@ import Button from '../../components/Button'
 import Card from '../../components/Card'
 import Toast from '../../components/Toast'
 import { useAuth } from '../../context/AuthContext'
+import { reverseGeocode } from '../../utils'
 
 const ReportDetail: React.FC = () => {
     const { id } = useParams()
@@ -37,6 +38,9 @@ const ReportDetail: React.FC = () => {
     // Photo carousel state
     const [isCarouselOpen, setIsCarouselOpen] = useState(false)
     const [carouselIndex, setCarouselIndex] = useState(0)
+    // Reverse-geocoded address for the report location (if available)
+    const [address, setAddress] = useState<string | null>(null)
+    const [addressLoading, setAddressLoading] = useState(false)
 
     const fetchReport = useCallback(async (reportId: number) => {
         setLoading(true)
@@ -110,6 +114,22 @@ const ReportDetail: React.FC = () => {
     useEffect(() => {
         if (!report) return
         console.log(report);
+
+        // Try to reverse-geocode the report location when available
+        const lat = report.location?.lat
+        const lon = report.location?.lng
+        if (typeof lat === 'number' && typeof lon === 'number') {
+            setAddressLoading(true)
+            reverseGeocode(lat, lon)
+                .then((addr) => {
+                    setAddress(addr)
+                })
+                .catch((e) => {
+                    console.warn('Failed to reverse-geocode:', e)
+                    setAddress(null)
+                })
+                .finally(() => setAddressLoading(false))
+        }
 
         if (selectedAction === 'accept' && report.status === 'Pending Approval' && report.category_id) {
             fetchTosUsers(report.category_id)
@@ -265,20 +285,55 @@ const ReportDetail: React.FC = () => {
                 </div>
 
                 <div className="mb-4">
-                    <p className="text-sm text-gray-600">Category: {report.category?.name}</p>
-                    <p className="text-sm text-gray-600">Location: {report.location ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
-                    <p className="text-sm text-gray-600">Reporter: {!report.is_public ? 'Anonymous' : report.reporter.first_name + ' ' +  report.reporter.last_name + ' [' + report.reporter.username + ']'  || '—'}</p>
+                    {/* Category with icon (use same emoji/icon shown in report creation form) */}
+                    <p className="text-sm text-gray-600"><span className="font-semibold">Category:</span> {report.category ? (
+                        <span className="inline-flex items-center gap-2">
+                            <span className="text-lg" aria-hidden>{report.category.icon}</span>
+                            <span className="text-sm text-gray-700">{report.category.name}</span>
+                        </span>
+                    ) : '—'}</p>
+
+                    <p className="text-sm text-gray-600"><span className="font-semibold">Location:</span> {report.location ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
+                    {addressLoading ? (
+                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> Resolving address…</p>
+                    ) : address ? (
+                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> {address}</p>
+                    ) : (
+                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> Not available</p>
+                    )}
+
+                    {/* Reporter - change color to brown to make it more prominent */}
+                    <p className="text-sm"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
+                        <span className="text-gray-600">Anonymous</span>
+                    ) : (
+                        <span style={{ color: '#8B4513' }} className="font-medium">
+                            {report.reporter && typeof report.reporter === 'object' ?
+                                `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
+                            {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
+                                <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
+                            ) : null}
+                        </span>
+                    )}</p>
                     {report.status === 'Rejected' && report.status_reason && (
                         <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
                     )}
                     {report.status === 'Assigned' && (
                         <>
-                            <p className="text-sm text-gray-600">
-                                Assigned To: {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name} [${report.assigned_to.username}]` : '—'}
+                            <p className="text-sm">
+                                <span className="font-semibold">Technical Officer Responsible:</span>
+                                <span style={{ color: '#c2410c' }} className="font-medium ml-2">
+                                    {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
+                                    {report.assigned_to && report.assigned_to.username ? (
+                                        <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
+                                    ) : null}
+                                </span>
                             </p>
                             {report.maintainer_id && (
-                                <p className="text-sm text-gray-600">
-                                    Assigned Maintainer: {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                <p className="text-sm">
+                                    <span className="font-semibold">Assigned Maintainer:</span>
+                                    <span style={{ color: '#166534' }} className="font-medium ml-2">
+                                        {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                    </span>
                                 </p>
                             )}
                         </>
