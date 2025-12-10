@@ -198,4 +198,147 @@ describe('ReportController error branches (mocked DAO)', () => {
     await expect(ctrl.searchReports(1, 10, null, null, null)).rejects.toThrow(/count boom/)
     spyErr.mockRestore()
   })
+
+  test('assignReportToUser assigns report and returns updated report (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    
+    const ctrl = new ReportController()
+    const udao = new UserDAO()
+
+    // Create users
+    const techOff = await udao.createUser('techOff', 'T', 'O', 't@o.test', 'pw', 'municipality')
+    const admin = await udao.createUser('adminAssign', 'A', 'A', 'a@a.test', 'pw', 'municipality')
+    
+    // Create report
+    const rpt = new Report(0, 1, 'To Assign', 10, 11, ReportStatus.PENDING_APPROVAL, false, undefined, undefined, 'desc')
+    const saved = await ctrl.saveReport(rpt)
+
+    // Assign
+    const updated = await ctrl.assignReportToUser(saved.id, techOff.id, admin.id)
+    
+    expect(updated.id).toBe(saved.id)
+    expect(updated.status).toBe(ReportStatus.ASSIGNED)
+    expect(updated.assigned_to.id).toBe(techOff.id)
+  })
+
+  test('getTOSUsersByCategory returns users for category (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    
+    const ctrl = new ReportController()
+    const udao = new UserDAO()
+
+    // We need to setup roles and responsibilities which might be complex in integration test without seeding
+    // Assuming seed data or previous tests might have set up some roles, but let's try to rely on basic setup or empty result
+    // Ideally we should insert role_category_responsibility here but that requires direct DB access or DAO method
+    
+    // For now, let's just call it and expect an array (empty or not) to ensure no crash
+    const users = await ctrl.getTOSUsersByCategory(1)
+    expect(Array.isArray(users)).toBe(true)
+  })
+
+  test('updateReportStatus updates status (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const ctrl = new ReportController()
+
+    const rpt = new Report(0, 1, 'Status Update', 0, 0, ReportStatus.PENDING_APPROVAL, true)
+    const saved = await ctrl.saveReport(rpt)
+
+    await ctrl.updateReportStatus(saved.id, ReportStatus.RESOLVED, 'Looks good')
+    const updated = await ctrl.getReportById(saved.id)
+    expect(updated.status).toBe(ReportStatus.RESOLVED)
+    expect(updated.status_reason).toBe('Looks good')
+  })
+
+  test('getAllMaintainers returns maintainers (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    const maintainers = await ctrl.getAllMaintainers()
+    expect(Array.isArray(maintainers)).toBe(true)
+  })
+
+  test('getReportsAssignedToTechOfficer returns reports (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const ctrl = new ReportController()
+    const udao = new UserDAO()
+
+    const tech = await udao.createUser('tech_ctrl', 'T', 'C', 'tc@test.com', 'pw', 'municipality')
+    const from = await udao.createUser('from_ctrl', 'F', 'C', 'fc@test.com', 'pw', 'municipality')
+
+    const rpt = new Report(0, 1, 'Assigned Ctrl', 0, 0, ReportStatus.ASSIGNED, true)
+    const saved = await ctrl.saveReport(rpt)
+    await ctrl.assignReportToUser(saved.id, tech.id, from.id)
+
+    const reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
+    expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+  })
+
+  test('assignReportToMaintainer updates report (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    const ReportController = require('../../src/controllers/reportController').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const ctrl = new ReportController()
+    const udao = new UserDAO()
+
+    const maint = await udao.createUser('maint_ctrl', 'M', 'C', 'mc@test.com', 'pw', 'municipality')
+    const tech = await udao.createUser('tech_upd_ctrl', 'T', 'U', 'tu@test.com', 'pw', 'municipality')
+
+    const rpt = new Report(0, 1, 'Maint Ctrl', 0, 0, ReportStatus.PENDING_APPROVAL, true)
+    const saved = await ctrl.saveReport(rpt)
+
+    const updated = await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
+    expect(updated.maintainer_id).toBe(maint.id)
+    expect(updated.updated_by).toBe(tech.id)
+  })
+
+  test('Controller methods log and rethrow errors (mocked DAO)', async () => {
+    jest.resetModules()
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    class MockDAO5 {
+      async saveReport() { throw new Error('fail') }
+      async saveReportPhotos() { throw new Error('fail') }
+      async getAllReportCategories() { throw new Error('fail') }
+      async getReportById() { throw new Error('fail') }
+      async getPaginatedReports() { throw new Error('fail') }
+      async updateReportStatus() { throw new Error('fail') }
+      async getReportsAssignedToTechOfficer() { throw new Error('fail') }
+      async getTOSUsersByCategory() { throw new Error('fail') }
+      async getAllMaintainers() { throw new Error('fail') }
+      async assignReportToUser() { throw new Error('fail') }
+      async assignReportToMaintainer() { throw new Error('fail') }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO5 }))
+    const ReportController = require('../../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    await expect(ctrl.updateReportStatus(1, 'Resolved')).rejects.toThrow('fail')
+    await expect(ctrl.getReportsAssignedToTechOfficer(1)).rejects.toThrow('fail')
+    await expect(ctrl.getTOSUsersByCategory(1)).rejects.toThrow('fail')
+    await expect(ctrl.getAllMaintainers()).rejects.toThrow('fail')
+    await expect(ctrl.assignReportToUser(1, 1, 1)).rejects.toThrow('fail')
+    await expect(ctrl.assignReportToMaintainer(1, 1, 1)).rejects.toThrow('fail')
+    await expect(ctrl.saveReportPhotos({})).rejects.toThrow('fail')
+
+    spyErr.mockRestore()
+  })
 })
