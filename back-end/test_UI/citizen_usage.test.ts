@@ -5,7 +5,6 @@ import { CommonSteps, CommonData } from './common';
 
 // npm test -- test_UI/citizen_usage.test.ts
 
-
 const demoWaitDefault = !process.env.CI;
 jest.setTimeout(demoWaitDefault ? 180000 : 60000);
 
@@ -40,11 +39,6 @@ describe('Citizen usages: ', () => {
       steps = new CommonSteps(driver, demoWait);
 
   }, 120000);
-
-  afterEach(async ()=>{
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep()
-  })
 
   afterAll(async () => {
     if (driver) await driver.quit();
@@ -91,7 +85,9 @@ describe('Citizen usages: ', () => {
     // Click sign-in button
     await steps.custumClick(By.id('registerBtnSubmit'));
 
-    await steps.demoSleep()
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
     
   }, 60000);
 
@@ -99,7 +95,7 @@ describe('Citizen usages: ', () => {
   test('Citizen usage submitting report', async () => {
     await steps.login(CommonData.USER_CITIZEN, false);
 
-    await steps.custumClick(By.id('createNewReportBtn'))
+    await steps.custumClick(By.id('createNewReportBtn'));
     
     await steps.scrollBySteps(By.id('mapReport'), [30, -50]);
     if(demoWait){
@@ -109,7 +105,7 @@ describe('Citizen usages: ', () => {
       const maxMoveRand = 500;
       const deltaX = Math.floor(Math.random() * (maxMoveRand *2 + 1)) - maxMoveRand;
       const deltaY = Math.floor(Math.random() * (maxMoveRand *2 + 1)) - maxMoveRand;
-      await steps.moveMap(By.id('mapReport'), deltaX, deltaY)
+      await steps.moveMap(By.id('mapReport'), deltaX, deltaY);
     }
     await steps.clickRandomInMiddle();
     await steps.selectDropdownByValue(By.id('reportType'), '3');
@@ -128,7 +124,9 @@ describe('Citizen usages: ', () => {
     
     await steps.assertExists(By.id('toast_message_success'));
     
-    await steps.demoSleep()
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
   }, 60000);
 
 
