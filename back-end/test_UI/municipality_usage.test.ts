@@ -86,7 +86,7 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(By.id("rejectAction"));
     await steps.scrollToElementGlobal(By.id("submmitChoice"));
 
-    await steps.custumSendKeys(By.id("rejectReasonInput"), "I do not care");
+    await steps.custumSendKeys(By.id("rejectReasonInput"), "Issue already reported, maintenance in progress");
     await steps.custumClick(By.id("submmitChoice"));
 
     await steps.demoSleep();
@@ -94,7 +94,7 @@ describe('Municipality usages: ', () => {
     await steps.demoSleep();
   }, 60000);
 
-/*
+
   test('Assign report to mainteiners', async () => {
     await steps.login(CommonData.USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN);
     await steps.assertExists(By.id("report-table"));
@@ -107,6 +107,8 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(By.id("assignMaintainerAction"));
     await steps.demoSleep();
 
+    await steps.scrollToElementGlobal(By.id("assignMaintainer"));
+
     const select = By.id("maintainer-dropdown");
     const selectEl = await steps.driver.findElement(select);
     const options = await selectEl.findElements(By.tagName("option"));
@@ -115,11 +117,12 @@ describe('Municipality usages: ', () => {
     await steps.demoSleep();
     
     await steps.custumClick(By.id("assignMaintainer"));
-    
+    await steps.assertExists(By.id('toast_message_success'));
+
     await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
   }, 60000);
-*/
+
 
 });
