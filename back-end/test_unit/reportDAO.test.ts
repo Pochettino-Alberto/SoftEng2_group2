@@ -450,8 +450,8 @@ describe('ReportDAO', () => {
       expect(reports).toHaveLength(1)
       expect(reports[0]).toEqual({ id: 1, title: 'r1', mapped: true })
       expect(dbAll).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM reports WHERE status = ? AND assigned_to = ?'),
-        ['Assigned', 99],
+        expect.stringContaining(`SELECT * FROM reports WHERE (status = 'Assigned' OR status = 'In Progress') AND assigned_to = ? ORDER BY updatedAt DESC`),
+        [99],
         expect.any(Function)
       )
     })
