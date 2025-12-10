@@ -273,8 +273,18 @@ describe('ReportController error branches (mocked DAO)', () => {
     const saved = await ctrl.saveReport(rpt)
     await ctrl.assignReportToUser(saved.id, tech.id, from.id)
 
-    const reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
+    // Test Assigned status
+    let reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
     expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+
+    // Test In Progress status (e.g. after assigning to maintainer)
+    const maint = await udao.createUser('maint_for_tech', 'M', 'T', 'mt@test.com', 'pw', 'municipality')
+    await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
+    
+    reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
+    expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+    const fetched = reports.find((r: any) => r.id === saved.id)
+    expect(fetched.status).toBe(ReportStatus.IN_PROGRESS)
   })
 
   test('assignReportToMaintainer updates report (real DB)', async () => {
@@ -295,6 +305,7 @@ describe('ReportController error branches (mocked DAO)', () => {
     const updated = await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
     expect(updated.maintainer_id).toBe(maint.id)
     expect(updated.updated_by).toBe(tech.id)
+    expect(updated.status).toBe(ReportStatus.IN_PROGRESS)
   })
 
   test('Controller methods log and rethrow errors (mocked DAO)', async () => {
