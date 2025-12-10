@@ -2,6 +2,7 @@ import chromedriver from 'chromedriver';
 import { Builder, WebDriver, By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import { CommonSteps, CommonData } from './common';
+import { afterEach } from 'node:test';
 
 // npm test -- test_UI/municipality_usage.test.ts
 
@@ -40,6 +41,11 @@ describe('Municipality usages: ', () => {
 
   }, 120000);
 
+  afterEach(async ()=>{
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep()
+  })
+  
   afterAll(async () => {
     if (driver) await driver.quit();
   });

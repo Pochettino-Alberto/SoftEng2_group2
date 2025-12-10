@@ -1,4 +1,5 @@
-import { WebDriver, until, By, WebElement  } from 'selenium-webdriver';
+import { WebDriver, until, By, WebElement } from 'selenium-webdriver';
+
 
 export class CommonData {
   
@@ -13,6 +14,7 @@ export class CommonData {
     password: "SE2_group2_password!",
     type: "citizen"
   };
+
   static readonly USER_MUNICIPAL_PUBLIC_RELATIONS_OFFICER = {
     username: "m.rossi",
     password: "SE2_group2_password!",
