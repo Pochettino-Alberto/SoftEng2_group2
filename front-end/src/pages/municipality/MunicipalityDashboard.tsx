@@ -45,17 +45,17 @@ const MunicipalityDashboard: React.FC = () => {
   const cfg = primaryRole ? roleConfig[primaryRole] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 sm:mb-8">
-          <Card className="p-4 sm:p-6 lg:p-8 flex items-center space-x-4">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <Card className="p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-semibold"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex-shrink-0 flex items-center justify-center text-white text-lg sm:text-xl font-semibold"
               style={{ backgroundColor: cfg ? cfg.avatarBg : '#4F46E5' }}
             >
               {initials}
             </div>
-            <div>
+            <div className="flex-1 w-full">
               <div className="text-xl sm:text-2xl font-bold text-gray-900">{displayName}</div>
               
               {cfg && (
@@ -65,7 +65,7 @@ const MunicipalityDashboard: React.FC = () => {
               )}
               
 
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                   style={{ backgroundColor: cfg ? cfg.badgeBg : '#D1FAE5', color: cfg ? cfg.badgeText : '#065F46' }}
@@ -100,21 +100,19 @@ const MunicipalityDashboard: React.FC = () => {
         </div>
 
         {showInstructions && cfg && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black opacity-30" onClick={() => setShowInstructions(false)} />
-            <div className="relative max-w-md w-full mx-4">
-              <Card className="p-4">
-                <div className="flex justify-between items-start">
+            <div className="relative max-w-md w-full mx-auto">
+              <Card className="p-4 sm:p-6">
+                <div className="flex justify-between items-start gap-4">
                   <div>
                     <h3 className="text-lg font-semibold" style={{ color: cfg.badgeText }}>{cfg.title}</h3>
                     <p className="mt-2 text-sm text-gray-700">{cfg.instructions}</p>
                   </div>
-                  <div>
-                    <button onClick={() => setShowInstructions(false)} className="text-gray-500 hover:text-gray-700">✕</button>
-                  </div>
+                  <button onClick={() => setShowInstructions(false)} className="text-gray-500 hover:text-gray-700 flex-shrink-0 text-xl">✕</button>
                 </div>
                 <div className="mt-4 text-right">
-                  <button onClick={() => setShowInstructions(false)} className="px-3 py-1.5 bg-gray-100 rounded text-sm font-medium">Close</button>
+                  <button onClick={() => setShowInstructions(false)} className="px-4 py-2 bg-gray-100 rounded text-sm font-medium hover:bg-gray-200">Close</button>
                 </div>
               </Card>
             </div>

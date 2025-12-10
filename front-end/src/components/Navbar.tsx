@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Show profile button only on landing page (/)
+  const showProfileButton = location.pathname === '/';
+  
+  // Determine profile button label based on user type
+  const getProfileButtonLabel = () => {
+    if (user?.user_type === 'admin' || user?.user_type === 'municipality') {
+      return 'Dashboard';
+    }
+    return 'My Profile';
+  };
 
   const handleLogout = async () => {
     try {
@@ -41,13 +53,15 @@ const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <>
-                <Link 
-                  to={`/${user?.user_type}`} 
-                  style={{ color: '#5199CD' }}
-                  className="hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  My Profile
-                </Link>
+                {showProfileButton && (
+                  <Link 
+                    to={`/${user?.user_type}`} 
+                    style={{ color: '#5199CD' }}
+                    className="hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    {getProfileButtonLabel()}
+                  </Link>
+                )}
                 <button
                   id="logoutBtn"
                   onClick={handleLogout}
@@ -102,14 +116,16 @@ const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <>
-                <Link 
-                  to={`/${user?.user_type}`} 
-                  onClick={closeMenu}
-                  style={{ color: '#5199CD' }}
-                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors"
-                >
-                  My Profile
-                </Link>
+                {showProfileButton && (
+                  <Link 
+                    to={`/${user?.user_type}`} 
+                    onClick={closeMenu}
+                    style={{ color: '#5199CD' }}
+                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors"
+                  >
+                    {getProfileButtonLabel()}
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
