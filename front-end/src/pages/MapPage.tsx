@@ -220,13 +220,14 @@ const MapPage: React.FC = () => {
 
         {/* Animated Report Form - LEFT on desktop (1/3 width), BOTTOM on mobile (max-h with scroll) */}
         {isFormVisible && selectedLocation && (
-        <div className="relative flex flex-col md:w-1/3 md:h-full w-full max-h-[60vh] border-t md:border-t-0 md:border-r border-gray-200 bg-gray-50">
+  <div className="relative flex flex-col md:w-1/3 md:h-full w-full max-h-[60vh] md:max-h-none border-t md:border-t-0 md:border-r border-gray-200 bg-gray-50">
           {/* Form container with scroll */}
           <div
             ref={formScrollRef}
             id="scrollableFormSubmitReport"
             onScroll={handleFormScroll}
-            className={`transition-all duration-500 ease-in-out overflow-y-auto relative p-6`}
+            // allow the inner container to fill available height on md+ so it scrolls correctly
+            className={`transition-all duration-500 ease-in-out overflow-y-auto relative p-6 md:h-full`}
         >
           {/* Only render form content if visible, to avoid tab order issues */}
           {isFormVisible && selectedLocation && (
@@ -380,7 +381,8 @@ const MapPage: React.FC = () => {
           {!isScrolledToBottom && isFormVisible && selectedLocation && (
             <button
               onClick={scrollToBottom}
-              className="w-full flex justify-center items-center py-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent border-b border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+              // Show arrow only on small screens (hide on md and larger)
+              className="w-full flex justify-center items-center py-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent border-b border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer md:hidden"
               title="Scroll to bottom of form"
             >
               <svg className="w-5 h-5 text-gray-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">

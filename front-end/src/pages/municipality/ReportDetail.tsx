@@ -407,6 +407,7 @@ const ReportDetail: React.FC = () => {
                                     Assign this report to a maintainer for execution.
                                 </p>
                                 <Button
+                                    id="assignMaintainerAction"
                                     onClick={() => {
                                         setShowMaintainerDropdown(true)
                                         fetchMaintainers()
@@ -480,6 +481,7 @@ const ReportDetail: React.FC = () => {
                                         Cancel
                                     </Button>
                                     <Button
+                                        id="assignMaintainer"
                                         onClick={() => {
                                             if (selectedMaintainerId) {
                                                 handleAssignMaintainer(selectedMaintainerId)
