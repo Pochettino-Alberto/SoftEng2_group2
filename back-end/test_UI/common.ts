@@ -2,6 +2,9 @@ import { WebDriver, until, By, WebElement } from 'selenium-webdriver';
 
 // for all 'npm run test_ui'
 
+// npm test -- test_UI/citizen_usage.test.ts
+// npm test -- test_UI/municipality_usage.test.ts
+
 export class CommonData {
   
   static readonly BASE_URL_FE = 'http://localhost:5173';

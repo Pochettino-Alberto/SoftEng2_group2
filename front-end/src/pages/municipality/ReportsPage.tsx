@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../components/Button'
 import { ReportStatus } from '../../types/report'
 import { useAuth } from '../../context/AuthContext'
+import { getStatusClass } from '../../components/Map';
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -131,7 +132,7 @@ export default function ReportsPage() {
     { header: 'Category', accessor: (r: Report) => (r.category_id ? categoriesMap[r.category_id] || '' : '') },
     {
       header: 'Status', accessor: (r: Report) => (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${r.status === ReportStatus.RESOLVED ? 'bg-green-100 text-green-700' : r.status === ReportStatus.IN_PROGRESS ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{r.status}</span>
+        <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusClass(r.status)}`}>{r.status}</span>
       )
     },
     {

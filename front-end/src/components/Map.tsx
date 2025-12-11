@@ -11,6 +11,47 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { ReportStatus } from '../types/report'; 
 import type { Location } from '../types/report'; 
 
+export const getStatusColor = (status: string): string => {
+    switch (status) {
+        case ReportStatus.RESOLVED:
+        return '#10b981'; // Green
+        case ReportStatus.REJECTED:
+        return '#ef4444'; // Red
+        case ReportStatus.IN_PROGRESS:
+        return '#3b82f6'; // Blue
+        case ReportStatus.ASSIGNED:
+        return '#3b82f6'; // Blue
+        case ReportStatus.SUSPENDED:
+        return '#f59e0b'; // Amber
+        case ReportStatus.PENDING_APPROVAL:
+        default:
+        return '#6b7280'; // Gray
+    }
+};
+
+export const getStatusClass = (status: string): string => {
+  switch (status) {
+    case ReportStatus.RESOLVED:
+      return 'bg-green-100 text-green-700';
+
+    case ReportStatus.REJECTED:
+      return 'bg-red-100 text-red-700';
+
+    case ReportStatus.IN_PROGRESS:
+      return 'bg-blue-100 text-blue-700';
+
+    case ReportStatus.ASSIGNED:
+      return 'bg-blue-100 text-blue-700';
+
+    case ReportStatus.SUSPENDED:
+      return 'bg-amber-100 text-amber-700';
+
+    case ReportStatus.PENDING_APPROVAL:
+    default:
+      return 'bg-gray-100 text-gray-700';
+  }
+};
+
 
 const TORINO_CENTER: LatLngTuple = [45.0703, 7.6869];
 const DEFAULT_ZOOM = 12;
@@ -31,6 +72,7 @@ interface LocationMarkerProps {
   selectedLocation: Location | null;
   onBoundaryWarning: () => void;
 }
+
 
 const LocationMarker: React.FC<LocationMarkerProps> = ({ 
   onLocationSelect, 
@@ -96,25 +138,6 @@ const ReportsMapContent: React.FC<ReportsMapProps> = ({ reports, currentPopUp, s
       });
     }
   }, [currentPopUp, map]);
-
-  const getStatusColor = (status: string): string => {
-
-    switch (status) {
-      case ReportStatus.RESOLVED:
-        return '#10b981'; // Green
-      case ReportStatus.REJECTED:
-        return '#ef4444'; // Red
-      case ReportStatus.IN_PROGRESS:
-        return '#3b82f6'; // Blue
-      case ReportStatus.ASSIGNED:
-        return '#3b82f6'; // Blue
-      case ReportStatus.SUSPENDED:
-        return '#f59e0b'; // Amber
-      case ReportStatus.PENDING_APPROVAL:
-      default:
-        return '#6b7280'; // Gray
-    }
-  };
 
   const boundaryLayers = useMemo(() => {
     const geo: any = torinoGeo as any;
