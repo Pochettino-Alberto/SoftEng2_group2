@@ -86,7 +86,7 @@ $$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 
   > Negative lesson: every team member must review its own work, double-checking if all the task requirements have been implemented so that it doesn't cause problems for other members who are working on tasks related to that one.
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
-  > We achieved both goals we set at the previous rertospective; during the sprint planning we created more detailed tasks and we managed to finish the source code (except tests) within our internal deadline.
+  > We achieved both goals we set at the previous retrospective; during the sprint planning we created more detailed tasks and we managed to finish the source code (except tests) within our internal deadline.
 - Which ones you were not able to achieve? Why?
 
   > We have achieved all the goals set in the previous retrospective.
