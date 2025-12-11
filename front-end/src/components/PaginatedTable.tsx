@@ -1,5 +1,6 @@
-import React from 'react';
+import React , {useState} from 'react';
 import Button from './Button';
+import ReportsMap from './Map';
 
 type AccessorFn<T> = (row: T) => React.ReactNode;
 type AccessorKey<T> = keyof T;
@@ -23,6 +24,7 @@ export interface PaginatedTableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
   tableId?: string;
+  addMap?:boolean
 }
 
 function PaginatedTable<T>({
@@ -32,8 +34,33 @@ function PaginatedTable<T>({
   onRowClick,
   className = '',
   tableId = '',
+  addMap = true,
 }: PaginatedTableProps<T>) {
+  const [selectedReport, setSelectedReport] = useState<T | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<number | null>(null);
+  
+  const handleMouseEnter = (row: T) => {
+    if (hoverTimeout !== null) clearTimeout(hoverTimeout);
+
+    const timeout = setTimeout(() => {
+        setSelectedReport(row);
+    }, 1000);
+    
+    setHoverTimeout(timeout);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
+  };
+
   const { page_num, total_pages, total_items, items } = paginatedData;
+
+  const isRowSelected = (row: T) => {
+    return selectedReport && (row as any).id === (selectedReport as any).id;
+  };
 
   const goToPage = (page: number) => {
     if (onPageChange) onPageChange(page);
@@ -65,7 +92,9 @@ function PaginatedTable<T>({
                 <tr
                   id={(row as any).id ?? ""}
                   key={(row as any).id ?? rowIndex}
-                  className={`hover:bg-gray-50 transition-colors text-xs sm:text-sm ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`hover:bg-gray-50 transition-colors text-xs sm:text-sm ${isRowSelected(row) ? 'bg-yellow-100' : ''} ${onRowClick ? 'cursor-pointer' : ''}`}
+                  onMouseEnter={() => handleMouseEnter(row)}
+                  onMouseLeave={handleMouseLeave}
                   onClick={onRowClick ? (e) => {
                     // don't trigger row click when the user clicked an interactive element (link, button, input, etc.)
                     const el = (e.target as HTMLElement).closest('a,button,input,textarea,select,label');
@@ -102,6 +131,14 @@ function PaginatedTable<T>({
           )}
         </tbody>
       </table>
+      {addMap && (
+        <div className="flex justify-center w-full mt-5">
+          <div className="h-[500px] w-4/5"> 
+            <ReportsMap reports={items as any[]} currentPopUp={selectedReport} setCurrentPopUp={setSelectedReport} hasSelect={false}/>
+          </div>
+        </div>
+      )}
+      
 
    
       {total_pages > 1 && (
