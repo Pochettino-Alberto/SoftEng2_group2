@@ -34,7 +34,21 @@ sections:
 > place technical tasks corresponding to story `#0` and leave out story points (not applicable in this case)
 
 - Hours per task (average, standard deviation)
+|            | Mean  | StDev |
+| ---------- | ----- | ----- |
+| Estimation | 2.50h | 3.32h |
+| Actual     | 2.20h | 2.63h |
+
 - Total task estimation error ratio: sum of total hours estimation / sum of total hours spent -1
+$$\frac{\sum_i \text{spent}_{task_i}}{\sum_i \text{estimation}_{task_i}} - 1 = -11.8 \%$$
+
+**Result:** The total estimation error is **-11.8%**, which means that the effective work required about 11.8% less time, compared to what was estimated.
+
+- Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
+
+$$\frac{1}{}\sum_{i=1}^{} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| \approx 30\%$$
+
+**Meaning:** The average absolute error per single task is **30%**, which tells us that, on average, every single esteem deviated from the effective value of about 30%. Such a value is higher than the total error (-11.8%) because some errors have compensated each other (some esteems were too high, others too low).
 
 ## QUALITY MEASURES
 
