@@ -28,8 +28,10 @@ sections:
 
 | Story           | # Tasks | Points | Hours est. | Hours actual |
 | --------------- | ------- | ------ | ---------- | ------------ |
-| _Uncategorized_ |         | -      |            |              |
-| n               |         |        |            |              |
+| _Uncategorized_ | 11        | -      |    41h        |    36h 25m          |
+| PT-06 Approve or reject reports by municipal officer               |    10     |     8   |    20h 30m        |       20h 10m       |
+| PT-08 Show assigned reports to technical office staff members               |    7     |     3   |    13h 30m        |       8h 50m       |
+| PT-24 Assign reports to external maintainers                |    7     |     8   |    12h 30m        |       11h 45m       |
 
 > place technical tasks corresponding to story `#0` and leave out story points (not applicable in this case)
 
