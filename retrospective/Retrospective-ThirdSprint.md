@@ -26,29 +26,30 @@ sections:
 
 ### Detailed statistics
 
-| Story           | # Tasks | Points | Hours est. | Hours actual |
-| --------------- | ------- | ------ | ---------- | ------------ |
-| _Uncategorized_ | 11        | -      |    41h        |    36h 25m          |
-| PT-06 Approve or reject reports by municipal officer               |    10     |     8   |    20h 30m        |       20h 10m       |
-| PT-08 Show assigned reports to technical office staff members               |    7     |     3   |    13h 30m        |       8h 50m       |
-| PT-24 Assign reports to external maintainers                |    7     |     8   |    12h 30m        |       11h 45m       |
+| Story                                                         | # Tasks | Points | Hours est. | Hours actual |
+| ------------------------------------------------------------- | ------- | ------ | ---------- | ------------ |
+| _Uncategorized_                                               | 11      | -      | 41h        | 36h 25m      |
+| PT-06 Approve or reject reports by municipal officer          | 10      | 8      | 20h 30m    | 20h 10m      |
+| PT-08 Show assigned reports to technical office staff members | 7       | 3      | 13h 30m    | 8h 50m       |
+| PT-24 Assign reports to external maintainers                  | 7       | 8      | 12h 30m    | 11h 45m      |
 
 > place technical tasks corresponding to story `#0` and leave out story points (not applicable in this case)
 
 - Hours per task (average, standard deviation)
+
 |            | Mean  | StDev |
 | ---------- | ----- | ----- |
 | Estimation | 2.50h | 3.32h |
 | Actual     | 2.20h | 2.63h |
 
 - Total task estimation error ratio: sum of total hours estimation / sum of total hours spent -1
-$$\frac{\sum_i \text{spent}_{task_i}}{\sum_i \text{estimation}_{task_i}} - 1 = -11.8 \%$$
+  $$\frac{\sum_i \text{spent}_{task_i}}{\sum_i \text{estimation}_{task_i}} - 1 = -11.8 \%$$
 
 **Result:** The total estimation error is **-11.8%**, which means that the effective work required about 11.8% less time, compared to what was estimated.
 
 - Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
 
-$$\frac{1}{}\sum_{i=1}^{} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| \approx 30\%$$
+$$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \right| \approx 30\%$$
 
 **Meaning:** The average absolute error per single task is **30%**, which tells us that, on average, every single esteem deviated from the effective value of about 30%. Such a value is higher than the total error (-11.8%) because some errors have compensated each other (some esteems were too high, others too low).
 
@@ -69,7 +70,7 @@ $$\frac{1}{}\sum_{i=1}^{} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \r
   - Total hours estimated
   - Total hours spent
 - Technical Debt management:
-  - Strategy adopted
+  - Strategy adopted: [TD_Strategy](../TD_strategy.md)
   - Total hours estimated estimated at sprint planning
   - Total hours spent
 
@@ -82,7 +83,7 @@ $$\frac{1}{}\sum_{i=1}^{} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 \r
 - What lessons did you learn (both positive and negative) in this sprint?
 
   > Positive lesson: We learned that planning is essential and spending more time on it could save much more time down the line.
-  > Negative lesson: every team member must double-check if all the task requirements are implemented so that it doesn't cause problems for other members who are working on tasks related to that one.
+  > Negative lesson: every team member must review its own work, double-checking if all the task requirements have been implemented so that it doesn't cause problems for other members who are working on tasks related to that one.
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
   > We achieved both goals we set at the previous rertospective; during the sprint planning we created more detailed tasks and we managed to finish the source code (except tests) within our internal deadline.
