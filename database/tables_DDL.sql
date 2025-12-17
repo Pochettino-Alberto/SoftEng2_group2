@@ -118,3 +118,17 @@ CREATE TABLE report_photos (
     photo_public_url TEXT NOT NULL, -- public URL of the photo
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
 );
+
+-- ===============================
+-- REPORTS_COMMENTS (only for internal users)
+-- ===============================
+CREATE TABLE report_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    commenter_id INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    createdAt TEXT NOT NULL,    -- when getting comments, order by createdAt
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE,
+    FOREIGN KEY (commenter_id) REFERENCES users (id) ON DELETE CASCADE
+);
