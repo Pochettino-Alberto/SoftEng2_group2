@@ -109,6 +109,21 @@ class ReportController {
     }
 
     /**
+     * This controller function calls the reportDAO function in charge of getting all the reports with status
+     * "In Progress" or "Suspended" and with a specific "maintainer_id"
+     * @param maintainer_id
+     * @returns Array of reports 
+     */
+    async getReportsAssignedToMaintainer(maintainer_id: number): Promise<Report[]> {
+        try {
+            return await this.dao.getReportsAssignedToMaintainer(maintainer_id);
+        } catch (error) {
+            console.error(`Error fetching reports assigned to maintainer ${maintainer_id}:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Returns all municipality users whose roles are responsible for a given category ID.
      * @param categoryId - The ID of the report category.
      * @returns A Promise that resolves to an array of relevant TOS users.

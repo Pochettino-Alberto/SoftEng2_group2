@@ -384,6 +384,35 @@ class ReportDAO {
         });
     }
 
+    /**
+     * Get all reports assigned to a specific maintainer.
+     * A report is considered assigned to the maintainer when its `status` is 'In Progress' or 'Suspended'
+     * and `maintainer_id` equals the provided id.
+     * @param maintainer_id - id of the maintainer
+     */
+    async getReportsAssignedToMaintainer(maintainer_id: number): Promise<Report[]> {
+        return new Promise((resolve, reject) => {
+            try {
+                const sql = `SELECT * FROM reports WHERE (status = 'In Progress' OR status = 'Suspended') AND maintainer_id = ? ORDER BY updatedAt DESC`;
+                db.all(sql, [maintainer_id], async (err, rows: any[]) => {
+                    if (err) {
+                        console.error('SQL ERROR getReportsAssignedToMaintainer', err, { maintainer_id });
+                        return reject(err);
+                    }
+
+                    const reports: Report[] = [];
+                    for (const r of rows) {
+                        reports.push(await this.commonDao.mapDBrowToReport(r, true));
+                    }
+
+                    resolve(reports);
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
 }
 
 export default ReportDAO
