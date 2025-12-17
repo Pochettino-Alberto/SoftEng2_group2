@@ -49,7 +49,7 @@ The server can be launched with <code>nodemon index.ts</code>
 ### report routes
 
 | Method & Path                                  | Query / Body                                                                 | Description / Business Logic                                                                                                           |
-|------------------------------------------------| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **GET /report/categories**                     |                                                                              | Retrieves all the report categories available in the system                                                                            |
 | **GET /report/report/:id**                     | `id` (path param, required)                                                  | Retrieves a single report by its ID. Includes evaluated sub-objects (category, reporter, updater, photos)                              |
 | **PATCH /report/report/:id/status**            | { status, status_reason? }                                                   | Updates the status of a report (e.g., REJECTED). Requires Admin/Municipality privileges.                                               |
@@ -60,6 +60,7 @@ The server can be launched with <code>nodemon index.ts</code>
 | **PATCH /report/report/:id/assign**            | { assigned_to }                                                              | Assigns a report to a specific municipality user (Technical Officer). Sets status to 'Assigned'.                                       |
 | **PATCH /report/report/:id/assign-maintainer** | { maintainer_id }                                                            | Assigns a report to an external maintainer. Requires Technical Officer role.                                                           |
 | **GET /report/maintainer-users**               |                                                                              | Retrieves all users with the 'external_maintainer' role.                                                                               |
+| **GET /report/assigned-to-maintainer**         |                                                                              | Retrieves all the reports currently assigned to a specific external maintainer                                                         |
 
 **Notes:**
 - Optional body parameters are followed by a `?`
