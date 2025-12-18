@@ -239,7 +239,7 @@ class UserController {
      * @param id - the id of the user
      * @returns A Promise that resolves to a user object.
      */
-    async getUserById(requester: User, id: number) {
+    /*async getUserById(requester: User, id: number) {
         // Only the Admin can see any user infos; normal users can see only infos about themselves
         if (!Utility.isAdmin(requester) && requester.id !== id) {
             throw new UserNotAdminError();
@@ -247,7 +247,7 @@ class UserController {
 
         // Delegate to DAO; any errors will propagate to the route error handler
         return this.dao.getUserById(id);
-    }
+    }*/
 
     /**
      * Deletes a specific user
@@ -258,7 +258,7 @@ class UserController {
      * @param userId - The user's id of the user to delete. The user must exist.
      * @returns A Promise that resolves to true if the user has been deleted.
      */
-    async deleteUser(requester: User, id: number) {
+    /*async deleteUser(requester: User, id: number) {
         // Admins can delete any non-Admin user; other users can delete only their own account
         // First, if the requester is not admin, ensure they are deleting their own account
         if (!Utility.isAdmin(requester)) {
@@ -280,7 +280,7 @@ class UserController {
         const deleted = await this.dao.deleteUserById(id);
         if (!deleted) throw new UserNotFoundError();
         return true;
-    }
+    }*/
 
 
     /**
