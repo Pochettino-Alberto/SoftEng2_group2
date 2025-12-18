@@ -16,6 +16,7 @@ The server can be launched with <code>nodemon index.ts</code>
 - `/dao`: contains the logic for communicating to the Sqlite database.
 - `/errors`: in this folder you can create custom error classes (see UserError.ts example)
 - `/routers`: contains the routers for the different entities
+- `/services`: contains additional services APIs (like Supabase for BLOB storage)
 - `helper.ts`: declares the ErrorHandler used by the whole application for detailed HTTP errors
 - `routes.ts`: this module is called by `index.ts`, and defines the routes names for each service
 - `utilities.ts`: used for defining some useful static methods
@@ -40,11 +41,10 @@ The server can be launched with <code>nodemon index.ts</code>
 | **PATCH /users/edit-user**        | {id, username?, name?, surname?, email?, usertype?, rolesArray?} | Updates the profile of a generic user (requires admin privileges). <br> NOTE: rolesArray contains the roles identifiers so it is an Array<Int> type. <br>You must specify all new and old roles! If it's null, no modification to the user roles will be performed. |
 | **GET /users/get-roles**          |                                                                  | Return all the roles available on the database (requires admin privileges)                                                                                                                                                                                          |
 | **GET /users/get-roles/:userId**  |                                                                  | Return all the roles of a given userId (requires admin privileges)                                                                                                                                                                                                  |
-| -- the following routes are todo  |                                                                  |                                                                                                                                                                                                                                                                     |
-| **GET /users/search-users**       |                                                                  | Lists users                                                                                                                                                                                                                                                         |
-| **DELETE /users/user**            |                                                                  | Deletes a municipality user account                                                                                                                                                                                                                                 |
-| **GET /users/municipality-roles** |                                                                  | Returns a list of Turin municipality technical offices                                                                                                                                                                                                              |
-| **DELETE /users/user/role**       |                                                                  | Removes assignment of a role to a municipality user                                                                                                                                                                                                                 |
+| **GET /users/search-users**       | `first_name?`, `last_name?`, `email?`, `role?`, `page_num?`, `page_size?` | Retrieve all users that matches the provided query filters (requires admin privileges)                                                                                                                                                                     |
+| **POST /users/admin/create-municipality-user**       | {username, name, surname, email, password, rolesArray} | Registers a new user for a given role (requires admin privileges)                                                                                                                                                                     |
+| **POST /users/admin/assign-roles**       | {userId, rolesArray} | Set (replace) roles for an existing user                                                                                                                                                                     |
+
 
 ### report routes
 
