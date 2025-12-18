@@ -1,8 +1,8 @@
 import db from "./db"
-import { Report, ReportCategory, ReportStatusType } from "../components/report"
+import { Report, ReportCategory, ReportComment, ReportStatusType } from "../components/report"
 import CommonDao from './commonDAO'
 import { Utility } from "../utilities";
-import {User} from "../components/user";
+import { User } from "../components/user";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
@@ -193,7 +193,7 @@ class ReportDAO {
             const sql = `SELECT * FROM report_categories WHERE active = 1`;
             db.all(sql, [], (err, rows) => {
                 if (err) return reject(err);
-            const categories = rows.map(row => this.commonDao.mapDBrowToReportCategoryObject(row));
+                const categories = rows.map(row => this.commonDao.mapDBrowToReportCategoryObject(row));
                 resolve(categories);
             });
         });
@@ -269,7 +269,7 @@ class ReportDAO {
 
                     const reports: Report[] = [];
                     for (const r of rows) {
-                        
+
                         reports.push(await this.commonDao.mapDBrowToReport(r, true));
                     }
 
@@ -348,7 +348,7 @@ class ReportDAO {
                 SET status = 'Assigned', assigned_to = ?, assigned_from_id = ?, updatedAt = ? 
                 WHERE id = ?
             `;
-            db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function(err) {
+            db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
                     return reject(new Error(`Report with ID ${reportId} not found.`));
@@ -374,7 +374,7 @@ class ReportDAO {
                 SET maintainer_id = ?, updated_by = ?, updatedAt = ?, status = 'In Progress'
                 WHERE id = ?
             `;
-            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function(err) {
+            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
                     return reject(new Error(`Report with ID ${reportId} not found.`));
@@ -410,6 +410,33 @@ class ReportDAO {
             } catch (err) {
                 reject(err);
             }
+        });
+    }
+
+    /**
+     * Adds a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the added ReportComment object.
+     */
+    async addCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        return new Promise<ReportComment>((resolve, reject) => {
+            const sql = `
+                INSERT INTO report_comments (
+                    report_id,
+                    commenter_id,
+                    comment,
+                    createdAt,
+                    updatedAt
+                ) VALUES (?, ?, ?, ?, ?)
+            `;
+            db.run(
+                sql,
+                [reportComment.report_id, reportComment.commenter_id, reportComment.comment, reportComment.createdAt, reportComment.updatedAt],
+                function (err) {
+                    if (err) return reject(err);
+                    reportComment.id = this.lastID;
+                    resolve(reportComment);
+                });
         });
     }
 

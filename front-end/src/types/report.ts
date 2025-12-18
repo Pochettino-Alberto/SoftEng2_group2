@@ -1,5 +1,17 @@
 import type {User} from "./user.ts";
 
+/**
+ * Represents a comment attached to a report.
+ */
+export interface ReportComment {
+    id: number;
+    report_id: number;
+    commenter_id: number;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface ReportPhoto {
   id: number;
   report_id: number;

@@ -60,6 +60,34 @@ class ReportPhoto {
 }
 
 /**
+ * Represents a comment attached to a report.
+ */
+class ReportComment {
+    id: number;
+    report_id: number;
+    commenter_id: number;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+
+    constructor(
+        id: number = 0,
+        report_id: number,
+        commenter_id: number,
+        comment: string,
+        createdAt: string,
+        updatedAt: string
+    ) {
+        this.id = id;
+        this.report_id = report_id;
+        this.commenter_id = commenter_id;
+        this.comment = comment;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+}
+
+/**
  * Represents a user-submitted report.
  */
 class Report {
@@ -146,4 +174,4 @@ class Report {
     }
 }
 
-export { Report, ReportPhoto, ReportCategory };
+export { Report, ReportPhoto, ReportCategory, ReportComment };

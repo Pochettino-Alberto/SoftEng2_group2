@@ -2,7 +2,7 @@ import express, { Router } from "express"
 import multer from "multer";
 import Authenticator from "./auth"
 import { query, body, param } from "express-validator"
-import { Report, ReportStatus, ReportCategory, ReportPhoto, ReportStatusType } from "../components/report"
+import { Report, ReportStatus, ReportCategory, ReportPhoto, ReportStatusType, ReportComment } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ErrorHandler from "../helper"
 import ReportController from "../controllers/reportController"
@@ -10,7 +10,7 @@ import { supabaseService } from "../services/supabaseService";
 import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
 import { SERVER_CONFIG } from "../config";
-import {User} from "../components/user";
+import { User } from "../components/user";
 
 /**
  * Represents a class that defines the routes for handling users.
@@ -97,7 +97,7 @@ class ReportRoutes {
                     const savedReport = await this.controller.saveReport(report);
 
                     let file_ids: { publicUrl: string, filePath: string }[] = []
-                    if((req.files as any[]).length > 0){
+                    if ((req.files as any[]).length > 0) {
                         file_ids = await supabaseService.uploadFiles(
                             `${savedReport.category_id}/${savedReport.id}`,
                             req.files as Express.Multer.File[],
@@ -168,7 +168,7 @@ class ReportRoutes {
                     await this.controller.updateReportStatus(reportId, status as ReportStatusType, status_reason);
 
                     const updatedReport = await this.controller.getReportById(reportId);
-                    
+
                     res.status(200).json(updatedReport);
                 } catch (err) {
                     console.error('REPORT STATUS UPDATE ERROR:', err);
@@ -251,7 +251,7 @@ class ReportRoutes {
             }
         );
 
-        
+
         /** GET /reports/assigned-to-techOfficer
          *  Returns all reports assigned to the authenticated technical officer
          * Error codes:
@@ -344,6 +344,46 @@ class ReportRoutes {
             }
         );
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *          REPORT COMMENTS ROUTES                   *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        /* POST /report/:id/comment
+         * Adds a comment to a report.
+         * Parameters:
+         * - id: Report ID (URL parameter)
+         * - comment: Comment text (body parameter)
+         */
+        this.router.post(
+            "/:report_id/comment",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.isLoggedIn,
+            this.authService.isAdminOrMunicipality,
+            param("report_id").toInt().isInt({ min: 1 }),
+            body("comment").isString().notEmpty(),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.report_id);
+                    const commenterId = Number(req.user.id);
+                    const { comment } = req.body;
+                    const reportComment = new ReportComment(
+                        0,
+                        reportId,
+                        commenterId,
+                        comment,
+                        Utility.now(),
+                        Utility.now()
+                    );
+                    const savedComment = await this.controller.addCommentToReport(reportComment);
+                    res.status(201).json(savedComment);
+                } catch (err) {
+                    console.error('REPORT COMMENT ERROR:', err);
+                    next(err);
+                }
+            }
+        );
     }
 }
 

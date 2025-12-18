@@ -1,4 +1,4 @@
-import { Report, ReportCategory, ReportStatusType } from "../components/report"
+import { Report, ReportCategory, ReportComment, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
 import { User } from "../components/user";
@@ -181,6 +181,21 @@ class ReportController {
             throw error;
         }
     }
+
+    /**
+     * Adds a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the added ReportComment object.
+     */
+    async addCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        try {
+            return await this.dao.addCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error adding comment to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
+    
 
 }
 
