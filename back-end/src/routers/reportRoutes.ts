@@ -11,6 +11,7 @@ import { SupabaseBucket } from "../services/supabaseService";
 import { Utility } from "../utilities";
 import { SERVER_CONFIG } from "../config";
 import { User } from "../components/user";
+import { ReportRejectedWithoutReasonError } from "../errors/reportError";
 
 /**
  * Represents a class that defines the routes for handling users.

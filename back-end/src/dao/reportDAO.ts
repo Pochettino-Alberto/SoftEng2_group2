@@ -3,6 +3,7 @@ import { Report, ReportCategory, ReportComment, ReportStatusType } from "../comp
 import CommonDao from './commonDAO'
 import { Utility } from "../utilities";
 import { User } from "../components/user";
+import { ReportNotFoundError } from "../errors/reportError";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.

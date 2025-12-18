@@ -26,3 +26,5 @@ class ReportRejectedWithoutReasonError extends Error {
         this.customCode = 400
     }
 }
+
+export { ReportNotFoundError, ReportRejectedWithoutReasonError }
