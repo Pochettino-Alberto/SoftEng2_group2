@@ -251,6 +251,33 @@ class ReportDAO {
         });
     }
 
+    async getMapReports(
+        status: Array<String> | null,
+    ): Promise<Report[]> {
+        return new Promise((resolve, reject) => {
+            try {
+                let baseSql = " SELECT * FROM reports WHERE 1=1 ";
+                const params: any[] = [];
+                if (status && status.length > 0) {
+                    const placeholders = status.map(() => '?').join(', ');
+                    baseSql += ` AND status IN (${placeholders})`;
+                    params.push(...status);
+                }
+                baseSql += " ORDER BY updatedAt DESC";
+                db.all(baseSql, params, async (err, rows: any[]) => {
+                    if (err) return reject(err);
+                    const reports: Report[] = [];
+                    for (const r of rows) {
+                        reports.push(await this.commonDao.mapDBrowToReport(r, true)); // include subclasses
+                    }
+                    resolve(reports);
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
     /**
      * Get all reports assigned to a specific technical officer.
      * A report is considered assigned to the technical officer when its `status` is 'Assigned' or 'In Progress'
@@ -435,6 +462,7 @@ class ReportDAO {
                 function (err) {
                     if (err) return reject(err);
                     reportComment.id = this.lastID;
+                    // Note: the mapDBrowToReportComment is not necessary here since we already have the ReportComment object
                     resolve(reportComment);
                 });
         });

@@ -93,6 +93,17 @@ class ReportController {
         }
     }
 
+    async getMapReports(
+        status: Array<String> | null,
+    ): Promise<Report[]> {
+        try {
+            const reports = await this.dao.getMapReports(status);
+            return reports;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     /**
      * This controller function calls the reportDAO function in charge of getting all the reports with status
      * "Assigned" and with a specific "assigned_from_id" (which correspons to the technical officer's id) 

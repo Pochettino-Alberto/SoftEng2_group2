@@ -178,6 +178,17 @@ class ReportRoutes {
             }
         );
 
+        /**
+         * GET /reports/search-reports
+         * Query Parameters:
+         * - page_num (optional): The page number for pagination (default: 1).
+         * - page_size (optional): The number of reports per page (default: 10).
+         * - status (optional): Filter reports by status (e.g., 'Pending Approval', 'Assigned', 'Resolved', 'Rejected').
+         * - is_public (optional): Filter reports by their public visibility (true or false).
+         * - category_id (optional): Filter reports by category ID.
+         * 
+         * Returns a paginated list of reports based on the provided filters.
+         */
         this.router.get(
             "/search-reports",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
@@ -198,6 +209,28 @@ class ReportRoutes {
                     req.query.category_id || null
                 )
                     .then((pagReports: PaginatedResult<Report>) => res.status(200).json(pagReports))
+                    .catch((err: any) => next(err));
+            }
+        );
+
+        /**
+         * GET /reports/get-map-reports
+         * Returns all reports for displaying on a map.
+         * Optional body parameter:
+         * @param statusArray: An array of report statuses to filter the reports (e.g., ['Assigned', 'In Progress']).
+         * @return A list of all reports matching the specified statuses.
+         * This endpoint can be called without authentication.
+         */
+        this.router.get(
+            "/get-map-reports",
+            body("statusArray").optional().isArray().isIn(Object.values(ReportStatus)),
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            (req: any, res: any, next: any) => {
+                this.controller.getMapReports(
+                    req.body.statusArray || null
+                )
+                    .then((pagReports: Report[]) => res.status(200).json(pagReports))
                     .catch((err: any) => next(err));
             }
         );

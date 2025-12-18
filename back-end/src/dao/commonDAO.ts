@@ -1,5 +1,5 @@
 import db from "./db"
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportPhoto, ReportStatus, ReportCategory, ReportComment } from "../components/report"
 import { User, UserRole } from "../components/user"
 import { PaginatedResult } from "../components/common";
 
@@ -60,6 +60,22 @@ class CommonDao {
             dbRow.position,
             dbRow.photo_public_url ?? "",
             dbRow.photo_path ?? ""
+        );
+    }
+
+    /**
+     * Builds a ReportComment object from a database row
+     * @param dbRow Row Object containing the comment data
+     * @returns ReportComment object
+     */
+    mapDBrowToReportComment(dbRow: any): ReportComment  {
+        return new ReportComment(
+            dbRow.id,
+            dbRow.report_id,
+            dbRow.commenter_id,
+            dbRow.comment,
+            dbRow.created_at,
+            dbRow.updated_at
         );
     }
 
