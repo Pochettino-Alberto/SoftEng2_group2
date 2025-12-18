@@ -198,7 +198,7 @@ class UserRoutes {
          * 404 - Not Found
          * 500 - Internal Server Error
          */
-        this.router.get(
+        /*this.router.get(
             "/users/:userId",
             this.authService.isLoggedIn,
             param('userId').isInt({min: 1}).toInt(),
@@ -206,7 +206,7 @@ class UserRoutes {
             (req: any, res: any, next: any) => this.controller.getUserById(req.user, req.params.userId)
                 .then((user: any) => res.status(200).json(user))
                 .catch((err: any) => next(err))
-        )
+        )*/
 
         /**
          * Route for deleting a user by userId.
@@ -218,7 +218,7 @@ class UserRoutes {
          * 404 - Not Found
          * 500 - Internal Server Error
          */
-        this.router.delete(
+        /*this.router.delete(
             "/users/:userId",
             this.authService.isLoggedIn,
             param('userId').isInt({min: 1}).toInt(),
@@ -226,7 +226,7 @@ class UserRoutes {
             (req: any, res: any, next: any) => this.controller.deleteUser(req.user, req.params.userId)
                 .then(() => res.status(200).end())
                 .catch((err: any) => next(err))
-        )
+        )*/
 
 
         this.router.get(
@@ -312,82 +312,6 @@ class UserRoutes {
                 }
             }
         )
-
-        /**
-         * Route for retrieving all users.
-         * It requires the user to be logged in and to be an admin.
-         * It returns an array of users.
-         */
-        /*this.router.get(
-            "/",
-            this.authService.isAdmin,
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.getUsers()
-                .then((users: any) => res.status(200).json(users))
-                .catch((err) => next(err))
-        )*/
-
-        /**
-         * Route for retrieving all users of a specific role.
-         * It requires the user to be logged in and to be an admin.
-         * It expects the role of the users in the request parameters: the role must be one of ("Manager", "Customer", "Admin").
-         * It returns an array of users.
-         */
-        /*this.router.get(
-            "/roles/:role",
-            this.authService.isAdmin,
-            param('role').isIn(Object.values(Role)),
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.getUsersByRole(req.params.role)
-                .then((users: any) => res.status(200).json(users))
-                .catch((err) => next(err))
-        )*/
-
-        /**
-         * Route for retrieving a user by its username.
-         * It requires the user to be authenticated: users with an Admin role can retrieve data of any user, users with a different role can only retrieve their own data.
-         * It expects the username of the user in the request parameters: the username must represent an existing user.
-         * It returns the user.
-         */
-        /*this.router.get(
-            "/:username",
-            this.authService.isLoggedIn,
-            param('username').isString().notEmpty(),
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.getUserByUsername(req.user, req.params.username)
-                .then((user: any) => res.status(200).json(user))
-                .catch((err) => next(err))
-        )*/
-
-        /**
-         * Route for deleting a user.
-         * It requires the user to be authenticated: users with an Admin role can delete the data of any user (except other Admins), users with a different role can only delete their own data.
-         * It expects the username of the user in the request parameters: the username must represent an existing user.
-         * It returns a 200 status code.
-         */
-        /*this.router.delete(
-            "/:username",
-            this.authService.isLoggedIn,
-            param('username').isString().notEmpty(),
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.deleteUser(req.user, req.params.username)
-                .then(() => res.status(200).end())
-                .catch((err: any) => next(err))
-        )*/
-
-        /**
-         * Route for deleting all users.
-         * It requires the user to be logged in and to be an admin.
-         * It returns a 200 status code.
-         */
-        /*this.router.delete(
-            "/",
-            this.authService.isAdmin,
-            this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.deleteAll()
-                .then(() => res.status(200).end())
-                .catch((err: any) => next(err))
-        )*/
     }
 }
 
