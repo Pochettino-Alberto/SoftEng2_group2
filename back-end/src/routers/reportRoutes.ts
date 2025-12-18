@@ -132,11 +132,12 @@ class ReportRoutes {
             }
         );
 
+        // Anyone is able to get report details
         this.router.get(
             "/report/:id",
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
-            this.authService.isAdminOrMunicipality,
+            //this.authService.isAdminOrMunicipality,
             (req: any, res: any, next: any) => {
                 const reportId = Number(req.params.id);
                 this.controller.getReportById(reportId)
