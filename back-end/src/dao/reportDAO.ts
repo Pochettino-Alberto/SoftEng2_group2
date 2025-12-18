@@ -175,7 +175,7 @@ class ReportDAO {
                 function (err) {
                     if (err) return reject(err);
                     if (this.changes === 0) {
-                        return reject(new Error(`Report with ID ${reportId} not found.`));
+                        return reject(new ReportNotFoundError());
                     }
                     resolve();
                 }
@@ -378,7 +378,7 @@ class ReportDAO {
             db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
-                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                    return reject(new ReportNotFoundError());
                 }
                 resolve();
             });
@@ -404,7 +404,7 @@ class ReportDAO {
             db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
-                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                    return reject(new ReportNotFoundError());
                 }
                 resolve();
             });
@@ -461,6 +461,11 @@ class ReportDAO {
                 [reportComment.report_id, reportComment.commenter_id, reportComment.comment, reportComment.createdAt, reportComment.updatedAt],
                 function (err) {
                     if (err) return reject(err);
+
+                    if (this.changes === 0) {
+                        return reject(new ReportNotFoundError());
+                    }
+
                     reportComment.id = this.lastID;
                     // Note: the mapDBrowToReportComment is not necessary here since we already have the ReportComment object
                     resolve(reportComment);

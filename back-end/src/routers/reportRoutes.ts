@@ -156,7 +156,7 @@ class ReportRoutes {
             body("status_reason").optional().isString().trim(),
             body("status_reason").custom((value, { req }) => {
                 if (req.body.status === ReportStatus.REJECTED && (!value || value.trim() === '')) {
-                    throw new Error("Status reason is required when rejecting a report.");
+                    throw new ReportRejectedWithoutReasonError();
                 }
                 return true;
             }),
