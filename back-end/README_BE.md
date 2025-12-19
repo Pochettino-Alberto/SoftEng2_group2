@@ -62,6 +62,7 @@ The server can be launched with <code>nodemon index.ts</code>
 | **PATCH /reports/report/:id/assign-maintainer** | `id` { maintainer_id }                                                            | Assigns a report to an external maintainer. Requires Technical Officer role.                                                           |
 | **GET /reports/maintainer-users**               |                                                                              | Retrieves all users with the 'external_maintainer' role. Requires Technical Officer role.                                                                               |
 | **GET /reports/assigned-to-maintainer**         |                                                                              | Returns all reports assigned to the authenticated external maintainer. Requires Mainteiner role.                                                         |
+| **GET /reports/:report_id/comments**           |                                                                              | Get all comments for the specified `report_id`                                                                                         |
 | **POST /reports/:report_id/comment**           | {comment}                                                                    | Add a new comment to the specified `report_id`                                                                                         |
 
 **Notes:**

@@ -16,7 +16,30 @@ class ReportDAO {
     }
 
     async getReportById(id: number): Promise<Report> {
-        return await this.commonDao.getById<Report>("reports", id, async (row) => await this.commonDao.mapDBrowToReport(row, true));
+        try {
+            return await this.commonDao.getById<Report>("reports", id, async (row) => await this.commonDao.mapDBrowToReport(row, true));
+        } catch (error: any) {
+            if (error.message && error.message.includes("not found")) {
+                throw new ReportNotFoundError();
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Get all comments for a specific report
+     * @param reportId - The ID of the report
+     * @returns Promise resolving to an array of ReportComment objects
+     */
+    async getCommentsByReportId(reportId: number): Promise<ReportComment[]> {
+        return new Promise<ReportComment[]>((resolve, reject) => {
+            const sql = `SELECT * FROM report_comments WHERE report_id = ? ORDER BY createdAt ASC`;
+            db.all(sql, [reportId], (err: Error | null, rows: any[]) => {
+                if (err) return reject(err);
+                const comments = rows.map(row => this.commonDao.mapDBrowToReportComment(row));
+                resolve(comments);
+            });
+        });
     }
 
     /**

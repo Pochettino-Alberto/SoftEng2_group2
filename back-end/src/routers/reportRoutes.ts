@@ -383,6 +383,29 @@ class ReportRoutes {
          *          REPORT COMMENTS ROUTES                   *
          * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+        /* GET /:report_id/comments
+         * Get all comments for a report.
+         * Parameters:
+         * - report_id: Report ID (URL parameter)
+         */
+        this.router.get(
+            "/:report_id/comments",
+            this.authService.isLoggedIn,
+            this.authService.isAdminOrMunicipality,
+            param("report_id").toInt().isInt({ min: 1 }),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.report_id);
+                    const comments = await this.controller.getCommentsByReportId(reportId);
+                    res.status(200).json(comments);
+                } catch (err) {
+                    console.error('REPORT COMMENTS FETCH ERROR:', err);
+                    next(err);
+                }
+            }
+        );
+
         /* POST /report/:id/comment
          * Adds a comment to a report.
          * Parameters:

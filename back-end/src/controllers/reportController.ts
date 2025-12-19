@@ -55,6 +55,22 @@ class ReportController {
         }
     }
 
+    /**
+     * Fetch all comments for a specific report
+     * @param reportId - The ID of the report
+     * @returns Promise resolving with an array of ReportComment
+     */
+    async getCommentsByReportId(reportId: number): Promise<ReportComment[]> {
+        try {
+            // Check if report exists (throws ReportNotFoundError if not found)
+            await this.getReportById(reportId);
+            return await this.dao.getCommentsByReportId(reportId);
+        } catch (error) {
+            console.error("Error fetching report comments:", error);
+            throw error;
+        }
+    }
+
     async updateReportStatus(reportId: number, status: ReportStatusType, statusReason?: string): Promise<void> {
         try {
             return await this.dao.updateReportStatus(reportId, status, statusReason);
