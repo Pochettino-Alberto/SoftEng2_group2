@@ -4,9 +4,13 @@ import * as crypto from 'crypto';
 import { SupabaseFailedToUpload, SupabaseFailedToDelete } from '../errors/supabaseError';
 
 // --- Configuration ---
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rksihjpitwbqsydhlyeb.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 // NOTE: Use the Service Role Key for server-side operations to bypass RLS
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'sb_secret_X0X76JcwyNPc6M9P25QB-g_AgZ2Sbxj';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    throw new Error("Missing Supabase configuration. Please set SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables.");
+}
 
 // Initialize the Supabase Client
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);

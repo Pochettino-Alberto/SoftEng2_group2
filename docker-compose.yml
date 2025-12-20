@@ -16,6 +16,8 @@ services:
       - PORT=3001
       # we tell the TS code in db.ts where it can look for the database in case docker is used
       - DB_PATH=/usr/src/app/database/database.db
+    env_file:
+      - .env
     restart: unless-stopped
 
   # --- frontend service ---
