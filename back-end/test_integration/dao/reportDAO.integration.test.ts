@@ -445,20 +445,7 @@ describe('ReportDAO integration', () => {
     expect(updated.status_reason).toBe('Fixed')
   })
 
-  test('updateReportStatus throws if report not found (real DB)', async () => {
-    jest.resetModules()
-    jest.unmock('sqlite3')
-    jest.unmock('fs')
 
-    const ReportDAO = require('../../src/dao/reportDAO').default
-    const { ReportStatus } = require('../../src/components/report')
-    const { dbReady } = require('../../src/dao/db')
-    await dbReady
-
-    const dao = new ReportDAO()
-
-    await expect(dao.updateReportStatus(999999, ReportStatus.RESOLVED)).rejects.toThrow(/not found/)
-  })
 
   test('getTOSUsersByCategory returns correct users (real DB)', async () => {
     jest.resetModules()

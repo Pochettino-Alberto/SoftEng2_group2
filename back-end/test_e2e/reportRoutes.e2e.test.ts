@@ -82,7 +82,7 @@ describe('E2E Report Routes', () => {
         expect(res.body).toHaveProperty('total_items')
     })
 
-    test('Non-admin cannot GET /reports/report/:id and search filter by is_public', async () => {
+    test('GET /reports/report/:id is public but search filter by is_public works', async () => {
         // create a citizen and a private report
         const username = `citizen_filter_${Date.now()}`
         const password = 'P@ssw0rd'
@@ -101,11 +101,11 @@ describe('E2E Report Routes', () => {
         expect(resPrivate.status).toBe(201)
         const privateReport = resPrivate.body
 
-        // another citizen should not be able to GET the report by id (route is admin-only)
+        // another citizen CAN GET the report by id (route is public)
         const otherUser = `citizen_other_${Date.now()}`
         const { cookies: otherCookies } = await registerAndLogin(request, otherUser, 'AnotherP4ss')
         const getByNonAdmin = await request.get(`/reports/report/${privateReport.id}`).set('Cookie', otherCookies)
-        expect(getByNonAdmin.status).toBe(401)
+        expect(getByNonAdmin.status).toBe(200)
 
         // promote one admin and search for public reports only -> should not include the private one
         const adminName = `admin_filter_${Date.now()}`

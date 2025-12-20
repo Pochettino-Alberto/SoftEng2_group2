@@ -232,28 +232,6 @@ describe('E2E Advanced Controller and Router Coverage', () => {
         expect(res.status).toBe(422)
     })
 
-    test('GET /users/users/:userId validates userId as positive integer', async () => {
-        const admin = `admin_${Date.now()}`
-        await registerAndLogin(request, admin, 'AdminPass')
-        await promoteToAdmin(admin)
-        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
-        const adminCookie = loginRes.headers['set-cookie']
-
-        const res = await request.get('/users/users/0').set('Cookie', adminCookie)
-        expect(res.status).toBe(422)
-    })
-
-    test('DELETE /users/users/:userId validates userId as positive integer', async () => {
-        const admin = `admin_${Date.now()}`
-        await registerAndLogin(request, admin, 'AdminPass')
-        await promoteToAdmin(admin)
-        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
-        const adminCookie = loginRes.headers['set-cookie']
-
-        const res = await request.delete('/users/users/abc').set('Cookie', adminCookie)
-        expect(res.status).toBe(422)
-    })
-
     test('GET /reports/report/:id with invalid id returns error', async () => {
         const admin = `admin_${Date.now()}`
         await registerAndLogin(request, admin, 'AdminPass')

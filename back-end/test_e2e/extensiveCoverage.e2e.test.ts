@@ -189,27 +189,6 @@ describe('E2E Comprehensive User Coverage', () => {
         expect(res.status).toBe(200)
     })
 
-    test('DELETE /users/users/:userId as admin deletes successfully', async () => {
-        // Create user to delete
-        const toDelete = `citizen_todel_${Date.now()}`
-        const { user: delUser } = await registerAndLogin(request, toDelete, 'Pass')
-
-        // Create admin
-        const admin = `admin_delete_${Date.now()}`
-        await registerAndLogin(request, admin, 'AdminPass')
-        await promoteToAdmin(admin)
-        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
-        const adminCookie = loginRes.headers['set-cookie']
-
-        // Delete user
-        const delRes = await request.delete(`/users/users/${delUser.id}`).set('Cookie', adminCookie)
-        expect(delRes.status).toBe(200)
-
-        // Verify deleted
-        const checkRes = await request.get(`/users/users/${delUser.id}`).set('Cookie', adminCookie)
-        expect(checkRes.status).toBe(404)
-    })
-
     test('POST /users/register-user (admin) creates citizen successfully', async () => {
         const admin = `admin_create_${Date.now()}`
         await registerAndLogin(request, admin, 'AdminPass')

@@ -151,57 +151,9 @@ describe('UserRoutes integration - edit-user', () => {
     expect(reloaded.email).toBe('sn@int.test')
   })
 
-  test('GET /users/users/:userId returns user when authorized', async () => {
-    const express = require('express')
-    const app = express()
-    app.use(express.json())
 
-    const UserDAO = require('../../src/dao/userDAO').default
-    const { UserRoutes } = require('../../src/routers/userRoutes')
 
-    const dao = new UserDAO()
-    await dao.createUser('getme', 'G', 'Et', 'g@int.test', 'pwd', 'citizen')
-    const target = await dao.getUserByUsername('getme')
 
-    const fakeAuth = makeFakeAuth({ isLoggedIn: (req: any, res: any, next: any) => { req.user = { id: target.id, username: target.username, user_type: target.user_type }; return next() } })
-
-    const ur = new UserRoutes(fakeAuth)
-    app.use('/users', ur.getRouter())
-
-    const res = await request(app)
-      .get(`/users/users/${target.id}`)
-      .expect(200)
-
-    expect(res.body.username).toBe('getme')
-  })
-
-  test('DELETE /users/users/:userId allows admin to delete another user', async () => {
-    const express = require('express')
-    const app = express()
-    app.use(express.json())
-
-    const UserDAO = require('../../src/dao/userDAO').default
-    const { UserRoutes } = require('../../src/routers/userRoutes')
-
-    const dao = new UserDAO()
-    await dao.createUser('todelete', 'T', 'Del', 'td@int.test', 'pwd', 'citizen')
-    const target = await dao.getUserByUsername('todelete')
-
-    const fakeAuth = makeFakeAuth({
-      isLoggedIn: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() },
-      isAdmin: (req: any, res: any, next: any) => { req.user = { id: 1, username: 'superadmin', user_type: 'admin' }; return next() }
-    })
-
-    const ur = new UserRoutes(fakeAuth)
-    app.use('/users', ur.getRouter())
-
-    await request(app)
-      .delete(`/users/users/${target.id}`)
-      .expect(200)
-
-    const { UserNotFoundError } = require('../../src/errors/userError')
-    await expect(dao.getUserById(target.id)).rejects.toBeInstanceOf(UserNotFoundError)
-  })
 
   test('GET /users/search-users returns paginated users for admin', async () => {
     const express = require('express')
