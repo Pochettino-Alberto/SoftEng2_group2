@@ -166,18 +166,26 @@ function initializeDb() {
     candidates.push('/usr/src/app/sql');
 
     let sqlDir: string | null = null;
+    console.log("🔍 Searching for SQL files in candidates:", candidates);
     for (const cand of candidates) {
         try {
-            if (fs.existsSync(path.join(cand, 'tables_DDL.sql')) && fs.existsSync(path.join(cand, 'tables_default_values.sql'))) {
+            const ddlExists = fs.existsSync(path.join(cand, 'tables_DDL.sql'));
+            const defaultExists = fs.existsSync(path.join(cand, 'tables_default_values.sql'));
+            console.log(`Checking ${cand}: DDL=${ddlExists}, Default=${defaultExists}`);
+            
+            if (ddlExists && defaultExists) {
                 sqlDir = cand;
+                console.log("✅ Found SQL files in:", sqlDir);
                 break;
             }
         } catch (e) {
+            console.error(`Error checking candidate ${cand}:`, e);
             // ignore and try next
         }
     }
 
     if (!sqlDir) {
+        console.warn("⚠️ Could not find SQL files in any candidate path. Fallback to repo location.");
         // fallback to repo database location (best-effort)
         sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
     }

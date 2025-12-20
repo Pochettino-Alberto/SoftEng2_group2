@@ -120,17 +120,20 @@ interface ReportsMapProps {
 }
 const ReportsMapContent: React.FC<ReportsMapProps> = ({ reports, currentPopUp, setCurrentPopUp, hasSelect = false }) => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [boundaryWarning, setBoundaryWarning] = useState(false);
+  // const [boundaryWarning, setBoundaryWarning] = useState(false);
   
   const handleLocationSelect = (loc: Location | null) => setSelectedLocation(loc);
-  const handleBoundaryWarning = () => setBoundaryWarning(true);
+  const handleBoundaryWarning = () => {
+    // setBoundaryWarning(true);
+    console.warn("Boundary warning triggered");
+  };
 
   const map = useMap(); 
   React.useEffect(() => {
     if (currentPopUp) {
       map.closePopup(); 
 
-      const layer = map.eachLayer((layer: any) => {
+      map.eachLayer((layer: any) => {
         if (layer.options && layer.options.className === `report_circle_${currentPopUp.id}`) {
           layer.openPopup();
           map.flyTo([currentPopUp.latitude, currentPopUp.longitude], map.getZoom()); 
