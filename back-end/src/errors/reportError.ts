@@ -8,7 +8,7 @@ class ReportNotFoundError extends Error {
     customCode: number
 
     constructor() {
-        super()
+        super(REPORT_NOT_FOUND)
         this.customMessage = REPORT_NOT_FOUND
         this.customCode = 404
     }

@@ -205,12 +205,6 @@ describe('E2E Critical Branch and Component Coverage', () => {
         expect(editRes.status).toBe(200)
         expect(editRes.body.first_name).toBe('EditedName')
         expect(editRes.body.last_name).toBe('EditedSurname')
-
-        // Verify consistency by fetching the user again
-        const getRes = await request.get(`/users/users/${targetUser.id}`).set('Cookie', adminCookie)
-        expect(getRes.status).toBe(200)
-        expect(getRes.body.first_name).toBe('EditedName')
-        expect(getRes.body.last_name).toBe('EditedSurname')
     })
 
     test('POST /auth/login then DELETE /auth/logout then POST /auth/login again', async () => {

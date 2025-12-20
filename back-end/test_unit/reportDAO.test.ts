@@ -251,7 +251,7 @@ describe('ReportDAO', () => {
       const ReportDAO = require('../src/dao/reportDAO').default
       const dao = new ReportDAO()
 
-      await expect(dao.updateReportStatus(999, 'Assigned')).rejects.toThrow('Report with ID 999 not found.')
+      await expect(dao.updateReportStatus(999, 'Assigned')).rejects.toThrow('The report does not exist')
     })
 
     it('updateReportStatus rejects on db error', async () => {
@@ -416,7 +416,7 @@ describe('ReportDAO', () => {
       const ReportDAO = require('../src/dao/reportDAO').default
       const dao = new ReportDAO()
 
-      await expect(dao.assignReportToUser(100, 200, 300)).rejects.toThrow('Report with ID 100 not found')
+      await expect(dao.assignReportToUser(100, 200, 300)).rejects.toThrow('The report does not exist')
     })
 
     it('assignReportToUser rejects on db error', async () => {
@@ -523,7 +523,7 @@ describe('ReportDAO', () => {
       const ReportDAO = require('../src/dao/reportDAO').default
       const dao = new ReportDAO()
 
-      await expect(dao.assignReportToMaintainer(10, 20, 30)).rejects.toThrow('Report with ID 10 not found')
+      await expect(dao.assignReportToMaintainer(10, 20, 30)).rejects.toThrow('The report does not exist')
     })
 
     it('assignReportToMaintainer rejects on db error', async () => {

@@ -190,6 +190,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('assignReportToUser assigns report and returns updated report (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
@@ -216,6 +220,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getTOSUsersByCategory returns users for category (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
     
@@ -234,6 +242,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('updateReportStatus updates status (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const { Report, ReportStatus } = require('../../src/components/report')
     const ctrl = new ReportController()
@@ -250,6 +262,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getAllMaintainers returns maintainers (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const ctrl = new ReportController()
 
@@ -260,6 +276,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getReportsAssignedToTechOfficer returns reports (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
@@ -290,6 +310,10 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('assignReportToMaintainer updates report (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
