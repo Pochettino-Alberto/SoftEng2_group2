@@ -2,6 +2,7 @@
 
 PRAGMA foreign_keys = ON;
 
+DROP TABLE IF EXISTS report_comments;
 DROP TABLE IF EXISTS report_photos;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS role_category_responsibility;

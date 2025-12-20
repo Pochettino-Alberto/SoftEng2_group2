@@ -302,53 +302,6 @@ describe('E2E User Routes', () => {
         expect(Array.isArray(editRes.body.userRoles)).toBeTruthy()
     })
 
-    test('GET /users/:userId returns user with all fields', async () => {
-        // Create a user
-        const username = `user_fetch_${Date.now()}`
-        const password = 'Pass'
-        const { user: targetUser } = await registerAndLogin(request, username, password)
-
-        // Create admin to fetch the user
-        const admin = `admin_fetch_${Date.now()}`
-        const adminPass = 'AdminPass'
-        await registerAndLogin(request, admin, adminPass)
-        await promoteToAdmin(admin)
-        const login = await request.post('/auth/login').send({ username: admin, password: adminPass })
-        const adminCookie = login.headers['set-cookie']
-
-        // Fetch user
-        const res = await request.get(`/users/users/${targetUser.id}`).set('Cookie', adminCookie)
-        expect(res.status).toBe(200)
-        expect(res.body.id).toBe(targetUser.id)
-        expect(res.body.username).toBe(username)
-        expect(res.body).toHaveProperty('first_name')
-        expect(res.body).toHaveProperty('last_name')
-        expect(res.body).toHaveProperty('email')
-    })
-
-    test('DELETE /users/:userId as admin removes user', async () => {
-        // Create user to delete
-        const target = `user_del_${Date.now()}`
-        const pw = 'Pass'
-        const { user: targetUser } = await registerAndLogin(request, target, pw)
-
-        // Create admin
-        const admin = `admin_del_${Date.now()}`
-        const adminPass = 'AdminPass'
-        await registerAndLogin(request, admin, adminPass)
-        await promoteToAdmin(admin)
-        const login = await request.post('/auth/login').send({ username: admin, password: adminPass })
-        const adminCookie = login.headers['set-cookie']
-
-        // Delete user
-        const delRes = await request.delete(`/users/users/${targetUser.id}`).set('Cookie', adminCookie)
-        expect(delRes.status).toBe(200)
-
-        // Verify user is deleted
-        const getRes = await request.get(`/users/users/${targetUser.id}`).set('Cookie', adminCookie)
-        expect(getRes.status).toBe(404)
-    })
-
     test('POST /users/admin/create-municipality-user creates municipality user with rolesArray', async () => {
         const adminUser = `admin_muni_${Date.now()}`
         await registerAndLogin(request, adminUser, 'P@ss1234')

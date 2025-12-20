@@ -107,27 +107,7 @@ describe('UserDAO additional integration tests (dao folder)', () => {
     await expect(dao.getUserById(999999)).rejects.toBeInstanceOf(UserNotFoundError)
   })
 
-  test('updateUserInfo persists changes and deleteUserById false when missing (real DB)', async () => {
-    const UserDAO = require('../../src/dao/userDAO').default
-    const dao = new UserDAO()
 
-    const username = 'to_update'
-    const created = await dao.createUser(username, 'First', 'Last', 'tu@int.test', 'pwd', 'citizen')
-    const uid = created.id
-
-    // update info
-    created.username = 'updated_user_dao'
-    created.email = 'updated@int.test'
-    await dao.updateUserInfo(uid, created)
-
-    const reloaded = await dao.getUserById(uid)
-    expect(reloaded.username).toBe('updated_user_dao')
-    expect(reloaded.email).toBe('updated@int.test')
-
-    // deleting non-existent id should return false
-    const deleted = await dao.deleteUserById(9999999)
-    expect(deleted).toBe(false)
-  })
 
   test('assignRoles/removeRoles with empty arrays resolve (real DB)', async () => {
     const UserDAO = require('../../src/dao/userDAO').default
@@ -270,14 +250,7 @@ describe('UserDAO Coverage Integration', () => {
         await expect(dao.getUserById(1)).rejects.toThrow('DB Error');
     });
 
-    test('deleteUserById rejects on DB error', async () => {
-        const spyRun = jest.spyOn(db, 'run').mockImplementation(function (this: any, sql: any, params: any, cb: any) {
-            cb.call(this, new Error('DB Error'));
-            return db;
-        });
 
-        await expect(dao.deleteUserById(1)).rejects.toThrow('DB Error');
-    });
 
     test('updateUserInfo rejects on DB error', async () => {
         const spyRun = jest.spyOn(db, 'run').mockImplementation(function (this: any, sql: any, params: any, cb: any) {

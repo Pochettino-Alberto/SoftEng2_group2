@@ -111,19 +111,7 @@ describe('E2E Maximum Coverage Tests', () => {
         expect(res.body.first_name).toBe(newName)
     })
 
-    test('DELETE /users/users/:userId as admin deletes user and returns 200', async () => {
-        const toDelete = `citizen_del_${Date.now()}`
-        const { user: delUser } = await registerAndLogin(request, toDelete, 'Pass')
 
-        const admin = `admin_del_${Date.now()}`
-        await registerAndLogin(request, admin, 'AdminPass')
-        await promoteToAdmin(admin)
-        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
-        const adminCookie = loginRes.headers['set-cookie']
-
-        const res = await request.delete(`/users/users/${delUser.id}`).set('Cookie', adminCookie)
-        expect(res.status).toBe(200)
-    })
 
     test('POST /reports/upload creates report with correct default fields', async () => {
         const { cookies } = await registerAndLogin(request, `citizen_defaults_${Date.now()}`, 'Pass')

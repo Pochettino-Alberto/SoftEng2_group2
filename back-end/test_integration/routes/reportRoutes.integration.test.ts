@@ -19,7 +19,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -43,7 +44,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -67,7 +69,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -96,7 +99,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -139,7 +143,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -173,7 +178,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -197,7 +203,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -225,7 +232,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -261,7 +269,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => { req.user = { id: 99 }; return next() },
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -286,7 +295,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -318,7 +328,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -341,7 +352,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -365,7 +377,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => next()
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -389,7 +402,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() }
+      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() },
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')
@@ -417,7 +431,8 @@ describe('ReportRoutes integration', () => {
       isCitizen: (req: any, res: any, next: any) => next(),
       isAdmin: (req: any, res: any, next: any) => next(),
       isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
-      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() }
+      hasRoleTechOff: (req: any, res: any, next: any) => { req.user = { id: 55 }; return next() },
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
     }
 
     const { ReportRoutes } = require('../../src/routers/reportRoutes')

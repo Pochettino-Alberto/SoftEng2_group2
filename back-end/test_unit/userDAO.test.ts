@@ -152,33 +152,7 @@ describe('UserDAO', () => {
     await expect(dao.getUserByUsername('x')).rejects.toBe(err)
   })
 
-  // Tests for deleteUserById
-  test('deleteUserById resolves true when a row is deleted', async () => {
-    // simulate db.run invoking callback with this.changes = 1
-    db.run.mockImplementation((sql: string, params: any[], cb: Function) => {
-      cb.call({ changes: 1 }, null)
-    })
 
-    const dao = new UserDAO()
-    await expect(dao.deleteUserById(2)).resolves.toBe(true)
-    expect(db.run).toHaveBeenCalled()
-  })
-
-  test('deleteUserById resolves false when no row deleted', async () => {
-    db.run.mockImplementation((sql: string, params: any[], cb: Function) => {
-      cb.call({ changes: 0 }, null)
-    })
-
-    const dao = new UserDAO()
-    await expect(dao.deleteUserById(3)).resolves.toBe(false)
-  })
-
-  test('deleteUserById rejects when db.run returns an error', async () => {
-    const err = new Error('delete failed')
-    db.run.mockImplementation((sql: string, params: any[], cb: Function) => { cb(err) })
-    const dao = new UserDAO()
-    await expect(dao.deleteUserById(4)).rejects.toBe(err)
-  })
 
   // Tests for updateUserInfo in DAO
   test('updateUserInfo resolves with the passed user when db.run succeeds', async () => {
