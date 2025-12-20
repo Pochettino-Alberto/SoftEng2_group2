@@ -14,3 +14,4 @@ database/database.db-shm
 database/database.db-wal
 **/package-lock.json
 database/*.py
+.env
