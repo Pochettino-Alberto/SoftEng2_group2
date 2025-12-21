@@ -666,4 +666,57 @@ describe('ReportDAO', () => {
       await expect(dao.getCommentsByReportId(10)).rejects.toThrow('fail')
     })
   })
+
+  describe('addCommentToReport', () => {
+    it('inserts comment and returns it with new id', async () => {
+      const dbRun = jest.fn((sql, params, cb) => {
+        cb.call({ lastID: 101, changes: 1 }, null)
+      })
+      jest.doMock('../src/dao/db', () => ({ run: dbRun }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const comment = {
+        report_id: 1,
+        commenter_id: 2,
+        comment: 'text',
+        createdAt: '2025-01-01',
+        updatedAt: '2025-01-01'
+      }
+
+      const result = await dao.addCommentToReport(comment)
+      expect(dbRun).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO report_comments'),
+        [1, 2, 'text', '2025-01-01', '2025-01-01'],
+        expect.any(Function)
+      )
+      expect(result.id).toBe(101)
+    })
+
+    it('rejects when db.run errors', async () => {
+      const dbRun = jest.fn((sql, params, cb) => cb(new Error('insert fail')))
+      jest.doMock('../src/dao/db', () => ({ run: dbRun }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const comment = { report_id: 1 }
+      await expect(dao.addCommentToReport(comment)).rejects.toThrow('insert fail')
+    })
+
+    it('rejects with ReportNotFoundError when changes is 0', async () => {
+      const dbRun = jest.fn((sql, params, cb) => {
+        cb.call({ changes: 0 }, null)
+      })
+      jest.doMock('../src/dao/db', () => ({ run: dbRun }))
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+      const { ReportNotFoundError } = require('../src/errors/reportError')
+
+      const comment = { report_id: 1 }
+      await expect(dao.addCommentToReport(comment)).rejects.toThrow(ReportNotFoundError)
+    })
+  })
 })
