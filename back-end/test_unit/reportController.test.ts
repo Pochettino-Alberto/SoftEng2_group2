@@ -291,4 +291,32 @@ describe('ReportController', () => {
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })
+
+  it('getReportsAssignedToMaintainer delegates to DAO and returns reports', async () => {
+    const reports = [{ id: 1, title: 'Report 1' }, { id: 2, title: 'Report 2' }]
+    const mockGetReports = jest.fn().mockResolvedValue(reports)
+    const MockDAO = jest.fn().mockImplementation(() => ({ getReportsAssignedToMaintainer: mockGetReports }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    const res = await ctrl.getReportsAssignedToMaintainer(456)
+    expect(res).toBe(reports)
+    expect(mockGetReports).toHaveBeenCalledWith(456)
+  })
+
+  it('getReportsAssignedToMaintainer logs and rethrows on error', async () => {
+    const err = new Error('fetch-maint-fail')
+    const MockDAO = jest.fn().mockImplementation(() => ({ getReportsAssignedToMaintainer: jest.fn().mockRejectedValue(err) }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(ctrl.getReportsAssignedToMaintainer(456)).rejects.toThrow('fetch-maint-fail')
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
 })

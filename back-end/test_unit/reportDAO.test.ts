@@ -538,5 +538,38 @@ describe('ReportDAO', () => {
 
       await expect(dao.assignReportToMaintainer(10, 20, 30)).rejects.toThrow('update fail')
     })
+
+    it('getReportsAssignedToMaintainer resolves with mapped reports', async () => {
+      const mockRows = [{ id: 1, title: 'r1' }]
+      const dbAll = jest.fn((sql, params, cb) => cb(null, mockRows))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+
+      const mockMapReport = jest.fn(r => ({ ...r, mapped: true }))
+      const MockCommon = jest.fn().mockImplementation(() => ({ mapDBrowToReport: mockMapReport }))
+      jest.doMock('../src/dao/commonDAO', () => MockCommon)
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const reports = await dao.getReportsAssignedToMaintainer(55)
+      expect(reports).toHaveLength(1)
+      expect(reports[0]).toEqual({ id: 1, title: 'r1', mapped: true })
+      expect(dbAll).toHaveBeenCalledWith(
+        expect.stringContaining(`SELECT * FROM reports WHERE (status = 'In Progress' OR status = 'Suspended') AND maintainer_id = ? ORDER BY updatedAt DESC`),
+        [55],
+        expect.any(Function)
+      )
+    })
+
+    it('getReportsAssignedToMaintainer rejects on db error', async () => {
+      const dbAll = jest.fn((sql, params, cb) => cb(new Error('db error'), null))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+      jest.doMock('../src/dao/commonDAO', () => jest.fn())
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.getReportsAssignedToMaintainer(55)).rejects.toThrow('db error')
+    })
   })
 })
