@@ -1,6 +1,10 @@
 // Integration tests for ReportDAO using real sqlite test DB
 const { resetTestDB: resetReportsDB_DAO } = require('../helpers/resetTestDB')
 
+// Set dummy Supabase config to prevent service initialization error
+process.env.SUPABASE_URL = 'https://example.supabase.co'
+process.env.SUPABASE_SERVICE_KEY = 'example-key'
+
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetReportsDB_DAO()
@@ -543,6 +547,27 @@ describe('ReportDAO integration', () => {
     expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
   })
 
+  test('getReportsAssignedToMaintainer returns assigned reports', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const udao = new UserDAO()
+
+    // Create users for assignment
+    const maintUser = await udao.createUser('maint_assign_dao', 'Maint', 'User', 'maint_dao@test.com', 'pass', 'municipality')
+    const techUser = await udao.createUser('tech_assign_dao', 'Tech', 'User', 'tech_dao@test.com', 'pass', 'municipality')
+
+    // Create a report
+    const report = new Report(0, 1, 'Maint Assigned Report', 0, 0, ReportStatus.IN_PROGRESS, true)
+    const saved = await dao.saveReport(report)
+
+    await dao.assignReportToMaintainer(saved.id, maintUser.id, techUser.id)
+
+    const reports = await dao.getReportsAssignedToMaintainer(maintUser.id)
+    expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+  })
+
   test('assignReportToMaintainer updates maintainer_id and updated_by', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const UserDAO = require('../../src/dao/userDAO').default
@@ -562,5 +587,46 @@ describe('ReportDAO integration', () => {
     const updated = await dao.getReportById(saved.id)
     expect(updated.maintainer_id).toBe(maintainer.id)
     expect(updated.updated_by).toBe(techUser.id)
+  })
+
+  test('getMapReports returns all reports when no status filter provided', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const dao = new ReportDAO()
+    
+    const reports = await dao.getMapReports(null)
+    expect(reports).toBeDefined()
+    expect(Array.isArray(reports)).toBe(true)
+    // We expect at least the reports created in resetTestDB
+    expect(reports.length).toBeGreaterThan(0)
+  })
+
+  test('getMapReports filters by single status', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const dao = new ReportDAO()
+    
+    const reports = await dao.getMapReports(['Pending Approval'])
+    expect(reports).toBeDefined()
+    reports.forEach((r: any) => {
+        expect(r.status).toBe('Pending Approval')
+    })
+  })
+
+  test('getMapReports filters by multiple statuses', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const dao = new ReportDAO()
+    
+    const reports = await dao.getMapReports(['Pending Approval', 'Assigned'])
+    expect(reports).toBeDefined()
+    reports.forEach((r: any) => {
+        expect(['Pending Approval', 'Assigned']).toContain(r.status)
+    })
+  })
+
+  test('getMapReports returns empty array if no match', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const dao = new ReportDAO()
+    
+    const reports = await dao.getMapReports(['NonExistentStatus'])
+    expect(reports).toEqual([])
   })
 })

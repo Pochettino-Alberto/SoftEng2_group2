@@ -58,7 +58,7 @@ describe('ReportController additional integration tests', () => {
     const ReportController = require('../../src/controllers/reportController').default
     const ctrl = new ReportController()
 
-    await expect(ctrl.getReportById(999999)).rejects.toThrow(/reports with id 999999 not found|not found/i)
+    await expect(ctrl.getReportById(999999)).rejects.toThrow(/The report does not exist|not found/i)
   })
 
   test('searchReports honors status and is_public filters (real DB)', async () => {
@@ -95,6 +95,26 @@ describe('ReportController additional integration tests', () => {
     // ensure calling saveReportPhotos when photos is undefined does not fail
     const after = await ctrl.saveReportPhotos(saved)
     expect(after).toBeDefined()
+  })
+
+  test('getMapReports returns reports filtered by status (real DB)', async () => {
+    const ReportController = require('../../src/controllers/reportController').default
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+
+    const ctrl = new ReportController()
+    const dao = new ReportDAO()
+
+    // Ensure we have some data
+    await dao.saveReport(new Report(0, 1, 'Map1', 0, 0, ReportStatus.PENDING_APPROVAL, true))
+    await dao.saveReport(new Report(0, 1, 'Map2', 0, 0, ReportStatus.ASSIGNED, true))
+
+    const reports = await ctrl.getMapReports([ReportStatus.PENDING_APPROVAL])
+    expect(Array.isArray(reports)).toBe(true)
+    expect(reports.length).toBeGreaterThan(0)
+    reports.forEach((r: any) => {
+        expect(r.status).toBe(ReportStatus.PENDING_APPROVAL)
+    })
   })
 })
 
@@ -307,6 +327,31 @@ describe('ReportController error branches (mocked DAO)', () => {
     expect(fetched.status).toBe(ReportStatus.IN_PROGRESS)
   })
 
+  test('getReportsAssignedToMaintainer returns reports (real DB)', async () => {
+    jest.resetModules()
+    jest.unmock('../../src/dao/reportDAO')
+    // Wait for DB initialization after resetModules
+    const { dbReady } = require('../../src/dao/db')
+    await dbReady
+
+    const ReportController = require('../../src/controllers/reportController').default
+    const UserDAO = require('../../src/dao/userDAO').default
+    const { Report, ReportStatus } = require('../../src/components/report')
+    const ctrl = new ReportController()
+    const udao = new UserDAO()
+
+    const maint = await udao.createUser('maint_ctrl_get', 'M', 'C', 'mcg@test.com', 'pw', 'municipality')
+    const tech = await udao.createUser('tech_ctrl_get', 'T', 'C', 'tcg@test.com', 'pw', 'municipality')
+
+    const rpt = new Report(0, 1, 'Maint Get Ctrl', 0, 0, ReportStatus.PENDING_APPROVAL, true)
+    const saved = await ctrl.saveReport(rpt)
+
+    await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
+
+    const reports = await ctrl.getReportsAssignedToMaintainer(maint.id)
+    expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
+  })
+
   test('assignReportToMaintainer updates report (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
@@ -348,6 +393,7 @@ describe('ReportController error branches (mocked DAO)', () => {
       async getAllMaintainers() { throw new Error('fail') }
       async assignReportToUser() { throw new Error('fail') }
       async assignReportToMaintainer() { throw new Error('fail') }
+      async getMapReports() { throw new Error('fail') }
     }
 
     jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAO5 }))
@@ -361,6 +407,7 @@ describe('ReportController error branches (mocked DAO)', () => {
     await expect(ctrl.assignReportToUser(1, 1, 1)).rejects.toThrow('fail')
     await expect(ctrl.assignReportToMaintainer(1, 1, 1)).rejects.toThrow('fail')
     await expect(ctrl.saveReportPhotos({})).rejects.toThrow('fail')
+    await expect(ctrl.getMapReports([])).rejects.toThrow('fail')
 
     spyErr.mockRestore()
   })

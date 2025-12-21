@@ -224,12 +224,12 @@ class ReportRoutes {
          */
         this.router.get(
             "/get-map-reports",
-            body("statusArray").optional().isArray().isIn(Object.values(ReportStatus)),
             express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            body("statusArray").optional().isArray(),
             (req: any, res: any, next: any) => {
                 this.controller.getMapReports(
-                    req.body.statusArray || null
+                    (req.body && req.body.statusArray) || null
                 )
                     .then((pagReports: Report[]) => res.status(200).json(pagReports))
                     .catch((err: any) => next(err));
