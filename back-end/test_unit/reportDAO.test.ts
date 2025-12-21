@@ -627,4 +627,43 @@ describe('ReportDAO', () => {
       await expect(dao.getMapReports(['Open'])).rejects.toThrow('db error')
     })
   })
+
+  describe('getCommentsByReportId', () => {
+    it('returns comments when db returns rows', async () => {
+      const mockRows = [
+        { id: 1, report_id: 10, commenter_id: 5, comment: 'c1', createdAt: 'date1' },
+        { id: 2, report_id: 10, commenter_id: 6, comment: 'c2', createdAt: 'date2' }
+      ]
+      const dbAll = jest.fn((sql, params, cb) => cb(null, mockRows))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+
+      // Mock CommonDAO to return the row as is (or mapped)
+      const mockMapComment = jest.fn(r => ({ ...r, mapped: true }))
+      const MockCommon = jest.fn().mockImplementation(() => ({ mapDBrowToReportComment: mockMapComment }))
+      jest.doMock('../src/dao/commonDAO', () => MockCommon)
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const comments = await dao.getCommentsByReportId(10)
+      expect(dbAll).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM report_comments WHERE report_id = ?'),
+        [10],
+        expect.any(Function)
+      )
+      expect(comments).toHaveLength(2)
+      expect(comments[0]).toEqual({ ...mockRows[0], mapped: true })
+    })
+
+    it('rejects on db error', async () => {
+      const dbAll = jest.fn((sql, params, cb) => cb(new Error('fail'), null))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+      jest.doMock('../src/dao/commonDAO', () => jest.fn())
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.getCommentsByReportId(10)).rejects.toThrow('fail')
+    })
+  })
 })
