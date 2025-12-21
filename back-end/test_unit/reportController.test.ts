@@ -88,6 +88,31 @@ describe('ReportController', () => {
     expect(pag.total_items).toBe(totalCount)
   })
 
+  it('getMapReports delegates to DAO and returns reports', async () => {
+    const reports = [{ id: 1, title: 'Map Report' }]
+    const mockGetMapReports = jest.fn().mockResolvedValue(reports)
+    const MockDAO = jest.fn().mockImplementation(() => ({ getMapReports: mockGetMapReports }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    const res = await ctrl.getMapReports(['Open'])
+    expect(res).toBe(reports)
+    expect(mockGetMapReports).toHaveBeenCalledWith(['Open'])
+  })
+
+  it('getMapReports rethrows on error', async () => {
+    const err = new Error('map-fail')
+    const MockDAO = jest.fn().mockImplementation(() => ({ getMapReports: jest.fn().mockRejectedValue(err) }))
+    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+
+    const ReportController = require('../src/controllers/reportController').default
+    const ctrl = new ReportController()
+
+    await expect(ctrl.getMapReports(['Open'])).rejects.toThrow('map-fail')
+  })
+
   it('methods log and rethrow when DAO throws errors', async () => {
     const err = new Error('boom')
     const MockDAO = jest.fn().mockImplementation(() => ({

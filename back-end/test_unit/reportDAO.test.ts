@@ -572,4 +572,59 @@ describe('ReportDAO', () => {
       await expect(dao.getReportsAssignedToMaintainer(55)).rejects.toThrow('db error')
     })
   })
+
+  describe('getMapReports', () => {
+    it('resolves with mapped reports when status provided', async () => {
+      const mockRows = [{ id: 1, status: 'Open' }]
+      const dbAll = jest.fn((sql, params, cb) => cb(null, mockRows))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+
+      const mockMapReport = jest.fn(r => ({ ...r, mapped: true }))
+      const MockCommon = jest.fn().mockImplementation(() => ({ mapDBrowToReport: mockMapReport }))
+      jest.doMock('../src/dao/commonDAO', () => MockCommon)
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const reports = await dao.getMapReports(['Open', 'In Progress'])
+      expect(reports).toHaveLength(1)
+      expect(reports[0]).toEqual({ id: 1, status: 'Open', mapped: true })
+      expect(dbAll).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM reports WHERE 1=1  AND status IN (?, ?) ORDER BY updatedAt DESC'),
+        ['Open', 'In Progress'],
+        expect.any(Function)
+      )
+    })
+
+    it('resolves with all reports when status is null/empty', async () => {
+      const mockRows = [{ id: 1, status: 'Open' }]
+      const dbAll = jest.fn((sql, params, cb) => cb(null, mockRows))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+
+      const mockMapReport = jest.fn(r => ({ ...r, mapped: true }))
+      const MockCommon = jest.fn().mockImplementation(() => ({ mapDBrowToReport: mockMapReport }))
+      jest.doMock('../src/dao/commonDAO', () => MockCommon)
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      const reports = await dao.getMapReports(null)
+      expect(dbAll).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM reports WHERE 1=1  ORDER BY updatedAt DESC'),
+        [],
+        expect.any(Function)
+      )
+    })
+
+    it('rejects on db error', async () => {
+      const dbAll = jest.fn((sql, params, cb) => cb(new Error('db error'), null))
+      jest.doMock('../src/dao/db', () => ({ all: dbAll }))
+      jest.doMock('../src/dao/commonDAO', () => jest.fn())
+
+      const ReportDAO = require('../src/dao/reportDAO').default
+      const dao = new ReportDAO()
+
+      await expect(dao.getMapReports(['Open'])).rejects.toThrow('db error')
+    })
+  })
 })
