@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { getStatusColor } from '../../components/Map'
+import L from 'leaflet'
+import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { reportAPI } from '../../api/reports'
 import type { Report, ReportCategory } from '../../types/report'
 import type { User } from '../../types/user'
@@ -19,7 +23,7 @@ const ReportDetail: React.FC = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [reason, setReason] = useState('')
-    const [selectedAction, setSelectedAction] = useState<'accept' | 'reject'>('reject')
+    const [selectedAction, setSelectedAction] = useState<'accept' | 'reject'>('accept')
     const [categoriesCache, setCategoriesCache] = useState<ReportCategory[] | null>(null)
 
     const [tosUsers, setTosUsers] = useState<User[]>([])
@@ -35,12 +39,14 @@ const ReportDetail: React.FC = () => {
     const fetchedCategoriesRef = useRef<Set<number>>(new Set())
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-    // Photo carousel state
+
     const [isCarouselOpen, setIsCarouselOpen] = useState(false)
     const [carouselIndex, setCarouselIndex] = useState(0)
-    // Reverse-geocoded address for the report location (if available)
+
     const [address, setAddress] = useState<string | null>(null)
     const [addressLoading, setAddressLoading] = useState(false)
+  
+    const DETAIL_MAP_ZOOM = 15
 
     const fetchReport = useCallback(async (reportId: number) => {
         setLoading(true)
@@ -114,8 +120,6 @@ const ReportDetail: React.FC = () => {
     useEffect(() => {
         if (!report) return
         console.log(report);
-
-        // Try to reverse-geocode the report location when available
         const lat = report.location?.lat
         const lon = report.location?.lng
         if (typeof lat === 'number' && typeof lon === 'number') {
@@ -262,7 +266,8 @@ const ReportDetail: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto mt-8">
+        <div className="max-w-4xl mx-auto mt-8 px-4">
+            <style>{`.leaflet-container{z-index:0 !important;} .leaflet-control{z-index:5 !important;} .leaflet-marker-icon{z-index:6 !important;} .leaflet-popup{z-index:6 !important;}`}</style>
             {toast && (
                 <Toast
                     message={toast.message}
@@ -280,64 +285,105 @@ const ReportDetail: React.FC = () => {
             </div>
 
             <Card className="p-4">
-                <div className="mb-4">
-                    <p className="text-sm text-gray-700">{report.description}</p>
-                </div>
+ 
 
-                <div className="mb-4">
-                    {/* Category with icon (use same emoji/icon shown in report creation form) */}
-                    <p className="text-sm text-gray-600"><span className="font-semibold">Category:</span> {report.category ? (
-                        <span className="inline-flex items-center gap-2">
-                            <span className="text-lg" aria-hidden>{report.category.icon}</span>
-                            <span className="text-sm text-gray-700">{report.category.name}</span>
-                        </span>
-                    ) : '—'}</p>
-
-                    <p className="text-sm text-gray-600"><span className="font-semibold">Location:</span> {report.location ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
-                    {addressLoading ? (
-                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> Resolving address…</p>
-                    ) : address ? (
-                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> {address}</p>
-                    ) : (
-                        <p className="text-sm text-gray-600"><span className="font-semibold">Address:</span> Not available</p>
-                    )}
-
-                    {/* Reporter - change color to brown to make it more prominent */}
-                    <p className="text-sm"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
-                        <span className="text-gray-600">Anonymous</span>
-                    ) : (
-                        <span style={{ color: '#8B4513' }} className="font-medium">
-                            {report.reporter && typeof report.reporter === 'object' ?
-                                `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
-                            {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
-                                <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
-                            ) : null}
-                        </span>
-                    )}</p>
-                    {report.status === 'Rejected' && report.status_reason && (
-                        <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
-                    )}
-                    {report.status === 'Assigned' && (
-                        <>
-                            <p className="text-sm">
-                                <span className="font-semibold">Technical Officer Responsible:</span>
-                                <span style={{ color: '#c2410c' }} className="font-medium ml-2">
-                                    {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
-                                    {report.assigned_to && report.assigned_to.username ? (
-                                        <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
-                                    ) : null}
-                                </span>
-                            </p>
-                            {report.maintainer_id && (
-                                <p className="text-sm">
-                                    <span className="font-semibold">Assigned Maintainer:</span>
-                                    <span style={{ color: '#166534' }} className="font-medium ml-2">
-                                        {report.maintainer?.first_name} {report.maintainer?.last_name}
+                    <div className="md:flex md:gap-6 md:items-stretch">
+                    <div className="w-full md:w-1/2 flex">
+                        <div className="border rounded p-4 bg-white flex-1 min-h-[24rem]">
+                                <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Category:</span> {report.category ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <span className="text-lg" aria-hidden>{report.category.icon}</span>
+                                        <span className="text-sm text-gray-700">{report.category.name}</span>
                                     </span>
-                                </p>
-                            )}
-                        </>
-                    )}
+                                ) : '—'}</p>
+
+                                    {addressLoading ? (
+                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> Resolving address…</p>
+                                ) : address ? (
+                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> {address}</p>
+                                ) : (
+                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> Not available</p>
+                                )}
+
+                                <p className="text-base mb-3"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
+                                    <span className="text-gray-600">Anonymous</span>
+                                ) : (
+                                    <span style={{ color: '#8B4513' }} className="font-medium">
+                                        {report.reporter && typeof report.reporter === 'object' ?
+                                            `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
+                                        {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
+                                            <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
+                                        ) : null}
+                                    </span>
+                                )}</p>
+
+                                {report.status === 'Rejected' && report.status_reason && (
+                                    <p className="text-sm text-red-600 mb-2">Rejection reason: {report.status_reason}</p>
+                                )}
+                                {report.status === 'Assigned' && (
+                                    <>
+                                        <p className="text-sm mb-2">
+                                            <span className="font-semibold">Technical Officer Responsible:</span>
+                                            <span style={{ color: '#c2410c' }} className="font-medium ml-2">
+                                                {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
+                                                {report.assigned_to && report.assigned_to.username ? (
+                                                    <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
+                                                ) : null}
+                                            </span>
+                                        </p>
+                                        {report.maintainer_id && (
+                                            <p className="text-sm mb-2">
+                                                <span className="font-semibold">Assigned Maintainer:</span>
+                                                <span style={{ color: '#166534' }} className="font-medium ml-2">
+                                                    {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                                </span>
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+
+                                <h4 className="text-base font-medium mb-2 text-gray-900">Description</h4>
+                                <p className="text-base text-gray-900 whitespace-pre-wrap">{report.description || '—'}</p>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-1/2 flex">
+                        {report.location ? (
+                            <div className="w-full rounded overflow-hidden flex-1 relative z-0">
+                                <MapContainer
+                                        center={[report.location.lat, report.location.lng]}
+                                        zoom={DETAIL_MAP_ZOOM}
+                                        scrollWheelZoom={true}
+                                        touchZoom={true}
+                                        className="w-full h-full min-h-[16rem] md:min-h-[24rem]"
+                                    >
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    {(() => {
+                                        const color = getStatusColor(report.status || '')
+                                        const svg = `
+                                            <svg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'>
+                                                <path d='M12.5 0C7.2 0 2.8 4.4 2.8 9.7 2.8 18.1 12.5 34 12.5 34S22.2 18.1 22.2 9.7C22.2 4.4 17.8 0 12.5 0z' fill='${color}'/>
+                                                <circle cx='12.5' cy='9.7' r='3.5' fill='#ffffff' />
+                                            </svg>
+                                        `
+
+                                        const icon = L.icon({
+                                            iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+                                            shadowUrl: iconShadow as string,
+                                            iconSize: [25, 41],
+                                            iconAnchor: [12, 41],
+                                            popupAnchor: [1, -34],
+                                            shadowSize: [41, 41],
+                                            shadowAnchor: [12, 41],
+                                        })
+
+                                        return <Marker position={[report.location.lat, report.location.lng]} icon={icon} />
+                                    })()}
+                                </MapContainer>
+                            </div>
+                        ) : (
+                            <div className="w-full bg-gray-50 rounded flex items-center justify-center text-sm text-gray-500 min-h-[24rem]">No location available</div>
+                        )}
+                    </div>
                 </div>
 
                 {report.photos && report.photos.length > 0 && (
@@ -353,10 +399,9 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* Photo Carousel Modal */}
                 {isCarouselOpen && report && report.photos && (
-                    <div onClick={closeCarousel} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-                        <div onClick={(e) => e.stopPropagation()} className="relative max-w-4xl w-full mx-4">
+                        <div onClick={closeCarousel} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+                        <div onClick={(e) => e.stopPropagation()} className="relative max-w-full sm:max-w-2xl w-full mx-4">
                             <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeCarousel(); }} aria-label="Close carousel" className="absolute top-2 right-2 z-50 text-white bg-gray-800 bg-opacity-40 rounded-full p-2 hover:bg-opacity-60">✕</button>
                             <div className="bg-black rounded">
                                 <div className="relative">
@@ -372,7 +417,6 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* Only show action buttons for Pending Approval reports */}
                 {report.status === 'Pending Approval' && (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center space-x-2">
@@ -382,7 +426,7 @@ const ReportDetail: React.FC = () => {
                                 size="md"
                                 onClick={() => setSelectedAction('accept')}
                                 disabled={loading}
-                                style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { borderColor: '#16a34a', color: '#16a34a' }}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { borderColor: '#10b981', color: '##10b981' }}
                             >
                                 Accept & Assign
                             </Button>
@@ -436,10 +480,10 @@ const ReportDetail: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="mt-4 flex justify-end">
+                            <div className="mt-4 flex justify-end">
                             <Button
                                 id="submmitChoice"
-                                style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { backgroundColor: '#dc2626' }}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { backgroundColor: '#dc2626' }}
                                 disabled={
                                     loading ||
                                     (selectedAction === 'reject' && !reason.trim()) ||
@@ -453,7 +497,6 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* Assign/Edit Maintainer section for Technical Officers */}
                 {report.status === 'Assigned' && user?.userRoles.some((r) => r.role_type === 'technical_officer') && (
                     <div className="mt-6 pt-4 border-t border-gray-200">
                         {!report.maintainer_id ? (
@@ -469,6 +512,7 @@ const ReportDetail: React.FC = () => {
                                     }}
                                     variant="primary"
                                     className="flex items-center gap-2"
+                                    style={{ backgroundColor: '#10b981' }}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -544,6 +588,7 @@ const ReportDetail: React.FC = () => {
                                         }}
                                         variant="primary"
                                         size="md"
+                                        style={{ backgroundColor: '#10b981' }}
                                         disabled={
                                             assigningMaintainer ||
                                             loadingMaintainers ||
@@ -558,6 +603,7 @@ const ReportDetail: React.FC = () => {
                         )}
                     </div>
                 )}
+
             </Card>
         </div>
     )

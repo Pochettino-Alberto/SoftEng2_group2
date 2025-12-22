@@ -50,7 +50,6 @@ function App() {
           <Navbar />
           <main className="flex-grow">
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/statistics" element={<Statistics />} />
@@ -58,7 +57,7 @@ function App() {
               <Route path="/auth/login/:userType" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
 
-              {/* Protected Routes - Citizen */}
+
               <Route
                 path="/citizen/*"
                 element={
@@ -72,7 +71,6 @@ function App() {
                 }
               />
 
-              {/* Protected Routes - Municipality */}
               <Route
                 path="/municipality/*"
                 element={
@@ -100,15 +98,20 @@ function App() {
                 }
               />
 
-              {/* Fallback Route */}
               <Route path="*" element={<Home />} />
             </Routes>
           </main>
-          <Footer />
+          <ConditionalFooter />
         </div>
       </AuthProvider>
     </Router>
   );
+}
+
+function ConditionalFooter() {
+  const { pathname } = useLocation();
+  if (pathname === '/') return <Footer />;
+  return null;
 }
 
 export default App;

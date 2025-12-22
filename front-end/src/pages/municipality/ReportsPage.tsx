@@ -231,6 +231,7 @@ export default function ReportsPage() {
         onPageChange={handlePageChange}
         onRowClick={(r) => navigate(`/municipality/report/${(r as Report).id}`, { state: { report: r } })}
         className={loading ? 'opacity-70' : ''}
+        addMap={false}
         tableId = "report-table"
       />
     </div>
