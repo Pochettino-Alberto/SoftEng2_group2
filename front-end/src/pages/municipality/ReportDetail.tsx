@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import { getStatusColor } from '../../components/Map'
@@ -119,7 +119,6 @@ const ReportDetail: React.FC = () => {
 
     useEffect(() => {
         if (!report) return
-        console.log(report);
         const lat = report.location?.lat
         const lon = report.location?.lng
         if (typeof lat === 'number' && typeof lon === 'number') {
@@ -257,6 +256,27 @@ const ReportDetail: React.FC = () => {
         return () => window.removeEventListener('keydown', onKey)
     }, [isCarouselOpen, report])
 
+    const markerIcon = useMemo(() => {
+        if (!report || !report.status) return undefined
+        const color = getStatusColor(report.status || '')
+        const svg = `
+            <svg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'>
+                <path d='M12.5 0C7.2 0 2.8 4.4 2.8 9.7 2.8 18.1 12.5 34 12.5 34S22.2 18.1 22.2 9.7C22.2 4.4 17.8 0 12.5 0z' fill='${color}'/>
+                <circle cx='12.5' cy='9.7' r='3.5' fill='#ffffff' />
+            </svg>
+        `
+
+        return L.icon({
+            iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+            shadowUrl: iconShadow as string,
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+            shadowAnchor: [12, 41],
+        })
+    }, [report?.status])
+
     if (error && !loading && !report) {
         return <div className="max-w-3xl mx-auto mt-8 text-red-600">{error}</div>
     }
@@ -357,27 +377,7 @@ const ReportDetail: React.FC = () => {
                                         className="w-full h-full min-h-[16rem] md:min-h-[24rem]"
                                     >
                                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    {(() => {
-                                        const color = getStatusColor(report.status || '')
-                                        const svg = `
-                                            <svg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'>
-                                                <path d='M12.5 0C7.2 0 2.8 4.4 2.8 9.7 2.8 18.1 12.5 34 12.5 34S22.2 18.1 22.2 9.7C22.2 4.4 17.8 0 12.5 0z' fill='${color}'/>
-                                                <circle cx='12.5' cy='9.7' r='3.5' fill='#ffffff' />
-                                            </svg>
-                                        `
-
-                                        const icon = L.icon({
-                                            iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
-                                            shadowUrl: iconShadow as string,
-                                            iconSize: [25, 41],
-                                            iconAnchor: [12, 41],
-                                            popupAnchor: [1, -34],
-                                            shadowSize: [41, 41],
-                                            shadowAnchor: [12, 41],
-                                        })
-
-                                        return <Marker position={[report.location.lat, report.location.lng]} icon={icon} />
-                                    })()}
+                                    <Marker position={[report.location.lat, report.location.lng]} icon={markerIcon} />
                                 </MapContainer>
                             </div>
                         ) : (
@@ -426,7 +426,7 @@ const ReportDetail: React.FC = () => {
                                 size="md"
                                 onClick={() => setSelectedAction('accept')}
                                 disabled={loading}
-                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { borderColor: '#10b981', color: '##10b981' }}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { borderColor: '#10b981', color: '#10b981' }}
                             >
                                 Accept & Assign
                             </Button>
