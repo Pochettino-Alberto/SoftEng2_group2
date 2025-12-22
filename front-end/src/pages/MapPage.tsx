@@ -81,6 +81,7 @@ const MapPage: React.FC = () => {
   const [formWarning, setFormWarning] = useState('');
   const [formError, setFormError] = useState('');
   const [formSuccessMessage, setFormSuccessMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [categories, setCategories] = useState<ReportCategory[]>([]);
   const [boundaryWarning, setBoundaryWarning] = useState(false);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
@@ -88,14 +89,13 @@ const MapPage: React.FC = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
 
-  // Handle scroll event to show/hide scroll indicator
+
   const handleFormScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 10;
     setIsScrolledToBottom(isAtBottom);
   };
 
-  // Scroll to bottom of form when arrow is clicked
   const scrollToBottom = () => {
     if (formScrollRef.current) {
       formScrollRef.current.scrollTo({
@@ -105,7 +105,7 @@ const MapPage: React.FC = () => {
     }
   };
 
-  // When this component is mounted for the first time, call the server api for loading the report categories
+
   useEffect(() => {
     reportAPI.getReportCategories()
       .then((repCategories: ReportCategory[]) => {
@@ -121,7 +121,7 @@ const MapPage: React.FC = () => {
     setIsFormVisible(loc !== null);
   };
 
-  // When a location is selected, try to reverse-geocode it to get a human-readable address
+
   useEffect(() => {
     let mounted = true;
     if (!selectedLocation) {
@@ -172,17 +172,7 @@ const MapPage: React.FC = () => {
     return error == '';
   }
 
-  // const handleFileChange = (e: any) => {
-  //   if (e.target.files && e.target.files.length > 3) {
-  //     setFormWarning('You can select a maximum of 3 photos.');
-  //     e.target.value = '';
-  //     setPhotos(null);
-  //     return;
-  //   }
-  //   setFormWarning('');
-  //   setPhotos(e.target.files);
-  // };
-  // Example Handler using the recommended File[] type
+  
   const handleFileChange = (files: File[]) => {
     setPhotos(files);
   };
@@ -194,7 +184,7 @@ const MapPage: React.FC = () => {
     }
 
     const formData = new FormData();
-    // Note: All non-file fields must be appended as strings/numbers
+
     formData.append('title', title);
     formData.append('description', description);
     formData.append('category_id', categoryId.toString());
@@ -207,6 +197,7 @@ const MapPage: React.FC = () => {
         formData.append('photos', photos[i]);
 
     console.log('Report to send:', formData);
+    setIsUploading(true);
     reportAPI.createReport(formData).then(savedReport => {
       console.log(savedReport);
       // Reset form after successful submission
@@ -216,12 +207,14 @@ const MapPage: React.FC = () => {
     }).catch(err => {
       setFormError('Failed to create report: ' + err.message);
       console.log(err);
+    }).finally(() => {
+      setIsUploading(false);
     });
   };
 
   return (
     <>
-      {/* Boundary warning modal - shows when user clicks outside Turin */}
+
       <Modal
         isOpen={boundaryWarning}
         onClose={() => setBoundaryWarning(false)}
@@ -229,7 +222,7 @@ const MapPage: React.FC = () => {
         message={'Location must be inside the city of Torino!'}
         type={'warning'}
       />
-      {/* Warning modal - only shows up when the formWarning state is not empty */}
+     
       <Modal
         isOpen={formWarning !== ''}
         onClose={() => setFormWarning('')}
@@ -237,7 +230,7 @@ const MapPage: React.FC = () => {
         message={formWarning}
         type={'warning'}
       />
-      {/* Error modal - only shows up when the formError state is not empty */}
+
       <Modal
         isOpen={formError !== ''}
         onClose={() => setFormError('')}
@@ -245,23 +238,39 @@ const MapPage: React.FC = () => {
         message={formError}
         type={'error'}
       />
-      {/* Success toast (auto hides itself and consumes the message, setting it to empty string) */}
+  
       <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
+
+    
+      {isUploading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg p-6 flex items-center gap-4 shadow-lg">
+            <svg className="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <div>
+              <div className="font-medium text-gray-900">Uploading report</div>
+              <div className="text-sm text-gray-600">This may take a moment — please don’t close the tab.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] w-full">
 
-        {/* Animated Report Form - LEFT on desktop (1/3 width), BOTTOM on mobile (max-h with scroll) */}
+       
         {isFormVisible && selectedLocation && (
   <div className="relative flex flex-col md:w-1/3 md:h-full w-full max-h-[60vh] md:max-h-none border-t md:border-t-0 md:border-r border-gray-200 bg-gray-50">
-          {/* Form container with scroll */}
+        
           <div
             ref={formScrollRef}
             id="scrollableFormSubmitReport"
             onScroll={handleFormScroll}
-            // allow the inner container to fill available height on md+ so it scrolls correctly
+   
             className={`transition-all duration-500 ease-in-out overflow-y-auto relative p-6 md:h-full`}
         >
-          {/* Only render form content if visible, to avoid tab order issues */}
+      
           {isFormVisible && selectedLocation && (
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -272,7 +281,7 @@ const MapPage: React.FC = () => {
                   className="text-gray-500 hover:text-gray-900 transition-colors"
                   title="Close Form"
                 >
-                  {/* Tailwind X icon or similar */}
+        
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -282,7 +291,7 @@ const MapPage: React.FC = () => {
               </p>
               <form onSubmit={handleCreateReport} className="space-y-4">
 
-                {/* Latitude Field (Read-only) */}
+               
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Latitude</label>
                   <input
@@ -293,7 +302,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Longitude Field (Read-only) */}
+        
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Longitude</label>
                   <input
@@ -304,7 +313,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Address (reverse-geocoded) */}
+          
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Address</label>
                   <input
@@ -315,7 +324,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Report Type */}
+             
                 <div>
                   <label htmlFor="reportType" className="block text-sm font-medium text-gray-700">Report Type</label>
                   <select
@@ -340,7 +349,7 @@ const MapPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Title */}
+             
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
                   <input
@@ -353,7 +362,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Description */}
+            
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
@@ -364,7 +373,7 @@ const MapPage: React.FC = () => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
                   />
                 </div>
-                {/* Anonymous Checkbox */}
+            
                 <label htmlFor="anonymous" className="flex items-center space-x-2 cursor-pointer group">
                   <div className="relative flex items-center h-5">
                     <input
@@ -372,11 +381,11 @@ const MapPage: React.FC = () => {
                       type='checkbox'
                       checked={isAnonymous}
                       onChange={() => setIsAnonymous(!isAnonymous)}
-                      // Hide the default browser checkbox
+                 
                       className="hidden"
                     />
 
-                    {/* Custom Checkbox Appearance */}
+              
                     <div
                       className={`w-5 h-5 rounded-md border-2 transition-all duration-200 
                 ${isAnonymous
@@ -385,7 +394,7 @@ const MapPage: React.FC = () => {
                         }
                 flex items-center justify-center`}
                     >
-                      {/* Checkmark Icon (Visible only when checked) */}
+                      
                       {isAnonymous && (
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -399,21 +408,31 @@ const MapPage: React.FC = () => {
                   </span>
                 </label>
 
-                {/* File Input: Photos */}
                 <FileInput
                   name="photos"
                   accept="image/*"
-                  multiple={true} // Allow multiple selection
-                  maxFiles={3} // Enforce the limit
+                  multiple={true} 
+                  maxFiles={3} 
                   onChange={handleFileChange}
                 />
 
                 <button
                   id="submitReportBtn"
                   type="submit"
-                  className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isUploading}
+                  className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isUploading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 >
-                  Create Report
+                  {isUploading ? (
+                    <span className="inline-flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                      </svg>
+                      Uploading...
+                    </span>
+                  ) : (
+                    'Create Report'
+                  )}
                 </button>
               </form>
             </div>
