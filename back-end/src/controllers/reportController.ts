@@ -237,6 +237,19 @@ class ReportController {
         }
     }
 
+    /**
+     * Delete a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to nothing.
+     */
+    async deleteCommentToReport(reportComment: ReportComment): Promise<void> {
+        try {
+            return await this.dao.deleteCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error deleting comment ${reportComment.id} to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
 }
 
 export default ReportController

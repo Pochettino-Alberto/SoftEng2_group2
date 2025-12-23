@@ -523,6 +523,27 @@ class ReportDAO {
         });
     }
 
+    /**
+     * Delete a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the deleted ReportComment object.
+     */
+    async deleteCommentToReport(reportComment: ReportComment): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const sql = `DELETE FROM report_comments WHERE id = ? AND report_id = ? AND commenter_id = ?`;
+            db.run(
+                sql,
+                [reportComment.id, reportComment.report_id, reportComment.commenter_id],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new ReportCommentNotFoundError(reportComment.id, reportComment.report_id, reportComment.commenter_id));
+                    }
+                    resolve();
+                }
+            );
+        });
+    }
 }
 
 export default ReportDAO
