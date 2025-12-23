@@ -3,7 +3,7 @@ import { Report, ReportCategory, ReportComment, ReportStatusType } from "../comp
 import CommonDao from './commonDAO'
 import { Utility } from "../utilities";
 import { User } from "../components/user";
-import { ReportNotFoundError } from "../errors/reportError";
+import { ReportCommentNotFoundError, ReportNotFoundError } from "../errors/reportError";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
@@ -494,6 +494,32 @@ class ReportDAO {
                     // Note: the mapDBrowToReportComment is not necessary here since we already have the ReportComment object
                     resolve(reportComment);
                 });
+        });
+    }
+
+    /**
+     * Edit a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the edited ReportComment object.
+     */
+    async editCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        return new Promise<ReportComment>((resolve, reject) => {
+            const sql = `
+                UPDATE report_comments 
+                SET comment = ?, updatedAt = ? 
+                WHERE id = ? AND report_id = ? AND commenter_id = ?
+            `;
+            db.run(
+                sql,
+                [reportComment.comment, reportComment.updatedAt, reportComment.id, reportComment.report_id, reportComment.commenter_id],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new ReportCommentNotFoundError(reportComment.id, reportComment.report_id, reportComment.commenter_id));
+                    }
+                    resolve(reportComment);
+                }
+            );
         });
     }
 

@@ -27,4 +27,17 @@ class ReportRejectedWithoutReasonError extends Error {
     }
 }
 
-export { ReportNotFoundError, ReportRejectedWithoutReasonError }
+/**
+ * Represents an error that occurs when a comment associated to a report is not found.
+ */
+class ReportCommentNotFoundError extends Error {
+    customMessage: string
+    customCode: number
+    constructor(commentId: number, reportId: number, commenterId: number) {
+        super()
+        this.customMessage = `The report comment {comment_id: ${commentId}, report_id: ${reportId}, commenter_id: ${commenterId}} does not exist`
+        this.customCode = 404
+    }
+}
+
+export { ReportNotFoundError, ReportRejectedWithoutReasonError, ReportCommentNotFoundError }

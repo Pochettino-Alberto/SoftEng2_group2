@@ -406,7 +406,7 @@ class ReportRoutes {
             }
         );
 
-        /* POST /report/:id/comment
+        /* POST /report/:report_id/comment
          * Adds a comment to a report.
          * Parameters:
          * - id: Report ID (URL parameter)
@@ -431,13 +431,53 @@ class ReportRoutes {
                         reportId,
                         commenterId,
                         comment,
-                        Utility.now(),
-                        Utility.now()
+                        Utility.nowTimestamp(),
+                        Utility.nowTimestamp()
                     );
                     const savedComment = await this.controller.addCommentToReport(reportComment);
                     res.status(201).json(savedComment);
                 } catch (err) {
                     console.error('REPORT COMMENT ERROR:', err);
+                    next(err);
+                }
+            }
+        );
+
+        /* PATCH /report/:report_id/comment
+         * Edits a comment to a report owned by the current municipality user.
+         * Parameters:
+         * - id: Report ID (URL parameter)
+         * - comment_id: Comment ID (body parameter)
+         * - comment: Comment text (body parameter)
+         */
+        this.router.patch(
+            "/:report_id/comment",
+            express.json({ limit: SERVER_CONFIG.MAX_JSON_SIZE }),
+            express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
+            this.authService.isLoggedIn,
+            this.authService.isAdminOrMunicipality,
+            param("report_id").toInt().isInt({ min: 1 }),
+            body("comment_id").toInt().isInt({ min: 1 }),
+            body("comment").isString().notEmpty(),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any, next: any) => {
+                try {
+                    const reportId = Number(req.params.report_id);
+                    const { comment_id, comment } = req.body;
+                    const reportComment = new ReportComment(
+                        comment_id,
+                        reportId,
+                        // The commenter ID is the current user: this allows changing only owned comments
+                        req.user.id,
+                        comment,
+                        // CreatedAt is not used for edit. This is just a placeholder.
+                        Utility.nowTimestamp(),
+                        Utility.nowTimestamp()
+                    );
+                    const updatedComment = await this.controller.editCommentToReport(reportComment);
+                    res.status(200).json(updatedComment);
+                } catch (err) {
+                    console.error('REPORT COMMENT EDIT ERROR:', err);
                     next(err);
                 }
             }

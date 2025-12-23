@@ -223,6 +223,19 @@ class ReportController {
         }
     }
     
+    /**
+     * Edit a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the edited ReportComment object.
+     */
+    async editCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        try {
+            return await this.dao.editCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error editing comment ${reportComment.id} to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
 
 }
 
