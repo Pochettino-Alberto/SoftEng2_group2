@@ -66,6 +66,7 @@ class ReportComment {
     id: number;
     report_id: number;
     commenter_id: number;
+    userdata?: User;       // evaluated by commenter_id when calling GET comments
     comment: string;
     createdAt: string;
     updatedAt: string;

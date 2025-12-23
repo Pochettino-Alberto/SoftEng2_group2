@@ -346,14 +346,20 @@ describe('ReportController', () => {
   })
 
   it('getCommentsByReportId delegates to DAO and returns comments', async () => {
-    const comments = [{ id: 1, comment: 'c1' }]
+    const comments = [{ id: 1, commenter_id: 5, comment: 'c1' }]
+    const user = { id: 5, name: 'User5' }
     const mockGetReport = jest.fn().mockResolvedValue({ id: 10 })
     const mockGetComments = jest.fn().mockResolvedValue(comments)
-    const MockDAO = jest.fn().mockImplementation(() => ({
+    const mockGetUser = jest.fn().mockResolvedValue(user)
+    const MockReportDAO = jest.fn().mockImplementation(() => ({
       getReportById: mockGetReport,
       getCommentsByReportId: mockGetComments
     }))
-    jest.doMock('../src/dao/reportDAO', () => MockDAO)
+    const MockUserDAO = jest.fn().mockImplementation(() => ({
+      getUserById: mockGetUser
+    }))
+    jest.doMock('../src/dao/reportDAO', () => MockReportDAO)
+    jest.doMock('../src/dao/userDAO', () => MockUserDAO)
 
     const ReportController = require('../src/controllers/reportController').default
     const ctrl = new ReportController()
@@ -361,7 +367,8 @@ describe('ReportController', () => {
     const res = await ctrl.getCommentsByReportId(10)
     expect(mockGetReport).toHaveBeenCalledWith(10)
     expect(mockGetComments).toHaveBeenCalledWith(10)
-    expect(res).toBe(comments)
+    expect(mockGetUser).toHaveBeenCalledWith(5)
+    expect(res).toEqual([{ id: 1, commenter_id: 5, comment: 'c1', userdata: user }])
   })
 
   it('getCommentsByReportId logs and rethrows on error', async () => {

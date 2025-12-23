@@ -2,6 +2,7 @@ import { Report, ReportCategory, ReportComment, ReportStatusType } from "../comp
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
 import { User } from "../components/user";
+import UserDAO from "../dao/userDAO";
 
 /**
  * Represents a controller for managing users.
@@ -9,9 +10,11 @@ import { User } from "../components/user";
  */
 class ReportController {
     private dao: ReportDAO
+    private userDao: UserDAO
 
     constructor() {
         this.dao = new ReportDAO
+        this.userDao = new UserDAO()
     }
 
 
@@ -64,7 +67,14 @@ class ReportController {
         try {
             // Check if report exists (throws ReportNotFoundError if not found)
             await this.getReportById(reportId);
-            return await this.dao.getCommentsByReportId(reportId);
+            let reportComments = await this.dao.getCommentsByReportId(reportId);
+
+            // Enrich comments with user data
+            for (const comment of reportComments) {
+                const user =  await this.userDao.getUserById(comment.commenter_id);
+                comment.userdata = user;
+            }
+            return reportComments;
         } catch (error) {
             console.error("Error fetching report comments:", error);
             throw error;
