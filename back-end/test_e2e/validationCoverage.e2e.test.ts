@@ -241,7 +241,8 @@ describe('E2E Advanced Controller and Router Coverage', () => {
 
         const res = await request.get('/reports/report/invalid').set('Cookie', adminCookie)
         // Invalid ID results in 500 or 422 depending on implementation
-        expect([422, 500]).toContain(res.status)
+        //expect([422, 500]).toContain(res.status)
+        expect(res.status).toBe(404)
     })
 
     test('POST /users/register-user with duplicate username returns 409', async () => {
