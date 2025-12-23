@@ -444,7 +444,7 @@ class ReportDAO {
     async getReportsAssignedToMaintainer(maintainer_id: number): Promise<Report[]> {
         return new Promise((resolve, reject) => {
             try {
-                const sql = `SELECT * FROM reports WHERE (status = 'In Progress' OR status = 'Suspended') AND maintainer_id = ? ORDER BY createdAt DESC`;
+                const sql = `SELECT * FROM reports WHERE (status = 'In Progress' OR status = 'Suspended') AND maintainer_id = ? ORDER BY updatedAt DESC`;
                 db.all(sql, [maintainer_id], async (err, rows: any[]) => {
                     if (err) {
                         console.error('SQL ERROR getReportsAssignedToMaintainer', err, { maintainer_id });
