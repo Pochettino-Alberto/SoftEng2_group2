@@ -812,4 +812,688 @@ describe('userRoutes - Municipality and Role Management', () => {
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body.length).toBe(0);
   });
-});
+
+    test('GET /users/search-users returns users with complete information', async () => {
+        const admin = `admin_userinfo_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=20').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+        expect(res.body.total_items).toBeGreaterThanOrEqual(0)
+        
+        // Verify structure of returned users
+        res.body.items.forEach((user: any) => {
+            expect(user).toHaveProperty('id')
+            expect(user).toHaveProperty('username')
+            expect(user).toHaveProperty('first_name')
+            expect(user).toHaveProperty('last_name')
+            expect(user).toHaveProperty('email')
+            expect(user).toHaveProperty('user_type')
+        })
+    })
+
+    test('POST /users/register-citizen with maximum realistic data', async () => {
+        const timestamp = Date.now()
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_maxdata_${timestamp}`,
+            name: 'VeryLongFirstNameForTesting',
+            surname: 'VeryLongLastNameForTesting',
+            email: `firstname.lastname.${timestamp}@example.domain.com`,
+            password: 'ComplexPassword123!@#'
+        })
+        expect(res.status).toBe(201)
+        expect(res.body.first_name).toBe('VeryLongFirstNameForTesting')
+        expect(res.body.last_name).toBe('VeryLongLastNameForTesting')
+    })
+
+    test('PATCH /users/edit-me with all optional fields', async () => {
+        const username = `citizen_editall_${Date.now()}`
+        const { user, cookies } = await registerAndLogin(request, username, 'Pass')
+
+        const res = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({
+                id: user.id,
+                username: `${username}_updated`,
+                name: 'NewName',
+                surname: 'NewSurname',
+                email: `${username}_new@example.com`
+            })
+        
+        expect(res.status).toBe(200)
+        expect(res.body.first_name).toBe('NewName')
+        expect(res.body.last_name).toBe('NewSurname')
+        expect(res.body.email).toBe(`${username}_new@example.com`)
+    })
+
+    test('POST /users/register-user creates user with all metadata', async () => {
+        const admin = `admin_metadata_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const newUser = `created_${Date.now()}`
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username: newUser,
+                name: 'CreatedUser',
+                surname: 'ByAdmin',
+                email: `${newUser}@example.com`,
+                password: 'Pass123',
+                role: 'citizen'
+            })
+        
+        expect(res.status).toBe(201)
+        expect(res.body.username).toBe(newUser)
+        expect(res.body.first_name).toBe('CreatedUser')
+        expect(res.body.last_name).toBe('ByAdmin')
+        expect(res.body.user_type).toBe('citizen')
+        expect(res.body).toHaveProperty('id')
+    })
+
+    test('PATCH /users/edit-user updates user and maintains consistency', async () => {
+        const target = `target_consistency_${Date.now()}`
+        const { user: targetUser } = await registerAndLogin(request, target, 'Pass')
+
+        const admin = `admin_consistency_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        // Edit the user
+        const editRes = await request.patch('/users/edit-user')
+            .set('Cookie', adminCookie)
+            .send({
+                id: targetUser.id,
+                username: targetUser.username,
+                name: 'EditedName',
+                surname: 'EditedSurname',
+                email: `${target}_edited@example.com`,
+                usertype: 'citizen',
+                rolesArray: [1]
+            })
+        
+        expect(editRes.status).toBe(200)
+        expect(editRes.body.first_name).toBe('EditedName')
+        expect(editRes.body.last_name).toBe('EditedSurname')
+    })
+
+    test('POST /auth/login then DELETE /auth/logout then POST /auth/login again', async () => {
+        const username = `citizen_cycle2_${Date.now()}`
+        const password = 'Pass123'
+
+        // Register
+        await request.post('/users/register-citizen').send({
+            username,
+            name: 'Test',
+            surname: 'User',
+            email: `${username}@example.com`,
+            password
+        })
+
+        // First login
+        const login1 = await request.post('/auth/login').send({ username, password })
+        expect(login1.status).toBe(200)
+        const cookies1 = login1.headers['set-cookie']
+
+        // Verify logged in
+        const current1 = await request.get('/auth/current').set('Cookie', cookies1)
+        expect(current1.status).toBe(200)
+        expect(current1.body.username).toBe(username)
+
+        // Logout
+        const logout = await request.delete('/auth/logout').set('Cookie', cookies1)
+        expect(logout.status).toBe(200)
+
+        // Verify logged out
+        const notLoggedIn = await request.get('/auth/current').set('Cookie', cookies1)
+        expect(notLoggedIn.status).toBe(401)
+
+        // Login again
+        const login2 = await request.post('/auth/login').send({ username, password })
+        expect(login2.status).toBe(200)
+        const cookies2 = login2.headers['set-cookie']
+
+        // Verify new session works
+        const current2 = await request.get('/auth/current').set('Cookie', cookies2)
+        expect(current2.status).toBe(200)
+        expect(current2.body.username).toBe(username)
+    })
+
+    test('POST /users/register-citizen with all optional fields', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_full_${Date.now()}`,
+            name: 'John',
+            surname: 'Doe',
+            email: 'john.doe@example.com',
+            password: 'SecurePass123!'
+        })
+        expect(res.status).toBe(201)
+        expect(res.body).toHaveProperty('id')
+        expect(res.body).toHaveProperty('username')
+        expect(res.body).toHaveProperty('email')
+    })
+
+    test('PATCH /users/edit-me can update all fields', async () => {
+        const username = `citizen_full_edit_${Date.now()}`
+        const { user, cookies } = await registerAndLogin(request, username, 'Pass')
+
+        const newName = 'NewName'
+        const newSurname = 'NewSurname'
+        const newEmail = `${username}_new@example.com`
+        
+        const res = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({
+                id: user.id,
+                name: newName,
+                surname: newSurname,
+                email: newEmail,
+                username: username
+            })
+        
+        expect(res.status).toBe(200)
+        expect(res.body.email).toBe(newEmail)
+    })
+
+    test('GET /users/search-users as admin shows paginated results', async () => {
+        // Create admin
+        const admin = `admin_search_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        // Create multiple users
+        for (let i = 0; i < 3; i++) {
+            await request.post('/users/register-citizen').send({
+                username: `citizen_list_${i}_${Date.now()}`,
+                name: `User${i}`,
+                surname: 'Test',
+                email: `user${i}@example.com`,
+                password: 'Pass'
+            })
+        }
+
+        // Search with pagination
+        const res = await request.get('/users/search-users?page_num=1&page_size=5').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+        expect(Array.isArray(res.body.items)).toBeTruthy()
+        expect(res.body.total_items).toBeGreaterThanOrEqual(3)
+    })
+
+    test('GET /users/search-users with first_name filter', async () => {
+        const admin = `admin_fname_filter_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=10&first_name=John').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+    })
+
+    test('GET /users/search-users with email filter', async () => {
+        const admin = `admin_email_filter_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=10&email=test@example.com').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+    })
+
+    test('POST /users/register-user (admin) creates citizen successfully', async () => {
+        const admin = `admin_create_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const newUser = `newuser_${Date.now()}`
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username: newUser,
+                name: 'Admin Created',
+                surname: 'User',
+                email: `${newUser}@example.com`,
+                password: 'Pass123',
+                role: 'citizen'
+            })
+        
+        expect(res.status).toBe(201)
+        expect(res.body.username).toBe(newUser)
+    })
+
+    test('PATCH /users/edit-user (admin) modifies user successfully', async () => {
+        const target = `target_${Date.now()}`
+        const { user: targetUser } = await registerAndLogin(request, target, 'Pass')
+
+        const admin = `admin_edituser_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const newEmail = `${target}_modified@example.com`
+        const res = await request.patch('/users/edit-user')
+            .set('Cookie', adminCookie)
+            .send({
+                id: targetUser.id,
+                username: targetUser.username,
+                name: targetUser.first_name,
+                surname: targetUser.last_name,
+                email: newEmail,
+                usertype: 'citizen',
+                rolesArray: [1]
+            })
+        
+        expect(res.status).toBe(200)
+        expect(res.body.email).toBe(newEmail)
+    })
+
+    test('GET /users/get-roles/:userId as admin returns user roles', async () => {
+        const user = `citizen_roles_${Date.now()}`
+        const { user: userData } = await registerAndLogin(request, user, 'Pass')
+
+        const admin = `admin_roles_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get(`/users/get-roles/${userData.id}`).set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+        expect(Array.isArray(res.body)).toBeTruthy()
+    })
+
+    test('Multiple logins/logouts cycle works correctly', async () => {
+        const username = `citizen_cycle_${Date.now()}`
+        const password = 'Pass123'
+
+        // Register
+        await request.post('/users/register-citizen').send({
+            username,
+            name: 'Test',
+            surname: 'User',
+            email: `${username}@example.com`,
+            password
+        })
+
+        // Login, logout, login again
+        const login1 = await request.post('/auth/login').send({ username, password })
+        expect(login1.status).toBe(200)
+        const cookies1 = login1.headers['set-cookie']
+
+        const logout1 = await request.delete('/auth/logout').set('Cookie', cookies1)
+        expect(logout1.status).toBe(200)
+
+        const login2 = await request.post('/auth/login').send({ username, password })
+        expect(login2.status).toBe(200)
+        const cookies2 = login2.headers['set-cookie']
+
+        const current = await request.get('/auth/current').set('Cookie', cookies2)
+        expect(current.status).toBe(200)
+        expect(current.body.username).toBe(username)
+    })
+
+    test('User with special characters in email works', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_special_${Date.now()}`,
+            name: 'Test',
+            surname: 'User',
+            email: `test+special.email@example.co.uk`,
+            password: 'Pass'
+        })
+        expect(res.status).toBe(201)
+        expect(res.body.email).toBe('test+special.email@example.co.uk')
+    })
+
+    test('GET /users/search-users with role filter', async () => {
+        const admin = `admin_role_filter_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=10&role=citizen').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+        expect(Array.isArray(res.body.items)).toBeTruthy()
+    })
+
+    test('GET /users/search-users with last_name filter', async () => {
+        const admin = `admin_lname_filter_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=10&last_name=Doe').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+    })
+
+    test('POST /users/register-citizen response includes all user fields', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_fields_${Date.now()}`,
+            name: 'John',
+            surname: 'Doe',
+            email: 'john@example.com',
+            password: 'Pass123'
+        })
+        expect(res.status).toBe(201)
+        const user = res.body
+        expect(user).toHaveProperty('id')
+        expect(user).toHaveProperty('username')
+        expect(user).toHaveProperty('first_name')
+        expect(user).toHaveProperty('last_name')
+        expect(user).toHaveProperty('email')
+        expect(user).toHaveProperty('user_type')
+    })
+
+    test('GET /auth/current returns logged-in user with all fields', async () => {
+        const username = `citizen_current_${Date.now()}`
+        const { cookies } = await registerAndLogin(request, username, 'Pass')
+
+        const res = await request.get('/auth/current').set('Cookie', cookies)
+        expect(res.status).toBe(200)
+        expect(res.body.username).toBe(username)
+        expect(res.body).toHaveProperty('id')
+        expect(res.body).toHaveProperty('user_type')
+    })
+
+    test('PATCH /users/edit-me returns updated user with correct fields', async () => {
+        const username = `citizen_update_${Date.now()}`
+        const { user, cookies } = await registerAndLogin(request, username, 'Pass')
+
+        const newName = 'UpdatedName'
+        const res = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({
+                id: user.id,
+                name: newName
+            })
+        
+        expect(res.status).toBe(200)
+        expect(res.body.first_name).toBe(newName)
+    })
+
+    test('GET /users/search-users returns paginated results with correct structure', async () => {
+        const admin = `admin_users_paginate_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=1&page_size=10').set('Cookie', adminCookie)
+        expect(res.status).toBe(200)
+        expect(res.body).toHaveProperty('items')
+        expect(res.body).toHaveProperty('total_items')
+        expect(Array.isArray(res.body.items)).toBeTruthy()
+        // Verify user structure
+        if (res.body.items.length > 0) {
+            const user = res.body.items[0]
+            expect(user).toHaveProperty('id')
+            expect(user).toHaveProperty('username')
+        }
+    })
+
+    test('POST /users/register-user creates user with correct role assignment', async () => {
+        const admin = `admin_role_create_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const newUser = `newuser_role_${Date.now()}`
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username: newUser,
+                name: 'New',
+                surname: 'User',
+                email: `${newUser}@example.com`,
+                password: 'Pass123',
+                role: 'citizen'
+            })
+        
+        expect(res.status).toBe(201)
+        expect(res.body.username).toBe(newUser)
+        expect(res.body.user_type).toBe('citizen')
+    })
+
+    test('PATCH /users/edit-user updates user with role assignment', async () => {
+        const target = `target_role_${Date.now()}`
+        const { user: targetUser } = await registerAndLogin(request, target, 'Pass')
+
+        const admin = `admin_edit_role_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.patch('/users/edit-user')
+            .set('Cookie', adminCookie)
+            .send({
+                id: targetUser.id,
+                username: targetUser.username,
+                name: targetUser.first_name,
+                surname: targetUser.last_name,
+                email: targetUser.email,
+                usertype: 'citizen',
+                rolesArray: [1]
+            })
+        
+        expect(res.status).toBe(200)
+        expect(res.body.id).toBe(targetUser.id)
+    })
+
+    test('POST /auth/login with correct credentials logs in successfully', async () => {
+        const username = `citizen_login_${Date.now()}`
+        const password = 'SecurePass123'
+
+        // Register
+        await request.post('/users/register-citizen').send({
+            username,
+            name: 'Test',
+            surname: 'User',
+            email: `${username}@example.com`,
+            password
+        })
+
+        // Login
+        const res = await request.post('/auth/login').send({ username, password })
+        expect(res.status).toBe(200)
+        expect(res.body.username).toBe(username)
+        expect(res.headers).toHaveProperty('set-cookie')
+    })
+
+    test('POST /users/register-citizen validates required name field', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_${Date.now()}`,
+            surname: 'User',
+            email: 'test@example.com',
+            password: 'Pass'
+        })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-citizen validates required surname field', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_${Date.now()}`,
+            name: 'Test',
+            email: 'test@example.com',
+            password: 'Pass'
+        })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-citizen validates required email field', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_${Date.now()}`,
+            name: 'Test',
+            surname: 'User',
+            password: 'Pass'
+        })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-citizen validates required password field', async () => {
+        const res = await request.post('/users/register-citizen').send({
+            username: `citizen_${Date.now()}`,
+            name: 'Test',
+            surname: 'User',
+            email: 'test@example.com'
+        })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /auth/login validates required username', async () => {
+        const res = await request.post('/auth/login').send({ password: 'pass' })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /auth/login validates required password', async () => {
+        const res = await request.post('/auth/login').send({ username: 'user' })
+        expect(res.status).toBe(422)
+    })
+
+    test('GET /users/search-users validates page_num as positive integer', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/search-users?page_num=-1&page_size=10').set('Cookie', adminCookie)
+        expect(res.status).toBe(422)
+    })
+
+    test('PATCH /users/edit-me validates id field as integer', async () => {
+        const { cookies } = await registerAndLogin(request, `citizen_${Date.now()}`, 'Pass')
+        
+        const res = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({ id: 'not_an_int', email: 'test@example.com' })
+        expect(res.status).toBe(422)
+    })
+
+    test('PATCH /users/edit-user validates id field required', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.patch('/users/edit-user')
+            .set('Cookie', adminCookie)
+            .send({ email: 'test@example.com' })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-user validates required fields', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({ username: 'test' })
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-user validates role field', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username: `user_${Date.now()}`,
+                name: 'Test',
+                surname: 'User',
+                email: 'test@example.com',
+                password: 'Pass',
+                role: 'invalid_role'
+            })
+        expect(res.status).toBe(422)
+    })
+
+    test('GET /users/get-roles/:userId validates userId as positive integer', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const res = await request.get('/users/get-roles/invalid').set('Cookie', adminCookie)
+        expect(res.status).toBe(422)
+    })
+
+    test('POST /users/register-user with duplicate username returns 409', async () => {
+        const admin = `admin_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        const username = `dupuser_${Date.now()}`
+        
+        // Create first user
+        await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username,
+                name: 'Test',
+                surname: 'User',
+                email: 'first@example.com',
+                password: 'Pass',
+                role: 'citizen'
+            })
+
+        // Try to create second with same username
+        const res = await request.post('/users/register-user')
+            .set('Cookie', adminCookie)
+            .send({
+                username,
+                name: 'Another',
+                surname: 'User',
+                email: 'second@example.com',
+                password: 'Pass',
+                role: 'citizen'
+            })
+        expect(res.status).toBe(409)
+    })
+
+    test('PATCH /users/edit-me can update optional fields individually', async () => {
+        const username = `citizen_partial_${Date.now()}`
+        const { user, cookies } = await registerAndLogin(request, username, 'Pass')
+
+        // Update only name
+        const res1 = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({ id: user.id, name: 'UpdatedName' })
+        expect(res1.status).toBe(200)
+        expect(res1.body.first_name).toBe('UpdatedName')
+
+        // Update only surname
+        const res2 = await request.patch('/users/edit-me')
+            .set('Cookie', cookies)
+            .send({ id: user.id, surname: 'UpdatedSurname' })
+        expect(res2.status).toBe(200)
+        expect(res2.body.last_name).toBe('UpdatedSurname')
+    })
+
+})

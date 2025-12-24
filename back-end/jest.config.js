@@ -8,6 +8,10 @@ module.exports = {
   testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 
+  // Global setup and teardown for e2e tests
+  globalSetup: '<rootDir>/test_e2e/globalSetup.ts',
+  globalTeardown: '<rootDir>/test_e2e/globalTeardown.ts',
+
   // --- Add these ---
   collectCoverage: true,
   coverageDirectory: 'coverage',

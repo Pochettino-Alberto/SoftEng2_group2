@@ -3,10 +3,7 @@
  * Tests focus on Supabase errors, user errors, validation, and auth edge cases
  */
 
-jest.mock('../src/services/supabaseService', () => ({
-    supabaseService: require('./supabaseMock').supabaseService,
-    SupabaseBucket: require('./supabaseMock').SupabaseBucket
-}))
+import './supabaseMock'  // Import mock first
 
 import request from './setup'
 import { registerAndLogin, promoteToAdmin } from './e2eHelpers'

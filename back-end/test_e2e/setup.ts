@@ -3,35 +3,22 @@
 process.env.NODE_ENV = 'test'
 
 import request from 'supertest'
-import { resetTestDb, teardownTestDb } from './testDb'
-import { beforeAll, afterAll, afterEach } from '@jest/globals'
-// Remove any existing test DB before requiring modules that open the DB
-resetTestDb()
+// Remove resetTestDb call - now handled globally
+// Remove teardownTestDb import and call - now handled globally
 
-// Import dbReady after reset so the DB module opens with the expected file state
+// Import dbReady after NODE_ENV has been set
 import { dbReady } from '../src/dao/db'
 
-// import app after NODE_ENV has been set and DB reset
+// import app after NODE_ENV has been set
 import { app } from '../index'
-
-// Import supabase mock to reset fail flag after each test
-import { supabaseServiceMockConfig } from './supabaseMock'
 
 // jest global setup: nothing to export; tests will import this file.
 
-// After each test, reset the supabase mock fail flag to prevent state leakage
-afterEach(() => {
-    supabaseServiceMockConfig.setFailNextUpload(false)
-})
-
-// After all tests, close DB connection and perform cleanup
-afterAll(async () => {
-    await teardownTestDb()
-})
+// Remove afterAll hook - database teardown now handled globally
 
 // Ensure DB initialization finished before any tests run
 beforeAll(async () => {
     await dbReady
-})
+}, 60000) // 60 second timeout for DB initialization
 
 export default request(app)
