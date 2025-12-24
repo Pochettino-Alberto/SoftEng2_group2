@@ -32,6 +32,16 @@ export async function promoteToAdmin(username: string) {
     })
 }
 
+// Promote a username to municipality in the test DB
+export async function promoteToMunicipality(username: string) {
+    return new Promise<void>((resolve, reject) => {
+        db.run("UPDATE users SET user_type='municipality' WHERE username = ?", [username], (err: any) => {
+            if (err) return reject(err)
+            resolve()
+        })
+    })
+}
+
 // Create a municipality user and assign maintainer role
 export async function createMaintainerUser(agent: any, username: string, password: string) {
     // First create admin to create municipality user

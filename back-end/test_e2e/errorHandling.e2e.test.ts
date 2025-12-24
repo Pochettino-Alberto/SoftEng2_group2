@@ -6,7 +6,7 @@
 import './supabaseMock'  // Import mock first
 
 import request from './setup'
-import { registerAndLogin, promoteToAdmin } from './e2eHelpers'
+import { registerAndLogin, promoteToAdmin, promoteToMunicipality } from './e2eHelpers'
 
 describe('E2E Error Handling and Edge Cases', () => {
     
@@ -303,6 +303,119 @@ describe('E2E Error Handling and Edge Cases', () => {
                 rolesArray: [1, 2]
             })
         expect(editRes.status).toBe(200)
+    })
+
+    test('PATCH /reports/:report_id/comment with non-existent comment returns 404', async () => {
+        // Create a municipality user
+        const municipality = `municipality_${Date.now()}`
+        await registerAndLogin(request, municipality, 'Pass')
+        await promoteToMunicipality(municipality)
+        const loginRes = await request.post('/auth/login').send({ username: municipality, password: 'Pass' })
+        const cookies = loginRes.headers['set-cookie']
+
+        // Create a report first as a citizen
+        const citizen = `citizen_for_report_${Date.now()}`
+        const { cookies: citizenCookies } = await registerAndLogin(request, citizen, 'Pass')
+        const reportRes = await request.post('/reports/upload')
+            .set('Cookie', citizenCookies)
+            .field('title', 'Test Report for Comment')
+            .field('description', 'Test description')
+            .field('category_id', '1')
+            .field('latitude', '45.0')
+            .field('longitude', '7.0')
+            .field('is_public', 'true')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
+        expect(reportRes.status).toBe(201)
+        const reportId = reportRes.body.id
+
+        // Try to update a non-existent comment (id 99999)
+        const updateRes = await request.patch(`/reports/${reportId}/comment`)
+            .set('Cookie', cookies)
+            .send({
+                comment_id: 99999,
+                comment: 'Updated comment'
+            })
+        expect(updateRes.status).toBe(404) // Should trigger ReportCommentNotFoundError
+    })
+
+    test('DELETE /reports/:report_id/comment with non-existent comment returns 404', async () => {
+        // Create a municipality user
+        const municipality = `municipality_${Date.now()}`
+        await registerAndLogin(request, municipality, 'Pass')
+        await promoteToMunicipality(municipality)
+        const loginRes = await request.post('/auth/login').send({ username: municipality, password: 'Pass' })
+        const cookies = loginRes.headers['set-cookie']
+
+        // Create a report first as a citizen
+        const citizen = `citizen_for_report_${Date.now()}`
+        const { cookies: citizenCookies } = await registerAndLogin(request, citizen, 'Pass')
+        const reportRes = await request.post('/reports/upload')
+            .set('Cookie', citizenCookies)
+            .field('title', 'Test Report for Comment Delete')
+            .field('description', 'Test description')
+            .field('category_id', '1')
+            .field('latitude', '45.0')
+            .field('longitude', '7.0')
+            .field('is_public', 'true')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
+        expect(reportRes.status).toBe(201)
+        const reportId = reportRes.body.id
+
+        // Try to delete a non-existent comment (id 99999)
+        const deleteRes = await request.delete(`/reports/${reportId}/comment`)
+            .set('Cookie', cookies)
+            .send({
+                comment_id: 99999
+            })
+        expect(deleteRes.status).toBe(404) // Should trigger ReportCommentNotFoundError
+    })
+
+    test('POST /reports/upload with simulated Supabase failure returns 503', async () => {
+        // Set up mock to fail next upload
+        const { supabaseServiceMockConfig } = await import('./supabaseMock')
+        supabaseServiceMockConfig.setFailNextUpload(true)
+
+        const { cookies } = await registerAndLogin(request, `citizen_${Date.now()}`, 'Pass')
+
+        const res = await request.post('/reports/upload')
+            .set('Cookie', cookies)
+            .field('title', 'Test Report')
+            .field('description', 'Test description')
+            .field('category_id', '1')
+            .field('latitude', '45.0')
+            .field('longitude', '7.0')
+            .field('is_public', 'true')
+            .attach('photos', Buffer.from('fakeimage'), 'photo.jpg')
+        expect(res.status).toBe(503) // Should trigger SupabaseFailedToUpload
+    })
+
+    test('PATCH /users/edit-user with non-admin user returns 401', async () => {
+        const citizen1 = `citizen_edit_${Date.now()}`
+        const { user: user1 } = await registerAndLogin(request, citizen1, 'Pass')
+
+        const citizen2 = `citizen_edit2_${Date.now()}`
+        const { cookies: cookies2 } = await registerAndLogin(request, citizen2, 'Pass')
+
+        // Try to edit another user as a citizen (should fail)
+        const res = await request.patch('/users/edit-user')
+            .set('Cookie', cookies2)
+            .send({
+                id: user1.id,
+                email: 'newemail@example.com'
+            })
+        expect(res.status).toBe(401) // Should trigger UserNotAdminError
+    })
+
+    test('DELETE /users/1 (default admin) returns 404 (route commented out)', async () => {
+        const admin = `admin_del_${Date.now()}`
+        await registerAndLogin(request, admin, 'AdminPass')
+        await promoteToAdmin(admin)
+        const loginRes = await request.post('/auth/login').send({ username: admin, password: 'AdminPass' })
+        const adminCookie = loginRes.headers['set-cookie']
+
+        // Attempt to delete default admin (id 1) - route is commented out so should return 404
+        const res = await request.delete('/users/1').set('Cookie', adminCookie)
+        expect(res.status).toBe(404) // Route doesn't exist
     })
 
 })

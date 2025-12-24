@@ -11,17 +11,24 @@ export enum SupabaseBucket {
 
 // Mock state for controlling failures in tests
 let failNextUpload = false;
+let failNextRemove = false;
 
 export const supabaseServiceMockConfig = {
     setFailNextUpload: (fail: boolean) => {
         failNextUpload = fail;
     },
-    isFailNextUpload: () => failNextUpload
+    isFailNextUpload: () => failNextUpload,
+    setFailNextRemove: (fail: boolean) => {
+        failNextRemove = fail;
+    },
+    isFailNextRemove: () => failNextRemove
 };
 
 // Function to get current failure state
 const getFailNextUpload = () => failNextUpload;
 const setFailNextUpload = (value: boolean) => { failNextUpload = value; };
+const getFailNextRemove = () => failNextRemove;
+const setFailNextRemove = (value: boolean) => { failNextRemove = value; };
 
 // Mock the @supabase/supabase-js module
 jest.mock('@supabase/supabase-js', () => ({
@@ -41,6 +48,12 @@ jest.mock('@supabase/supabase-js', () => ({
                     data: { publicUrl: `http://test.local/${filePath}` }
                 })),
                 remove: jest.fn(async (files: string[]) => {
+                    // Simulate remove failure if flag is set (for testing error branches)
+                    if (getFailNextRemove()) {
+                        setFailNextRemove(false); // Reset after use
+                        return { data: null, error: { message: 'Simulated Supabase remove failure' } };
+                    }
+                    // Simulate successful remove
                     return { data: null, error: null };
                 })
             }))
