@@ -52,11 +52,18 @@ const Home: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-4">
               {isAuthenticated ? (
-                <Link to="/citizen" className="w-full sm:w-auto">
-                  <Button size="lg" className="text-base sm:text-lg w-full sm:w-auto">
-                    Go to Dashboard
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/citizen" className="w-full sm:w-auto">
+                    <Button size="lg" style={{ border: '2px solid white' }} className="text-base sm:text-lg w-full sm:w-auto">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/citizen/report/new" className="w-full sm:w-auto">
+                    <Button size="lg" style={{ backgroundColor: 'white', color: '#5199CD' }} className="text-base sm:text-lg hover:bg-gray-100 w-full sm:w-auto">
+                      Create New Report
+                    </Button>
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/auth/account" className="w-full sm:w-auto mx-auto">
