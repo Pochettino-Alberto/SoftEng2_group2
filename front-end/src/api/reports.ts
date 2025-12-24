@@ -85,4 +85,41 @@ export const reportAPI = {
     const response = await apiClient.patch(`/reports/report/${reportId}/assign-maintainer`, { maintainer_id: maintainerId })
     return response.data
   },
+
+  getMapReports: async (statusArray?: string[]): Promise<Report[]> => {
+    try {
+      console.log('[getMapReports] Called with statusArray:', statusArray);
+      const response = await apiClient.get('/reports/get-map-reports')
+      
+      let reports = transformReports(response.data);
+      
+      if (statusArray && statusArray.length > 0) {
+        console.log('[getMapReports] Filtering frontend reports by statuses:', statusArray);
+        reports = reports.filter(r => statusArray.includes(r.status));
+      }
+      
+      console.log('[getMapReports] Returning', reports.length, 'filtered reports');
+      return reports
+    } catch (error) {
+      console.error('getMapReports error:', error)
+      return []
+    }
+  },
+}
+
+function transformReports(data: any[]): Report[] {
+  if (!Array.isArray(data)) return []
+  
+  return data.map((report: any) => {
+    const lat = report.location?.lat || report.latitude || 0
+    const lng = report.location?.lng || report.longitude || 0
+    
+    return {
+      ...report,
+      location: {
+        lat: typeof lat === 'number' ? lat : parseFloat(lat) || 0,
+        lng: typeof lng === 'number' ? lng : parseFloat(lng) || 0
+      }
+    } as Report
+  })
 }

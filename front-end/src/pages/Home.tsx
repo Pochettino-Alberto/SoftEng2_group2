@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import ReportsMap from '../components/Map';
+import { reportAPI } from '../api/reports';
+import type { Report } from '../types/report';
 
 const Home: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [approvedReports, setApprovedReports] = useState<Report[]>([]);
+
+  useEffect(() => {
+    const fetchApprovedReports = async () => {
+      try {
+        const approvedStatuses = ["Assigned", "In Progress", "Suspended"]
+        const reports = await reportAPI.getMapReports(approvedStatuses);
+        setApprovedReports(reports || []);
+      } catch (error) {
+        console.error('Failed to load approved reports:', error);
+        setApprovedReports([]);
+      }
+    };
+
+    fetchApprovedReports();
+  }, []);
 
   return (
     <div id="homePage" className="min-h-screen">
@@ -49,6 +68,27 @@ const Home: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+              Citizens' Reports
+            </h2>
+          </div>
+          
+          <Card className="p-2 sm:p-3 overflow-hidden">
+            <div className="h-96 rounded-lg overflow-hidden">
+              <ReportsMap 
+                reports={approvedReports}
+                currentPopUp={null}
+                setCurrentPopUp={() => {}}
+                hasSelect={false}
+              />
+            </div>
+          </Card>
         </div>
       </section>
 
