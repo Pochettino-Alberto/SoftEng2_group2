@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, {type LatLngTuple } from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -10,7 +10,7 @@ import * as turf from "@turf/turf";
 import { useMemo, useRef } from 'react';
 
 import { reportAPI } from '../api/reports';
-import type { ReportCategory } from '../types/report';
+import type { ReportCategory, Report } from '../types/report';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import FileInput from '../components/FileInput';
@@ -32,6 +32,103 @@ interface Location {
   lng: number;
 }
 
+// Clustering helper: Groups reports by proximity based on zoom level
+interface Cluster {
+  lat: number;
+  lng: number;
+  reports: Report[];
+  isCluster: boolean;
+}
+
+const clusterReports = (reports: Report[], zoomLevel: number): Cluster[] => {
+  if (!reports || reports.length === 0) return [];
+  
+
+  const validReports = reports.filter(r => r.location && typeof r.location.lat === 'number' && typeof r.location.lng === 'number');
+  
+  if (validReports.length === 0) return [];
+  
+  if (zoomLevel >= 15) {
+    return validReports.map(report => ({
+      lat: report.location.lat,
+      lng: report.location.lng,
+      reports: [report],
+      isCluster: false
+    }));
+  }
+  
+  let radiusInDegrees: number;
+  if (zoomLevel >= 14) {
+    radiusInDegrees = 0.002; 
+  } else if (zoomLevel >= 13) {
+    radiusInDegrees = 0.005;
+  } else if (zoomLevel >= 12) {
+    radiusInDegrees = 0.01; 
+  } else if (zoomLevel >= 11) {
+    radiusInDegrees = 0.02; 
+  } else {
+    radiusInDegrees = 0.05; 
+  }
+  
+  const clusters: Cluster[] = [];
+  const processed = new Set<number>();
+  
+  validReports.forEach((report, index) => {
+    if (processed.has(index)) return;
+    
+    const nearbyReports = [report];
+    processed.add(index);
+    
+    validReports.forEach((otherReport, otherIndex) => {
+      if (processed.has(otherIndex)) return;
+      
+      const latDiff = Math.abs(report.location.lat - otherReport.location.lat);
+      const lngDiff = Math.abs(report.location.lng - otherReport.location.lng);
+      
+      if (latDiff <= radiusInDegrees && lngDiff <= radiusInDegrees) {
+        nearbyReports.push(otherReport);
+        processed.add(otherIndex);
+      }
+    });
+    
+    if (nearbyReports.length > 1) {
+      const avgLat = nearbyReports.reduce((sum, r) => sum + r.location.lat, 0) / nearbyReports.length;
+      const avgLng = nearbyReports.reduce((sum, r) => sum + r.location.lng, 0) / nearbyReports.length;
+      
+      clusters.push({
+        lat: avgLat,
+        lng: avgLng,
+        reports: nearbyReports,
+        isCluster: true
+      });
+    } else {
+      clusters.push({
+        lat: report.location.lat,
+        lng: report.location.lng,
+        reports: [report],
+        isCluster: false
+      });
+    }
+  });
+  
+  return clusters;
+};
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'Resolved':
+      return '#10b981'; 
+    case 'In Progress':
+      return '#3b82f6'; 
+    case 'Assigned':
+      return '#3b82f6';
+    case 'Suspended':
+      return '#f59e0b'; 
+    default:
+      return '#6b7280'; 
+  }
+};
+
 const LocationMarker: React.FC<{ 
   onLocationSelect: (loc: Location | null) => void; 
   selectedLocation: Location | null;
@@ -50,9 +147,6 @@ const LocationMarker: React.FC<{
       let inside = false;
 
           if (boundaryGeometry) {
-            // boundaryGeometry can be Polygon/MultiPolygon Feature or raw geometry from the geojson file.
-            // Use `any` here to satisfy the turf runtime which accepts GeoJSON polygons; strict typing
-            // would require mapping Geometry -> Feature<Polygon|MultiPolygon>.
             inside = turf.booleanPointInPolygon(point, boundaryGeometry as any);
           }
 
@@ -66,8 +160,113 @@ const LocationMarker: React.FC<{
   });
 
   return selectedLocation ? (
-    <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
+    <Marker 
+      position={[selectedLocation.lat, selectedLocation.lng]}
+      icon={L.icon({
+        iconUrl: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41"><path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 12.5 12.5 28.3 12.5 28.3s12.5-15.8 12.5-28.3C25 5.6 19.4 0 12.5 0z" fill="%23999999"/><circle cx="12.5" cy="12.5" r="4" fill="white"/></svg>',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+      })}
+    />
   ) : null;
+};
+
+const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedReports }) => {
+  const map = useMap();
+  const [zoom, setZoom] = useState(12);
+  
+  useMapEvents({
+    zoomend() {
+      setZoom(map.getZoom());
+    }
+  });
+  
+  const clusters = clusterReports(approvedReports, zoom);
+  
+  return (
+    <>
+      {clusters.map((cluster, idx) => (
+        <Marker
+          key={idx}
+          position={[cluster.lat, cluster.lng]}
+          icon={L.icon({
+            iconUrl: cluster.isCluster && cluster.reports.length > 1 
+              ? 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="%233b82f6" stroke="white" stroke-width="2"/><text x="20" y="24" text-anchor="middle" font-size="14" font-weight="bold" fill="white">' + cluster.reports.length + '</text></svg>'
+              : icon,
+            iconSize: cluster.isCluster && cluster.reports.length > 1 ? [40, 40] : [25, 41],
+            iconAnchor: cluster.isCluster && cluster.reports.length > 1 ? [20, 20] : [12, 41],
+          })}
+        >
+          {cluster.isCluster && cluster.reports.length > 1 ? (
+            <Popup>
+              <div className="w-80 max-h-96 overflow-y-auto">
+                <h3 className="font-bold mb-3 text-lg">
+                  {cluster.reports.length} Report{cluster.reports.length !== 1 ? 's' : ''} in this area
+                </h3>
+                <div className="space-y-3">
+                  {cluster.reports.map((report) => (
+                    <div key={report.id} className="border-l-4 pl-3 py-2" style={{ borderColor: getStatusColor(report.status) }}>
+                      <p className="font-semibold text-sm">{report.title}</p>
+                      <p className="text-xs text-gray-600 mb-1">{report.description?.substring(0, 80)}...</p>
+                      <div className="flex justify-between text-xs">
+                        <span className="inline-block px-2 py-1 rounded text-white" style={{ backgroundColor: getStatusColor(report.status) }}>
+                          {report.status}
+                        </span>
+                        <span className="text-gray-500">
+                          {report.is_public 
+                            ? `${report.reporter?.first_name || ''} ${report.reporter?.last_name || ''}`.trim()
+                            : 'Anonymous'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Popup>
+          ) : cluster.reports.length === 1 ? (
+            <Popup>
+              <div className="w-80">
+                <h3 className="font-bold text-lg mb-2">{cluster.reports[0].title}</h3>
+                <div className="mb-3">
+                  <span className="inline-block px-3 py-1 rounded text-white text-sm font-semibold" style={{ backgroundColor: getStatusColor(cluster.reports[0].status) }}>
+                    {cluster.reports[0].status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 mb-3">{cluster.reports[0].description}</p>
+                <div className="mb-3 text-sm">
+                  <p><strong>Category:</strong> {cluster.reports[0].category?.name || 'Unknown'}</p>
+                  <p><strong>Reporter:</strong> {cluster.reports[0].is_public 
+                    ? `${cluster.reports[0].reporter?.first_name || ''} ${cluster.reports[0].reporter?.last_name || ''}`.trim()
+                    : 'Anonymous'}</p>
+                  <p className="text-xs text-gray-500"><strong>Updated:</strong> {new Date(cluster.reports[0].updatedAt).toLocaleDateString()}</p>
+                </div>
+                {cluster.reports[0].photos && cluster.reports[0].photos.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-semibold mb-2">Photos:</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {cluster.reports[0].photos.slice(0, 2).map((photo, pidx) => (
+                        <img
+                          key={pidx}
+                          src={photo.photo_public_url}
+                          alt={`Report photo ${pidx + 1}`}
+                          className="h-16 w-16 object-cover rounded"
+                        />
+                      ))}
+                      {cluster.reports[0].photos.length > 2 && (
+                        <div className="h-16 w-16 bg-gray-300 rounded flex items-center justify-center text-xs font-bold">
+                          +{cluster.reports[0].photos.length - 2}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Popup>
+          ) : null}
+        </Marker>
+      ))}
+    </>
+  );
 };
 
 const MapPage: React.FC = () => {
@@ -88,6 +287,9 @@ const MapPage: React.FC = () => {
   const formScrollRef = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
+  
+  // New state for approved reports display
+  const [approvedReports, setApprovedReports] = useState<Report[]>([]);
 
 
   const handleFormScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -114,6 +316,31 @@ const MapPage: React.FC = () => {
         setFormError('Could not fetch report categories: ' + error.message);
         console.log('Could not fetch report categories: ' + error);
       });
+  }, []);
+
+  // Fetch approved reports for display on map
+  const fetchApprovedReports = async () => {
+    try {
+      console.log('Fetching approved reports...');
+      // Only fetch reports with approved statuses (exclude Pending Approval and Rejected)
+      const approvedStatuses = ["Assigned", "In Progress", "Suspended"]
+      const reports = await reportAPI.getMapReports(approvedStatuses);
+      console.log('Received reports:', reports);
+      setApprovedReports(reports || []);
+    } catch (error) {
+      console.error('Failed to load approved reports:', error);
+      // Don't set form error, just log it
+      // setFormError('Could not load approved reports');
+    }
+  };
+
+  useEffect(() => {
+    // Auto-load approved reports on mount
+    try {
+      fetchApprovedReports();
+    } catch (err) {
+      console.error('Error in fetchApprovedReports useEffect:', err);
+    }
   }, []);
 
   const handleLocationSelect = (loc: Location | null) => {
@@ -201,7 +428,7 @@ const MapPage: React.FC = () => {
     reportAPI.createReport(formData).then(savedReport => {
       console.log(savedReport);
       // Reset form after successful submission
-      setFormSuccessMessage('Report sent successfully!');
+      setFormSuccessMessage('Report created successfully! You will be able to see it on the map after it has been approved.');
       handleCloseForm();
 
     }).catch(err => {
@@ -520,6 +747,9 @@ const MapPage: React.FC = () => {
                   </>
                 )
               }, [])}
+
+            {/* Display approved reports with clustering */}
+            {approvedReports && approvedReports.length > 0 && <MapZoomListener approvedReports={approvedReports} />}
 
             <LocationMarker
               onLocationSelect={handleLocationSelect}

@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/Card';
 import { Link } from 'react-router-dom';
+import ReportsMap from '../../components/Map';
+import { reportAPI } from '../../api/reports';
+import type { Report } from '../../types/report';
 
 const CitizenDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [approvedReports, setApprovedReports] = useState<Report[]>([]);
+
+  useEffect(() => {
+    const fetchApprovedReports = async () => {
+      try {
+        const approvedStatuses = ["Assigned", "In Progress", "Suspended"]
+        const reports = await reportAPI.getMapReports(approvedStatuses);
+        setApprovedReports(reports || []);
+      } catch (error) {
+        console.error('Failed to load approved reports:', error);
+        setApprovedReports([]);
+      }
+    };
+
+    fetchApprovedReports();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
@@ -16,7 +35,6 @@ const CitizenDashboard: React.FC = () => {
           <p className="text-sm sm:text-base text-gray-600 mt-2">Manage your reports and track their progress</p>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           
           <Link to="/citizen/report/new" className="sm:col-span-2 lg:col-span-1">
@@ -35,8 +53,6 @@ const CitizenDashboard: React.FC = () => {
             </Card>
           </Link>
 
-
-
           <Link to="/citizen/profile" className="sm:col-span-2 lg:col-span-1">
             <Card className="p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-shadow">
               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -54,7 +70,19 @@ const CitizenDashboard: React.FC = () => {
           </Link>
         </div>
 
-        {/* 'Your Recent Reports' section removed as requested */}
+        <div className="mt-8 sm:mt-10">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Citizens' Reports</h2>
+          <Card className="p-2 sm:p-3 overflow-hidden">
+            <div className="h-96 rounded-lg overflow-hidden">
+              <ReportsMap 
+                reports={approvedReports}
+                currentPopUp={null}
+                setCurrentPopUp={() => {}}
+                hasSelect={false}
+              />
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

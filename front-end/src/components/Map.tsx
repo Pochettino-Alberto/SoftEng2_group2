@@ -258,7 +258,7 @@ const ReportsMapContent: React.FC<ReportsMapProps> = ({ reports, currentPopUp, s
                       </div>
                     )}
                     <p className="text-xs text-gray-400 mt-1">
-                        Reported by: {report.reporter?.username || 'Unknown'}
+                        Reported by: {report.is_public ? report.reporter?.username || 'Unknown' : 'Anonymous'}
                     </p>
                   </div>
                 </Popup>
