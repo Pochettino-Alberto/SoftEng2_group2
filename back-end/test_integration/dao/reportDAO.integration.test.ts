@@ -629,4 +629,53 @@ describe('ReportDAO integration', () => {
     const reports = await dao.getMapReports(['NonExistentStatus'])
     expect(reports).toEqual([])
   })
+
+  test('addCommentToReport and getCommentsByReportId work in sequence', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { ReportComment, Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
+    const rpt = await dao.saveReport(report)
+    
+    const newComment = new ReportComment(0, rpt.id, 1, 'This is a test comment', '2025-01-01', '2025-01-01')
+    const savedComment = await dao.addCommentToReport(newComment)
+    
+    expect(savedComment.id).toBeGreaterThan(0)
+
+    const comments = await dao.getCommentsByReportId(rpt.id)
+    expect(comments.length).toBe(1)
+    expect(comments[0].comment).toBe('This is a test comment')
+  })
+
+  test('editCommentToReport updates the text and updatedAt', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { ReportComment, Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
+    const rpt = await dao.saveReport(report)
+    const comment = await dao.addCommentToReport(new ReportComment(0, rpt.id, 1, 'Old text', '2025-01-01', '2025-01-01'))
+    
+    comment.comment = 'New text'
+    comment.updatedAt = '2025-01-02'
+    
+    const updated = await dao.editCommentToReport(comment)
+    expect(updated.comment).toBe('New text')
+
+    const comments = await dao.getCommentsByReportId(rpt.id)
+    expect(comments[0].comment).toBe('New text')
+  })
+
+  test('deleteCommentToReport removes the entry', async () => {
+    const ReportDAO = require('../../src/dao/reportDAO').default
+    const { ReportComment, Report, ReportStatus } = require('../../src/components/report')
+    const dao = new ReportDAO()
+    const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
+    const rpt = await dao.saveReport(report)
+    const comment = await dao.addCommentToReport(new ReportComment(0, rpt.id, 1, 'To be deleted', '2025-01-01', '2025-01-01'))
+    
+    await dao.deleteCommentToReport(comment)
+    
+    const comments = await dao.getCommentsByReportId(rpt.id)
+    expect(comments.length).toBe(0)
+  })
 })

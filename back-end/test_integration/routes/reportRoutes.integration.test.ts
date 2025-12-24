@@ -1,9 +1,20 @@
 import request from 'supertest'
-import express from 'express'
+import express, { Express, Request, Response, NextFunction } from 'express';
 
-// Set dummy Supabase config to prevent service initialization error
 process.env.SUPABASE_URL = 'https://example.supabase.co'
 process.env.SUPABASE_SERVICE_KEY = 'example-key'
+
+const fakeAuth = {
+  isLoggedIn: (req: Request, res: Response, next: NextFunction) => {
+    // Inject a mock user so the controller can find an ID
+    (req as any).user = { id: 5, role: 'citizen' };
+    next();
+  },
+  isCitizen: (req: Request, res: Response, next: NextFunction) => next(),
+  isAdminOrMunicipality: (req: Request, res: Response, next: NextFunction) => next(),
+  isTechnicalOfficer: (req: Request, res: Response, next: NextFunction) => next(),
+  isMaintainer: (req: Request, res: Response, next: NextFunction) => next(),
+};
 
 describe('ReportRoutes integration', () => {
   beforeEach(() => {
@@ -553,5 +564,155 @@ describe('ReportRoutes integration', () => {
 
     const res = await request(app).get('/report/get-map-reports')
     expect(res.status).toBe(500)
+  })
+
+  it('GET /report/:report_id/comments returns comments from controller', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      getCommentsByReportId: async (id: number) => [
+        { id: 101, report_id: id, comment: 'Test Comment', userdata: { id: 2, name: 'John' } }
+      ]
+    }))
+    jest.doMock('../../src/controllers/reportController', () => ({ __esModule: true, default: MockController }))
+
+    // Must include all middleware used by the router to prevent "argument handler must be a function"
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app).get('/report/1/comments')
+    
+    expect(res.status).toBe(200)
+    expect(res.body[0].comment).toBe('Test Comment')
+    expect(res.body[0].userdata.name).toBe('John')
+  })
+
+  it('POST /report/:report_id/comment creates a new comment via controller', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      addCommentToReport: async (commentObj: any) => ({ ...commentObj, id: 99 })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => ({ __esModule: true, default: MockController }))
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => { 
+        req.user = { id: 5 }; // Mocked logged-in user
+        return next() 
+      },
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    app.use(express.json()) 
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .post('/report/1/comment')
+      .send({ comment: 'New integrated comment' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.id).toBe(99)
+    expect(res.body.commenter_id).toBe(5)
+    expect(res.body.comment).toBe('New integrated comment')
+  })
+
+  it('PATCH /report/:report_id/comment updates comment and returns 200', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      editCommentToReport: async (commentObj: any) => ({ ...commentObj, comment: 'Edited' })
+    }))
+    jest.doMock('../../src/controllers/reportController', () => ({ __esModule: true, default: MockController }))
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => { 
+        req.user = { id: 5 }; 
+        return next() 
+      },
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    app.use(express.json())
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .patch('/report/1/comment')
+      .send({ comment_id: 99, comment: 'Edited' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.comment).toBe('Edited')
+  })
+
+  it('DELETE /report/:report_id/comment returns 204 on success', async () => {
+    const MockController = jest.fn().mockImplementation(() => ({
+      deleteCommentToReport: async () => { return } 
+    }))
+    jest.doMock('../../src/controllers/reportController', () => ({ __esModule: true, default: MockController }))
+
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => { 
+        req.user = { id: 5 }; 
+        return next() 
+      },
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    app.use(express.json())
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .delete('/report/1/comment')
+      .send({ comment_id: 99 })
+
+    expect(res.status).toBe(204)
+  })
+
+  it('POST /report/:report_id/comment returns 422 for empty comment', async () => {
+    const fakeAuth = {
+      isLoggedIn: (req: any, res: any, next: any) => next(),
+      isCitizen: (req: any, res: any, next: any) => next(),
+      isAdmin: (req: any, res: any, next: any) => next(),
+      isAdminOrMunicipality: (req: any, res: any, next: any) => next(),
+      hasRoleTechOff: (req: any, res: any, next: any) => next(),
+      hasRoleMaintainer: (req: any, res: any, next: any) => next()
+    }
+
+    const { ReportRoutes } = require('../../src/routers/reportRoutes')
+    const app = express()
+    app.use(express.json())
+    const rr = new ReportRoutes(fakeAuth as any)
+    app.use('/report', rr.getRouter())
+
+    const res = await request(app)
+      .post('/report/1/comment')
+      .send({ comment: '' }) 
+
+    expect(res.status).toBe(422)
   })
 })

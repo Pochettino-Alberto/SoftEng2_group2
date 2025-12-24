@@ -1,6 +1,30 @@
 // Integration tests for ReportController using real sqlite test DB
 import { resetTestDB } from '../helpers/resetTestDB';
 
+const createTestReport = (
+  Report: any, 
+  ReportStatus: any, 
+  Utility: any, 
+  title: string = 'Test Report'
+): any => {
+  const now: string = Utility.now();
+  return new Report(
+    0,                          // id
+    1,                          // category_id
+    title,                      // title
+    0.0,                        // latitude
+    0.0,                        // longitude
+    ReportStatus.PENDING_APPROVAL, 
+    true,                       // is_public
+    undefined,                  // reporter_id
+    undefined,                  // assigned_to
+    'Test Description',         // description
+    null,                       // status_reason
+    now,                        // createdAt
+    now                         // updatedAt
+  );
+};
+
 beforeAll(async () => {
   process.env.NODE_ENV = 'test'
   await resetTestDB()
@@ -412,3 +436,94 @@ describe('ReportController error branches (mocked DAO)', () => {
     spyErr.mockRestore()
   })
 })
+
+describe('ReportController - Real DB Integration', () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.unmock('../../src/dao/reportDAO');
+  });
+
+  test('Comment CRUD lifecycle with user data enrichment (real DB)', async () => {
+    const ReportController = require('../../src/controllers/reportController').default;
+    const UserDAO = require('../../src/dao/userDAO').default;
+    const { Report, ReportStatus, ReportComment } = require('../../src/components/report');
+    const { Utility } = require('../../src/utilities');
+
+    const ctrl = new ReportController();
+    const udao = new UserDAO();
+
+    // Setup user and valid report
+    const user = await udao.createUser('real_user', 'John', 'Doe', 'j@real.ts', 'pw', 'citizen');
+    const rpt = createTestReport(Report, ReportStatus, Utility, 'Real DB Test');
+    const savedReport = await ctrl.saveReport(rpt);
+
+    // Create a comment
+    const newComment = new ReportComment(0, savedReport.id, user.id, 'Original text', Utility.now(), Utility.now());
+    const added = await ctrl.addCommentToReport(newComment);
+    expect(added.id).toBeGreaterThan(0);
+
+    // Verify enrichment (userdata)
+    const comments = await ctrl.getCommentsByReportId(savedReport.id);
+    expect(comments[0].userdata).toBeDefined();
+    expect(comments[0].userdata.id).toBe(user.id);
+
+    // Cleanup
+    await ctrl.deleteCommentToReport(added);
+    const final = await ctrl.getCommentsByReportId(savedReport.id);
+    expect(final.length).toBe(0);
+  });
+});
+
+describe('ReportController - Mocked DAO Logic', () => {
+  const { Utility } = require('../../src/utilities');
+
+  test('Comment methods use MockDAO successfully', async () => {
+    jest.resetModules();
+    const { ReportStatus, ReportComment } = require('../../src/components/report');
+
+    // Define Mock with TS compatibility
+    class MockDAOSuccess {
+      async getReportById(id: number) { 
+        return { id, status: ReportStatus.PENDING_APPROVAL }; 
+      }
+      async addCommentToReport(comment: any) { 
+        return { ...comment, id: 777 }; 
+      }
+      async getCommentsByReportId(id: number) { 
+        return [{ id: 777, report_id: id, comment: 'Mocked', userdata: { id: 99 } }]; 
+      }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAOSuccess }));
+    
+    const ReportController = require('../../src/controllers/reportController').default;
+    const ctrl = new ReportController();
+
+    const comment = new ReportComment(0, 1, 99, 'Mocked Comment', Utility.now(), Utility.now());
+    const added = await ctrl.addCommentToReport(comment);
+    
+    expect(added.id).toBe(777);
+    const fetched = await ctrl.getCommentsByReportId(1);
+    expect(fetched[0].userdata.id).toBe(99);
+  });
+
+  test('Controller logs and rethrows when DAO fails', async () => {
+    jest.resetModules();
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    class MockDAOFail {
+      async getReportById() { return { id: 1 }; } 
+      async getCommentsByReportId() { throw new Error('mock_db_fail'); }
+    }
+
+    jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAOFail }));
+    
+    const ReportController = require('../../src/controllers/reportController').default;
+    const ctrl = new ReportController();
+
+    await expect(ctrl.getCommentsByReportId(1)).rejects.toThrow('mock_db_fail');
+    expect(spyErr).toHaveBeenCalled();
+    
+    spyErr.mockRestore();
+  });
+});
