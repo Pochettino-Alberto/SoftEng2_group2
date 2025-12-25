@@ -153,7 +153,7 @@ class ReportRoutes {
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.isAdminOrMunicipality,
             param("id").toInt().isInt({ min: 1 }),
-            body("status").isString().isIn([ReportStatus.ASSIGNED, ReportStatus.REJECTED]),
+            body("status").isString(),
             body("status_reason").optional().isString().trim(),
             body("status_reason").custom((value, { req }) => {
                 if (req.body.status === ReportStatus.REJECTED && (!value || value.trim() === '')) {

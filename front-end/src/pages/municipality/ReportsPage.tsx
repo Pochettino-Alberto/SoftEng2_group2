@@ -13,6 +13,8 @@ export default function ReportsPage() {
   const { user } = useAuth();
   const isPublicRelationsOfficer = user?.userRoles.some((r) => r.role_type === 'publicRelations_officer') ?? false;
   const isTechnicalOfficer = user?.userRoles.some((r) => r.role_type === 'technical_officer') ?? false;
+  const isExternalMaintainer = user?.userRoles.some((r) => r.role_type === 'external_maintainer') ?? false;
+
   const [pageSize] = useState(5)
   const [paginated, setPaginated] = useState({ page_num: 1, page_size: pageSize, total_pages: 1, total_items: 0, items: [] as Report[] })
   const [loading, setLoading] = useState(false)
@@ -25,6 +27,7 @@ export default function ReportsPage() {
     try {
       const params: any = { page_num: p, page_size: pageSize }
       if (selectedStatus && selectedStatus !== 'all') params.status = selectedStatus
+
       const toPaginated = (items: Report[]) => ({
         page_num: 1,
         page_size: pageSize,
@@ -44,11 +47,12 @@ export default function ReportsPage() {
           reports = reports.filter(r => r.status === selectedStatus);
         }
         res = toPaginated(reports);
-        //console.log('Municipal Technical Officer - can see only assigned reports');
-      } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
-        // Shows reports assigned to the external maintainer
-        // TODO API endpoint to get reports assigned to external maintainer
-        res = toPaginated([]);
+      } else if (isExternalMaintainer){
+        let reports = await reportAPI.getExternalMaintainerReports();
+        if (selectedStatus && selectedStatus !== 'all') {
+          reports = reports.filter(r => r.status === selectedStatus);
+        }
+        res = toPaginated(reports);
         console.log('External Maintainer - can see only assigned reports');
       } else {
         console.warn('No valid municipal role found - no reports to show');
@@ -64,10 +68,10 @@ export default function ReportsPage() {
   }
 
   useEffect(() => {
-    if (isTechnicalOfficer && selectedStatus === ReportStatus.PENDING_APPROVAL) {
+    if ((isTechnicalOfficer || isExternalMaintainer) && selectedStatus === ReportStatus.PENDING_APPROVAL) {
       setSelectedStatus('all');
     }
-  }, [isTechnicalOfficer]);
+  }, [isTechnicalOfficer, isExternalMaintainer]);
 
   useEffect(() => {
     fetchPage(1)
@@ -83,12 +87,13 @@ export default function ReportsPage() {
       }
     }
     loadCategories()
-  }, [selectedStatus, isPublicRelationsOfficer, isTechnicalOfficer])
+  }, [selectedStatus, isPublicRelationsOfficer, isTechnicalOfficer, isExternalMaintainer])
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= paginated.total_pages) fetchPage(p)
   }
   const truncateDescription = (text: string, maxLength: number = 70) => {
+    if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
@@ -205,8 +210,10 @@ export default function ReportsPage() {
                 disabled={loading}
               >
                 <option value="all">All Statuses</option>
+                {isPublicRelationsOfficer && <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>}
                 <option value={ReportStatus.ASSIGNED}>Assigned</option>
                 <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
+                <option value={ReportStatus.RESOLVED}>Resolved</option>
               </select>
             </div>
           ) : <div />}

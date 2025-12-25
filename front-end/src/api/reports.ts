@@ -43,8 +43,9 @@ export const reportAPI = {
     return response.data;
   },
 
-  getExternalMaintainerReports: async (): Promise<void> => {
-    console.log('This API is yet to be implemented on the backend.');
+  getExternalMaintainerReports: async (): Promise<Report[]> => {
+    const response = await apiClient.get('/reports/assigned-to-maintainer');
+    return transformReports(response.data);
   },
 
   updateReportStatus: async (

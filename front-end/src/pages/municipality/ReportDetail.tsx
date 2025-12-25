@@ -5,7 +5,7 @@ import { getStatusColor } from '../../components/Map'
 import L from 'leaflet'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { reportAPI } from '../../api/reports'
-import type { Report, ReportCategory } from '../../types/report'
+import type { Report, ReportCategory, ReportStatus } from '../../types/report'
 import type { User } from '../../types/user'
 import Button from '../../components/Button'
 import Card from '../../components/Card'
@@ -226,6 +226,21 @@ const ReportDetail: React.FC = () => {
         }
     }
 
+    const handleMaintainerStatusUpdate = async (newStatus: ReportStatus) => {
+        if (!report) return
+        setLoading(true)
+        try {
+            const updatedReport = await reportAPI.updateReportStatus(report.id, newStatus)
+            setReport((prev) => prev ? { ...prev, status: updatedReport.status } : null)
+            setToast({ message: `Status updated to ${newStatus}`, type: 'success' })
+        } catch (err) {
+            console.error(err)
+            setToast({ message: 'Failed to update status', type: 'error' })
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const openCarouselAt = (index: number) => {
         setCarouselIndex(index)
         setIsCarouselOpen(true)
@@ -284,6 +299,10 @@ const ReportDetail: React.FC = () => {
     if (!report) {
         return <div className="max-w-3xl mx-auto mt-8">{loading ? 'Loading...' : 'Report not found'}</div>
     }
+
+    const isPRO = user?.userRoles.some(r => r.role_type === 'publicRelations_officer')
+    const isTO = user?.userRoles.some(r => r.role_type === 'technical_officer')
+    const isMaintainer = user?.userRoles.some(r => r.role_type === 'external_maintainer')
 
     return (
         <div className="max-w-4xl mx-auto mt-8 px-4">
@@ -417,7 +436,7 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {report.status === 'Pending Approval' && (
+                {isPRO && report.status === 'Pending Approval' && (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center space-x-2">
                             <Button
@@ -497,7 +516,7 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {report.status === 'Assigned' && user?.userRoles.some((r) => r.role_type === 'technical_officer') && (
+                {isTO && report.status === 'Assigned' && (
                     <div className="mt-6 pt-4 border-t border-gray-200">
                         {!report.maintainer_id ? (
                             <>
@@ -601,6 +620,30 @@ const ReportDetail: React.FC = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {isMaintainer && (report.status === 'Assigned' || report.status === 'In Progress') && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h4 className="font-semibold mb-3">Update Work Progress</h4>
+                        <div className="flex gap-3">
+                            {report.status === 'Assigned' && (
+                                <Button
+                                    onClick={() => handleMaintainerStatusUpdate('In Progress')}
+                                    style={{ backgroundColor: '#3B82F6' }}
+                                    disabled={loading}
+                                >
+                                    Start Work
+                                </Button>
+                            )}
+                            <Button
+                                onClick={() => handleMaintainerStatusUpdate('Resolved')}
+                                style={{ backgroundColor: '#10B981' }}
+                                disabled={loading}
+                            >
+                                Mark as Resolved
+                            </Button>
+                        </div>
                     </div>
                 )}
 
