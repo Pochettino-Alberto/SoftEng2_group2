@@ -377,19 +377,6 @@ const ReportDetail: React.FC = () => {
                                 {report.status === 'Rejected' && report.status_reason && (
                                     <p className="text-sm text-red-600 mb-3">Rejection reason: {report.status_reason}</p>
                                 )}
-                                {(report.status === 'Assigned' || report.status === 'In Progress' || report.status === 'Resolved') && (
-                                    <>
-                                        <p className="text-sm mb-3">
-                                            <span className="font-semibold">Technical Officer Responsible:</span>
-                                            <span style={{ color: '#c2410c' }} className="font-medium ml-2">
-                                                {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
-                                                {report.assigned_to && report.assigned_to.username ? (
-                                                    <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
-                                                ) : null}
-                                            </span>
-                                        </p>
-                                    </>
-                                )}
 
                                 <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
                                     <h4 className="text-base font-medium mb-2 text-gray-900">Description</h4>
@@ -409,6 +396,20 @@ const ReportDetail: React.FC = () => {
                                         </span>
                                     )}</p>
                                 </div>
+
+                                {(report.status === 'Assigned' || report.status === 'In Progress' || report.status === 'Resolved') && (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base">
+                                            <span className="font-semibold">Technical Officer Responsible:</span>
+                                            <span style={{ color: '#c2410c' }} className="font-medium ml-2">
+                                                {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
+                                                {report.assigned_to && report.assigned_to.username ? (
+                                                    <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
+                                                ) : null}
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
 
                                 {report.maintainer_id && (
                                     <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
