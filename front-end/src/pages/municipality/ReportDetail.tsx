@@ -9,6 +9,7 @@ import type { Report, ReportCategory, ReportStatus } from '../../types/report'
 import type { User } from '../../types/user'
 import Button from '../../components/Button'
 import Card from '../../components/Card'
+import CommentsPanel from '../../components/CommentsPanel'
 import Toast from '../../components/Toast'
 import { useAuth } from '../../context/AuthContext'
 import { reverseGeocode } from '../../utils'
@@ -45,6 +46,8 @@ const ReportDetail: React.FC = () => {
 
     const [address, setAddress] = useState<string | null>(null)
     const [addressLoading, setAddressLoading] = useState(false)
+
+    const [showComments, setShowComments] = useState(false)
   
     const DETAIL_MAP_ZOOM = 15
 
@@ -316,45 +319,60 @@ const ReportDetail: React.FC = () => {
             )}
 
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold">{report.title}</h1>
                 <div className="flex items-center gap-3">
                     <div className="text-sm text-gray-600">Status: <span className="font-semibold">{report.status}</span></div>
+                    {(user?.userRoles.some((r) => r.role_type === 'technical_officer' || r.role_type === 'external_maintainer')) && (
+                        <Button 
+                          variant={showComments ? 'primary' : 'outline'} 
+                          onClick={() => setShowComments(!showComments)}
+                        >
+                          {showComments ? 'Hide Comments' : 'Comments'}
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
                 </div>
             </div>
 
+            {/* Comments Panel - Only for Tech Officer and Maintainer */}
+            {showComments && report?.id && (user?.userRoles.some((r) => r.role_type === 'technical_officer' || r.role_type === 'external_maintainer')) && (
+                <div className="mb-4">
+                    <CommentsPanel 
+                        reportId={report.id}
+                        onClose={() => setShowComments(false)}
+                    />
+                </div>
+            )}
+
             <Card className="p-4">
  
+
+                    <h1 className="text-2xl font-bold mb-4">{report.title}</h1>
 
                     <div className="md:flex md:gap-6 md:items-stretch">
                     <div className="w-full md:w-1/2 flex">
                         <div className="border rounded p-4 bg-white flex-1 min-h-[24rem]">
-                                <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Category:</span> {report.category ? (
-                                    <span className="inline-flex items-center gap-2">
-                                        <span className="text-lg" aria-hidden>{report.category.icon}</span>
-                                        <span className="text-sm text-gray-700">{report.category.name}</span>
-                                    </span>
-                                ) : '—'}</p>
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Category:</span> {report.category ? (
+                                        <span className="inline-flex items-center gap-2">
+                                            <span className="text-lg" aria-hidden>{report.category.icon}</span>
+                                            <span className="text-sm text-gray-700">{report.category.name}</span>
+                                        </span>
+                                    ) : '—'}</p>
+                                </div>
 
-                                    {addressLoading ? (
-                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> Resolving address…</p>
+                                {addressLoading ? (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> Resolving address…</p>
+                                    </div>
                                 ) : address ? (
-                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> {address}</p>
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> {address}</p>
+                                    </div>
                                 ) : (
-                                    <p className="text-base text-gray-700 mb-3"><span className="font-semibold text-gray-900">Address:</span> Not available</p>
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> Not available</p>
+                                    </div>
                                 )}
-
-                                <p className="text-base mb-3"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
-                                    <span className="text-gray-600">Anonymous</span>
-                                ) : (
-                                    <span style={{ color: '#8B4513' }} className="font-medium">
-                                        {report.reporter && typeof report.reporter === 'object' ?
-                                            `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
-                                        {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
-                                            <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
-                                        ) : null}
-                                    </span>
-                                )}</p>
 
                                 {report.status === 'Rejected' && report.status_reason && (
                                     <p className="text-sm text-red-600 mb-3">Rejection reason: {report.status_reason}</p>
@@ -370,22 +388,38 @@ const ReportDetail: React.FC = () => {
                                                 ) : null}
                                             </span>
                                         </p>
-                                        {report.maintainer_id && (
-                                            <p className="text-sm mb-3">
-                                                <span className="font-semibold">Assigned Maintainer:</span>
-                                                <span style={{ color: '#166534' }} className="font-medium ml-2">
-                                                    {report.maintainer?.first_name} {report.maintainer?.last_name}
-                                                    {report.maintainer?.username ? (
-                                                        <span className="text-sm text-gray-500 ml-2">[{report.maintainer?.username}]</span>
-                                                    ) : null}
-                                                </span>
-                                            </p>
-                                        )}
                                     </>
                                 )}
 
-                                <h4 className="text-base font-medium mb-2 text-gray-900">Description</h4>
-                                <p className="text-base text-gray-900 whitespace-pre-wrap">{report.description || '—'}</p>
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <h4 className="text-base font-medium mb-2 text-gray-900">Description</h4>
+                                    <p className="text-base text-gray-900 whitespace-pre-wrap">{report.description || '—'}</p>
+                                </div>
+
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <p className="text-base"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
+                                        <span className="text-gray-600">Anonymous</span>
+                                    ) : (
+                                        <span style={{ color: '#8B4513' }} className="font-medium">
+                                            {report.reporter && typeof report.reporter === 'object' ?
+                                                `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
+                                            {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
+                                                <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
+                                            ) : null}
+                                        </span>
+                                    )}</p>
+                                </div>
+
+                                {report.maintainer_id && (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-sm">
+                                            <span className="font-semibold">Assigned Maintainer:</span>
+                                            <span style={{ color: '#166534' }} className="font-medium ml-2">
+                                                {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
                         </div>
                     </div>
                     <div className="w-full md:w-1/2 flex">
