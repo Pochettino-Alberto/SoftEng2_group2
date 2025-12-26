@@ -357,11 +357,11 @@ const ReportDetail: React.FC = () => {
                                 )}</p>
 
                                 {report.status === 'Rejected' && report.status_reason && (
-                                    <p className="text-sm text-red-600 mb-2">Rejection reason: {report.status_reason}</p>
+                                    <p className="text-sm text-red-600 mb-3">Rejection reason: {report.status_reason}</p>
                                 )}
-                                {report.status === 'Assigned' && (
+                                {(report.status === 'Assigned' || report.status === 'In Progress' || report.status === 'Resolved') && (
                                     <>
-                                        <p className="text-sm mb-2">
+                                        <p className="text-sm mb-3">
                                             <span className="font-semibold">Technical Officer Responsible:</span>
                                             <span style={{ color: '#c2410c' }} className="font-medium ml-2">
                                                 {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
@@ -371,10 +371,13 @@ const ReportDetail: React.FC = () => {
                                             </span>
                                         </p>
                                         {report.maintainer_id && (
-                                            <p className="text-sm mb-2">
+                                            <p className="text-sm mb-3">
                                                 <span className="font-semibold">Assigned Maintainer:</span>
                                                 <span style={{ color: '#166534' }} className="font-medium ml-2">
                                                     {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                                    {report.maintainer?.username ? (
+                                                        <span className="text-sm text-gray-500 ml-2">[{report.maintainer?.username}]</span>
+                                                    ) : null}
                                                 </span>
                                             </p>
                                         )}
