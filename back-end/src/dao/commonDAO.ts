@@ -74,8 +74,8 @@ class CommonDao {
             dbRow.report_id,
             dbRow.commenter_id,
             dbRow.comment,
-            dbRow.created_at,
-            dbRow.updated_at
+            dbRow.createdAt,
+            dbRow.updatedAt
         );
     }
 
@@ -94,8 +94,8 @@ class CommonDao {
             dbRow.updated_by,
             dbRow.description,
             dbRow.status_reason,
-            dbRow.created_at,
-            dbRow.updated_at
+            dbRow.createdAt,
+            dbRow.updatedAt
         );
 
         // Populate assignment target (technical officer) even if subclasses are not fetched
