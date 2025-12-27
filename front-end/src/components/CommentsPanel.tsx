@@ -9,9 +9,10 @@ import Toast from './Toast'
 interface CommentsPanelProps {
   reportId: number
   onClose?: () => void
+  onCommentCountChange?: (count: number) => void
 }
 
-const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
+const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose, onCommentCountChange }) => {
   const { user } = useAuth()
   const [comments, setComments] = useState<ReportComment[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,13 +30,14 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
     try {
       const data = await reportAPI.getCommentsByReportId(reportId)
       setComments(data)
+      onCommentCountChange?.(data.length)
     } catch (err) {
       console.error('Failed to load comments:', err)
       setError('Failed to load comments')
     } finally {
       setLoading(false)
     }
-  }, [reportId])
+  }, [reportId, onCommentCountChange])
 
   useEffect(() => {
     fetchComments()
@@ -133,7 +135,24 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
         ) : comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No comments yet.</div>
         ) : (
-          comments.map(comment => (
+          comments.map(comment => {
+            const formatDate = (dateString: string) => {
+              try {
+                const date = new Date(dateString)
+                if (isNaN(date.getTime())) return null
+                return date.toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+              } catch {
+                return null
+              }
+            }
+
+            return (
             <Card key={comment.id} className="p-3 bg-gray-50">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -144,6 +163,11 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
                         : `User ${comment.commenter_id}`
                     )}
                   </div>
+                  {comment.createdAt && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatDate(comment.createdAt)}
+                    </div>
+                  )}
                 </div>
                 {canEditOrDelete(comment) && (
                   <div className="flex gap-2">
@@ -193,7 +217,8 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.comment}</p>
               )}
             </Card>
-          ))
+            )
+          })
         )}
       </div>
 

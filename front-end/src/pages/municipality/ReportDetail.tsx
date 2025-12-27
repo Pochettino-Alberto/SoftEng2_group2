@@ -48,6 +48,7 @@ const ReportDetail: React.FC = () => {
     const [addressLoading, setAddressLoading] = useState(false)
 
     const [showComments, setShowComments] = useState(false)
+    const [commentCount, setCommentCount] = useState(0)
   
     const DETAIL_MAP_ZOOM = 15
 
@@ -326,7 +327,7 @@ const ReportDetail: React.FC = () => {
                           variant={showComments ? 'primary' : 'outline'} 
                           onClick={() => setShowComments(!showComments)}
                         >
-                          {showComments ? 'Hide Comments' : 'Comments'}
+                          {showComments ? 'Hide Comments' : 'Comments'} ({commentCount})
                         </Button>
                     )}
                     <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
@@ -339,6 +340,7 @@ const ReportDetail: React.FC = () => {
                     <CommentsPanel 
                         reportId={report.id}
                         onClose={() => setShowComments(false)}
+                        onCommentCountChange={setCommentCount}
                     />
                 </div>
             )}
