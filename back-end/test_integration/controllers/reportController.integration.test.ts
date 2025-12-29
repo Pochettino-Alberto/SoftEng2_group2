@@ -490,12 +490,18 @@ describe('ReportController - Mocked DAO Logic', () => {
         return { ...comment, id: 777 }; 
       }
       async getCommentsByReportId(id: number) { 
-        return [{ id: 777, report_id: id, comment: 'Mocked', userdata: { id: 99 } }]; 
+        return [{ id: 777, report_id: id, commenter_id: 99, comment: 'Mocked' }];
       }
     }
 
     jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAOSuccess }));
-    
+    jest.doMock('../../src/dao/userDAO', () => ({
+      __esModule: true,
+      default: jest.fn().mockImplementation(() => ({
+        getUserById: async (id: number) => ({ id, username: 'mocked_user' })
+      }))
+    }));
+
     const ReportController = require('../../src/controllers/reportController').default;
     const ctrl = new ReportController();
 
@@ -509,7 +515,7 @@ describe('ReportController - Mocked DAO Logic', () => {
 
   test('Controller logs and rethrows when DAO fails', async () => {
     jest.resetModules();
-    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
 
     class MockDAOFail {
       async getReportById() { return { id: 1 }; } 
