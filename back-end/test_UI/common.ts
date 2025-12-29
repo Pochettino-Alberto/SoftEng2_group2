@@ -337,7 +337,6 @@ export class CommonSteps {
 
   
   async login(user: { username: string; password: string; type: string }, is_fast=true) {
-
     if(is_fast && this.demoWait){
       if (user.type === 'citizen') {
         await this.driver.get(CommonData.BASE_URL_FE+"/auth/login/citizen");

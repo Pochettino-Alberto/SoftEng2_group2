@@ -168,6 +168,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
               {editingCommentId === comment.id ? (
                 <div className="space-y-2">
                   <textarea
+                    id="updateCommentInput"
                     value={editingText}
                     onChange={e => setEditingText(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded text-sm resize-none"
@@ -176,6 +177,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
                   />
                   <div className="flex gap-2">
                     <button
+                      id="updateCommentSave"
                       onClick={() => handleEditComment(comment.id)}
                       className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
@@ -201,6 +203,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
       <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-lg">
         <form onSubmit={handleAddComment} className="space-y-2">
           <textarea
+            id="newCommentInput"
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
             placeholder="Add a comment..."
@@ -210,6 +213,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
           />
           <div className="flex justify-end">
             <Button
+              id="newCommentSave"
               type="submit"
               disabled={submitting || !newComment.trim()}
               className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400"

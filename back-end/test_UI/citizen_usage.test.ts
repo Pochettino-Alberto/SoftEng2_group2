@@ -6,7 +6,7 @@ import { CommonSteps, CommonData } from './common';
 // npm test -- test_UI/citizen_usage.test.ts
 
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 180000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 60000);
 
 describe('Citizen usages: ', () => {
   let driver: WebDriver;
@@ -127,6 +127,24 @@ describe('Citizen usages: ', () => {
     await steps.scrollToTop();
     
     await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
+  }, 60000);
+  
+
+  test('Citizen view submitted reports', async () => {
+    await steps.login(CommonData.USER_CITIZEN);
+
+    await steps.scrollToElementGlobal(By.id("mapReport"));
+    await steps.scrollBySteps(By.id('mapReport'), [30, -50]);
+    if(demoWait){
+      await steps.custumClick(By.css('.leaflet-control-zoom-out'));
+      await steps.custumClick(By.css('.leaflet-control-zoom-in'));
+      await steps.custumClick(By.css('.leaflet-control-zoom-in'));
+    }
+    await steps.custumClick(By.css('.report_circle_1'));
+    
+    await steps.demoSleep(1000);
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
   }, 60000);

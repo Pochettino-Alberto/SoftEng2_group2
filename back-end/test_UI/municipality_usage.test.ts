@@ -6,7 +6,7 @@ import { CommonSteps, CommonData } from './common';
 // npm test -- test_UI/municipality_usage.test.ts
 
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 180000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 60000);
 
 describe('Municipality usages: ', () => {
   let driver: WebDriver;
@@ -140,5 +140,48 @@ describe('Municipality usages: ', () => {
     
   }, 60000);
 
+
+  test('Add comment to report', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+
+    await steps.demoSleep();
+    await steps.custumClick(By.id("toggleComments"));
+    await steps.demoSleep();
+
+    
+    await steps.custumSendKeys(By.id("newCommentInput"), "Urgent fix");
+    await steps.demoSleep();
+
+    await steps.custumClick(By.id("newCommentSave"));
+    await steps.demoSleep();
+    
+    await steps.assertExists(By.id('toast_message_success'));
+    
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
+    
+  }, 60000);
+
+
+  test('Mainteiners update status report', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_ROADS_MAINTAINER);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+
+    await steps.custumClick(By.id("markResolved"));
+    await steps.demoSleep();
+    await steps.custumClick(By.id("logoutBtn"));
+    await steps.demoSleep();
+    
+  }, 60000);
 
 });

@@ -323,6 +323,7 @@ const ReportDetail: React.FC = () => {
                     <div className="text-sm text-gray-600">Status: <span className="font-semibold">{report.status}</span></div>
                     {(user?.userRoles.some((r) => r.role_type === 'technical_officer' || r.role_type === 'external_maintainer')) && (
                         <Button 
+                          id="toggleComments"
                           variant={showComments ? 'primary' : 'outline'} 
                           onClick={() => setShowComments(!showComments)}
                         >
@@ -675,6 +676,7 @@ const ReportDetail: React.FC = () => {
                                 </Button>
                             )}
                             <Button
+                                id="markResolved"
                                 onClick={() => handleMaintainerStatusUpdate('Resolved')}
                                 style={{ backgroundColor: '#10B981' }}
                                 disabled={loading}
