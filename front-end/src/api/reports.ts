@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Report, ReportStatus, ReportCategory } from '../types/report'
+import type { Report, ReportStatus, ReportCategory, ReportComment } from '../types/report'
 import type { User } from '../types/user'
 
 export const reportAPI = {
@@ -105,6 +105,26 @@ export const reportAPI = {
       console.error('getMapReports error:', error)
       return []
     }
+  },
+
+  // Comment APIs
+  getCommentsByReportId: async (reportId: number): Promise<ReportComment[]> => {
+    const response = await apiClient.get(`/reports/${reportId}/comments`)
+    return response.data
+  },
+
+  addCommentToReport: async (reportId: number, comment: string): Promise<ReportComment> => {
+    const response = await apiClient.post(`/reports/${reportId}/comment`, { comment })
+    return response.data
+  },
+
+  editCommentOnReport: async (reportId: number, commentId: number, comment: string): Promise<ReportComment> => {
+    const response = await apiClient.patch(`/reports/${reportId}/comment`, { comment_id: commentId, comment })
+    return response.data
+  },
+
+  deleteCommentFromReport: async (reportId: number, commentId: number): Promise<void> => {
+    await apiClient.delete(`/reports/${reportId}/comment`, { data: { comment_id: commentId } })
   },
 }
 
