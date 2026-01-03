@@ -12,13 +12,17 @@ const isTestEnv =
     typeof process.env.NODE_ENV === 'string' &&
     process.env.NODE_ENV.startsWith('test');
 
-const isIntegrationTest =
-    process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
-
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
+
+/**
+ * Skip DB init ONLY for mocked / in-memory test DBs.
+ * Never skip for real integration DBs.
+ */
+const skipDbInit =
+    isTestEnv &&
+    process.env.SKIP_DB_INIT === 'true' &&
+    useMemoryDb;
 
 const defaultPath = useMemoryDb
     ? ':memory:'
@@ -47,19 +51,6 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
-function sqlFilesExist(): boolean {
-    const candidates = [
-        path.resolve(__dirname, '..', '..', '..', 'database'),
-        '/usr/src/app/database',
-        '/usr/src/app/sql'
-    ]
-
-    return candidates.some(dir =>
-        fs.existsSync(path.join(dir, 'tables_DDL.sql')) &&
-        fs.existsSync(path.join(dir, 'tables_default_values.sql'))
-    )
-}
-
 function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err
@@ -78,7 +69,8 @@ function onOpen(this: any, err: Error | null) {
         dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
-    if (isIntegrationTest && sqlFilesExist()) {
+    // Skip ONLY for mocked/in-memory DBs
+    if (skipDbInit) {
         resolveDbReady()
         return
     }
