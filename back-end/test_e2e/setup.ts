@@ -1,6 +1,8 @@
 /// <reference types="jest" />
 // Ensure NODE_ENV=test to let db.ts pick the test DB path
 process.env.NODE_ENV = 'test'
+process.env.SUPABASE_URL = 'http://test.supabase.co';
+process.env.SUPABASE_SERVICE_KEY = 'test-key';
 
 import request from 'supertest'
 // Remove resetTestDb call - now handled globally
