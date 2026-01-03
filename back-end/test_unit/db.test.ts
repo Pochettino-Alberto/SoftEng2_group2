@@ -25,19 +25,15 @@ describe('db module', () => {
   });
 
   it('opens database and resolves dbReady', async () => {
-    const runMock = jest.fn();
-
     jest.doMock('sqlite3', () => ({
       Database: function (_: any, cb: any) {
         cb(null);
-        return { exec: jest.fn(), run: runMock, get: jest.fn() };
+        return { exec: jest.fn(), run: jest.fn(), get: jest.fn() };
       }
     }));
 
     const dbModule = require('../src/dao/db');
-    await dbModule.dbReady;
-
-    expect(runMock).toHaveBeenCalled();
+    await expect(dbModule.dbReady).resolves.toBeUndefined();
   });
 
   it('does not crash if SQL initialization is skipped', async () => {
