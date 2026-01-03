@@ -14,7 +14,8 @@ const isTestEnv =
 
 const isIntegrationTest =
     process.env.NODE_ENV === 'test' &&
-    process.env.SKIP_DB_INIT === 'true';
+    (process.env.TEST_DB_IN_MEMORY === 'true' ||
+        process.env.CI_USE_FILE_DB === 'true');
 
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
@@ -57,35 +58,24 @@ function onOpen(err: Error | null) {
         db.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
+    const skipDbInit = process.env.SKIP_DB_INIT === 'true'
+
     let shouldInitialize = false
 
-    if (useMemoryDb) {
-        shouldInitialize = true
-    } else if (env === 'test') {
-        shouldInitialize = true
-    } else {
-        shouldInitialize = !fs.existsSync(dbFilePath)
+    if (!isIntegrationTest) {
+        if (useMemoryDb) {
+            shouldInitialize = true
+        } else if (env === 'test') {
+            shouldInitialize = !fs.existsSync(dbFilePath)
+        } else {
+            shouldInitialize = !fs.existsSync(dbFilePath)
+        }
     }
 
-
-    if (shouldInitialize) {
+    if (shouldInitialize && !skipDbInit) {
         initializeDb()
     } else {
-        try {
-            db.get(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                ['users'],
-                (err, row) => {
-                    if (!row) {
-                        initializeDb()
-                    } else {
-                        resolveDbReady()
-                    }
-                }
-            )
-        } catch {
-            initializeDb()
-        }
+        resolveDbReady()
     }
 }
 

@@ -1,33 +1,60 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 import db, { dbReady } from '../../src/dao/db'
 
-export async function resetTestDB(): Promise<void> {
-  try {
-    const projectRoot = path.resolve(__dirname, '..', '..', '..')
-    const databaseDir = path.resolve(projectRoot, 'database')
-    const ddlPath = path.resolve(databaseDir, 'tables_DDL.sql')
-    const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
+export function resetTestDB(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      const projectRoot = path.resolve(__dirname, '..', '..', '..')
+      const databaseDir = path.resolve(projectRoot, 'database')
+      const ddlPath = path.resolve(databaseDir, 'tables_DDL.sql')
+      const defaultPath = path.resolve(databaseDir, 'tables_default_values.sql')
 
-    const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
-    const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
+      const useMemoryDb =
+          process.env.TEST_DB_IN_MEMORY === 'true' ||
+          process.env.TEST_DB_IN_MEMORY === '1'
 
-    const ddlToRun = `PRAGMA foreign_keys = OFF;
+      const useRepoFileDb =
+          process.env.CI_USE_FILE_DB === 'true' ||
+          process.env.CI_USE_FILE_DB === '1'
+
+      const testDbPath = useMemoryDb
+          ? ':memory:'
+          : (useRepoFileDb
+              ? path.resolve(databaseDir, 'testdb.db')
+              : path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
+
+      if (!useMemoryDb && fs.existsSync(testDbPath)) {
+        fs.unlinkSync(testDbPath)
+      }
+
+      const sqlite3 = require('sqlite3').verbose()
+      const ddlSQL = fs.readFileSync(ddlPath, 'utf8')
+      const defaultSQL = fs.readFileSync(defaultPath, 'utf8')
+
+      const dbConn = new sqlite3.Database(testDbPath, (err: Error | null) => {
+        if (err) return reject(err)
+
+        const ddlToRun = `PRAGMA foreign_keys = OFF;
 ${ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*ON;?/gi, '')}
 PRAGMA foreign_keys = ON;`
 
-    await dbReady
+        dbConn.exec(ddlToRun, (err2: Error | null) => {
+          if (err2) {
+            return dbConn.close(() => reject(err2))
+          }
 
-    await new Promise<void>((resolve, reject) => {
-      db.exec(ddlToRun, (err: Error | null) => {
-        if (err) return reject(err)
-        db.exec(defaultSQL, (err2: Error | null) => {
-          if (err2) return reject(err2)
-          resolve()
+          dbConn.exec(defaultSQL, (err3: Error | null) => {
+            dbConn.close((errClose: Error | null) => {
+              if (err3) return reject(err3)
+              resolve()
+            })
+          })
         })
       })
-    })
-  } catch (err) {
-    throw err
-  }
+    } catch (err) {
+      reject(err)
+    }
+  })
 }
