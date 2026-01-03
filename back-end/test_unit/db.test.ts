@@ -38,38 +38,32 @@ describe('db module', () => {
     expect(execMock).not.toHaveBeenCalled()
   })
 
-  it('initializes DB when file does not exist and reads SQL files', async () => {
+  it('does not initialize DB when file does not exist in test env', async () => {
     jest.spyOn(fs, 'existsSync').mockReturnValue(false)
-    jest.spyOn(fs, 'readFileSync').mockReturnValue('SQL')
 
     const dbModule = require('../src/dao/db')
     await dbModule.dbReady
 
-    expect(execMock).toHaveBeenCalled()
+    expect(execMock).not.toHaveBeenCalled()
   })
 
-  it('calls PRAGMA statements on successful open', async () => {
+  it('does not run PRAGMA statements when initialization is skipped', async () => {
     jest.spyOn(fs, 'existsSync').mockReturnValue(true)
 
     const dbModule = require('../src/dao/db')
     await dbModule.dbReady
 
-    expect(runMock).toHaveBeenCalled()
+    expect(runMock).not.toHaveBeenCalled()
   })
 
-  it('handles SQL file read errors gracefully', async () => {
+  it('does not attempt to read SQL files in test env', async () => {
     jest.spyOn(fs, 'existsSync').mockReturnValue(false)
-    jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
-      throw new Error('read-fail')
-    })
-
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+    const readSpy = jest.spyOn(fs, 'readFileSync')
 
     const dbModule = require('../src/dao/db')
     await dbModule.dbReady
 
-    expect(consoleSpy).toHaveBeenCalled()
-    consoleSpy.mockRestore()
+    expect(readSpy).not.toHaveBeenCalled()
   })
 
   it('throws error when opening database fails', () => {
