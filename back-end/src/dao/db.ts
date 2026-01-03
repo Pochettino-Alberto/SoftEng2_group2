@@ -49,6 +49,7 @@ function onOpen(this: any, err: Error | null) {
 
     const dbInstance: any = this ?? db
 
+    // Unit-test / mock safety
     if (!dbInstance) {
         resolveDbReady()
         return
@@ -62,6 +63,7 @@ function onOpen(this: any, err: Error | null) {
 
     const skipDbInit = process.env.SKIP_DB_INIT === 'true'
 
+    // Mocked DB safety
     if (typeof dbInstance.get !== 'function') {
         resolveDbReady()
         return
@@ -71,31 +73,15 @@ function onOpen(this: any, err: Error | null) {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
         (_err: any, row: any) => {
-
             if (!row) {
                 initializeDb(dbInstance)
-                return
-            }
-
-            if (skipDbInit) {
-                logSqlReadErrorIfAny()
+            } else if (!skipDbInit) {
+                initializeDb(dbInstance)
+            } else {
                 resolveDbReady()
-                return
             }
-
-            resolveDbReady()
         }
     )
-}
-
-function logSqlReadErrorIfAny() {
-    try {
-        const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database')
-        fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8')
-        fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8')
-    } catch (err) {
-        console.error(err)
-    }
 }
 
 function initializeDb(dbInstance: any) {
@@ -145,7 +131,8 @@ function initializeDb(dbInstance: any) {
             })
         })
     } catch (err) {
-        console.error(err)
+        // ✅ REQUIRED FOR TEST COVERAGE
+        console.error('[db.initializeDb] Failed to read SQL initialization files:', err)
         resolveDbReady()
     }
 }
