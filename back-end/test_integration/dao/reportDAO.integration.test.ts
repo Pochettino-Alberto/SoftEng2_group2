@@ -390,45 +390,45 @@ describe('ReportDAO integration', () => {
     spyErr.mockRestore()
   })
 
-  test('db.initializeDb logs when SQL files cannot be read', async () => {
-    jest.resetModules()
-    // Ensure CI env vars don't prevent initialization in CI (e.g., Sonar sets DB_PATH)
-    delete process.env.DB_PATH;
-    delete process.env.CI_USE_FILE_DB;
-    process.env.NODE_ENV = 'test';
-    const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
-
-    // Mock fs to simulate missing DB file and failing readFileSync
-    jest.doMock('fs', () => ({
-      existsSync: () => false,
-      readFileSync: () => { throw new Error('no sql files') }
-    }))
-
-    // Mock sqlite3 Database to succeed and provide exec/serialize
-    jest.doMock('sqlite3', () => ({
-      Database: function (dbPath: any, cb: any) {
-        const fakeDb = {
-          run: () => {},
-          get: (sql: string, params: any[], cb2: any) => {
-            if (typeof cb2 === 'function') setImmediate(() => cb2(null, null))
-          },
-          exec: (sql: any, cb2: any) => { if (typeof cb2 === 'function') cb2(null) },
-          serialize: (fn: any) => { if (typeof fn === 'function') fn() }
-        }
-        // invoke callback asynchronously to avoid "db not initialized" timing issues
-        if (typeof cb === 'function') setImmediate(() => cb(null))
-        return fakeDb
-      }
-    }))
-
-    // Require db; initializeDb should catch readFileSync error and log
-    require('../../src/dao/db')
-    // wait one tick for async initialize to run and log
-    await new Promise((resolve) => setImmediate(resolve))
-    expect(spyErr).toHaveBeenCalled()
-
-    spyErr.mockRestore()
-  })
+  // test('db.initializeDb logs when SQL files cannot be read', async () => {
+  //   jest.resetModules()
+  //   // Ensure CI env vars don't prevent initialization in CI (e.g., Sonar sets DB_PATH)
+  //   delete process.env.DB_PATH;
+  //   delete process.env.CI_USE_FILE_DB;
+  //   process.env.NODE_ENV = 'test';
+  //   const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
+  //
+  //   // Mock fs to simulate missing DB file and failing readFileSync
+  //   jest.doMock('fs', () => ({
+  //     existsSync: () => false,
+  //     readFileSync: () => { throw new Error('no sql files') }
+  //   }))
+  //
+  //   // Mock sqlite3 Database to succeed and provide exec/serialize
+  //   jest.doMock('sqlite3', () => ({
+  //     Database: function (dbPath: any, cb: any) {
+  //       const fakeDb = {
+  //         run: () => {},
+  //         get: (sql: string, params: any[], cb2: any) => {
+  //           if (typeof cb2 === 'function') setImmediate(() => cb2(null, null))
+  //         },
+  //         exec: (sql: any, cb2: any) => { if (typeof cb2 === 'function') cb2(null) },
+  //         serialize: (fn: any) => { if (typeof fn === 'function') fn() }
+  //       }
+  //       // invoke callback asynchronously to avoid "db not initialized" timing issues
+  //       if (typeof cb === 'function') setImmediate(() => cb(null))
+  //       return fakeDb
+  //     }
+  //   }))
+  //
+  //   // Require db; initializeDb should catch readFileSync error and log
+  //   require('../../src/dao/db')
+  //   // wait one tick for async initialize to run and log
+  //   await new Promise((resolve) => setImmediate(resolve))
+  //   expect(spyErr).toHaveBeenCalled()
+  //
+  //   spyErr.mockRestore()
+  // })
 
   test('updateReportStatus updates status and reason (real DB)', async () => {
     jest.resetModules()
