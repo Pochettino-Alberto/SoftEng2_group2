@@ -1,2 +1,10 @@
 import { app } from '../index'
-export default app
+export defaimport request from 'supertest'
+import { app } from '../index'
+import { dbReady } from '../src/dao/db'
+
+beforeAll(async () => {
+    await dbReady
+})
+
+export default request(app)ult app
