@@ -2,26 +2,26 @@
 import { resetTestDB } from '../helpers/resetTestDB';
 
 const createTestReport = (
-  Report: any, 
-  ReportStatus: any, 
-  Utility: any, 
-  title: string = 'Test Report'
+    Report: any,
+    ReportStatus: any,
+    Utility: any,
+    title: string = 'Test Report'
 ): any => {
   const now: string = Utility.now();
   return new Report(
-    0,                          // id
-    1,                          // category_id
-    title,                      // title
-    0.0,                        // latitude
-    0.0,                        // longitude
-    ReportStatus.PENDING_APPROVAL, 
-    true,                       // is_public
-    undefined,                  // reporter_id
-    undefined,                  // assigned_to
-    'Test Description',         // description
-    null,                       // status_reason
-    now,                        // createdAt
-    now                         // updatedAt
+      0,                          // id
+      1,                          // category_id
+      title,                      // title
+      0.0,                        // latitude
+      0.0,                        // longitude
+      ReportStatus.PENDING_APPROVAL,
+      true,                       // is_public
+      undefined,                  // reporter_id
+      undefined,                  // assigned_to
+      'Test Description',         // description
+      null,                       // status_reason
+      now,                        // createdAt
+      now                         // updatedAt
   );
 };
 
@@ -137,18 +137,16 @@ describe('ReportController additional integration tests', () => {
     expect(Array.isArray(reports)).toBe(true)
     expect(reports.length).toBeGreaterThan(0)
     reports.forEach((r: any) => {
-        expect(r.status).toBe(ReportStatus.PENDING_APPROVAL)
+      expect(r.status).toBe(ReportStatus.PENDING_APPROVAL)
     })
   })
 })
 
-// --- Error-branch tests for ReportController to improve coverage ---
 describe('ReportController error branches (mocked DAO)', () => {
   test('saveReport logs and rethrows when DAO.saveReport throws', async () => {
     jest.resetModules()
     const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
 
-    // Mock DAO so that saveReport throws
     class MockDAO {
       async saveReport() { throw new Error('dao save fail') }
       async saveReportPhotos(): Promise<any> { return {} }
@@ -234,28 +232,24 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('assignReportToUser assigns report and returns updated report (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
-    
+
     const ctrl = new ReportController()
     const udao = new UserDAO()
 
-    // Create users
     const techOff = await udao.createUser('techOff', 'T', 'O', 't@o.test', 'pw', 'municipality')
     const admin = await udao.createUser('adminAssign', 'A', 'A', 'a@a.test', 'pw', 'municipality')
-    
-    // Create report
+
     const rpt = new Report(0, 1, 'To Assign', 10, 11, ReportStatus.PENDING_APPROVAL, false, undefined, undefined, 'desc')
     const saved = await ctrl.saveReport(rpt)
 
-    // Assign
     const updated = await ctrl.assignReportToUser(saved.id, techOff.id, admin.id)
-    
+
     expect(updated.id).toBe(saved.id)
     expect(updated.status).toBe(ReportStatus.ASSIGNED)
     expect(updated.assigned_to.id).toBe(techOff.id)
@@ -264,21 +258,15 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getTOSUsersByCategory returns users for category (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
     const ReportController = require('../../src/controllers/reportController').default
     const UserDAO = require('../../src/dao/userDAO').default
-    
+
     const ctrl = new ReportController()
     const udao = new UserDAO()
 
-    // We need to setup roles and responsibilities which might be complex in integration test without seeding
-    // Assuming seed data or previous tests might have set up some roles, but let's try to rely on basic setup or empty result
-    // Ideally we should insert role_category_responsibility here but that requires direct DB access or DAO method
-    
-    // For now, let's just call it and expect an array (empty or not) to ensure no crash
     const users = await ctrl.getTOSUsersByCategory(1)
     expect(Array.isArray(users)).toBe(true)
   })
@@ -286,7 +274,6 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('updateReportStatus updates status (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
@@ -306,7 +293,6 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getAllMaintainers returns maintainers (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
@@ -320,7 +306,6 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getReportsAssignedToTechOfficer returns reports (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
@@ -337,14 +322,12 @@ describe('ReportController error branches (mocked DAO)', () => {
     const saved = await ctrl.saveReport(rpt)
     await ctrl.assignReportToUser(saved.id, tech.id, from.id)
 
-    // Test Assigned status
     let reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
     expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
 
-    // Test In Progress status (e.g. after assigning to maintainer)
     const maint = await udao.createUser('maint_for_tech', 'M', 'T', 'mt@test.com', 'pw', 'municipality')
     await ctrl.assignReportToMaintainer(saved.id, maint.id, tech.id)
-    
+
     reports = await ctrl.getReportsAssignedToTechOfficer(tech.id)
     expect(reports.some((r: any) => r.id === saved.id)).toBe(true)
     const fetched = reports.find((r: any) => r.id === saved.id)
@@ -354,7 +337,6 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('getReportsAssignedToMaintainer returns reports (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
@@ -379,7 +361,6 @@ describe('ReportController error branches (mocked DAO)', () => {
   test('assignReportToMaintainer updates report (real DB)', async () => {
     jest.resetModules()
     jest.unmock('../../src/dao/reportDAO')
-    // Wait for DB initialization after resetModules
     const { dbReady } = require('../../src/dao/db')
     await dbReady
 
@@ -452,22 +433,18 @@ describe('ReportController - Real DB Integration', () => {
     const ctrl = new ReportController();
     const udao = new UserDAO();
 
-    // Setup user and valid report
     const user = await udao.createUser('real_user', 'John', 'Doe', 'j@real.ts', 'pw', 'citizen');
     const rpt = createTestReport(Report, ReportStatus, Utility, 'Real DB Test');
     const savedReport = await ctrl.saveReport(rpt);
 
-    // Create a comment
     const newComment = new ReportComment(0, savedReport.id, user.id, 'Original text', Utility.now(), Utility.now());
     const added = await ctrl.addCommentToReport(newComment);
     expect(added.id).toBeGreaterThan(0);
 
-    // Verify enrichment (userdata)
     const comments = await ctrl.getCommentsByReportId(savedReport.id);
     expect(comments[0].userdata).toBeDefined();
     expect(comments[0].userdata.id).toBe(user.id);
 
-    // Cleanup
     await ctrl.deleteCommentToReport(added);
     const final = await ctrl.getCommentsByReportId(savedReport.id);
     expect(final.length).toBe(0);
@@ -481,20 +458,21 @@ describe('ReportController - Mocked DAO Logic', () => {
     jest.resetModules();
     const { ReportStatus, ReportComment } = require('../../src/components/report');
 
-    // Define Mock with TS compatibility
     class MockDAOSuccess {
-      async getReportById(id: number) { 
-        return { id, status: ReportStatus.PENDING_APPROVAL }; 
+      async getReportById(id: number) {
+        return { id, status: ReportStatus.PENDING_APPROVAL };
       }
-      async addCommentToReport(comment: any) { 
-        return { ...comment, id: 777 }; 
+      async addCommentToReport(comment: any) {
+        return { ...comment, id: 777 };
       }
-      async getCommentsByReportId(id: number) { 
-        return [{ id: 777, report_id: id, commenter_id: 99, comment: 'Mocked' }];
+      async getCommentsByReportId(id: number) {
+        return [{ id: 777, report_id: id, commenter_id: 99, comment: 'Mocked', userdata: { id: 99 } }];
       }
     }
 
     jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAOSuccess }));
+
+    // Mock UserDAO to satisfy enrichment logic
     jest.doMock('../../src/dao/userDAO', () => ({
       __esModule: true,
       default: jest.fn().mockImplementation(() => ({
@@ -507,7 +485,7 @@ describe('ReportController - Mocked DAO Logic', () => {
 
     const comment = new ReportComment(0, 1, 99, 'Mocked Comment', Utility.now(), Utility.now());
     const added = await ctrl.addCommentToReport(comment);
-    
+
     expect(added.id).toBe(777);
     const fetched = await ctrl.getCommentsByReportId(1);
     expect(fetched[0].userdata.id).toBe(99);
@@ -518,18 +496,18 @@ describe('ReportController - Mocked DAO Logic', () => {
     const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {})
 
     class MockDAOFail {
-      async getReportById() { return { id: 1 }; } 
+      async getReportById() { return { id: 1 }; }
       async getCommentsByReportId() { throw new Error('mock_db_fail'); }
     }
 
     jest.doMock('../../src/dao/reportDAO', () => ({ __esModule: true, default: MockDAOFail }));
-    
+
     const ReportController = require('../../src/controllers/reportController').default;
     const ctrl = new ReportController();
 
     await expect(ctrl.getCommentsByReportId(1)).rejects.toThrow('mock_db_fail');
     expect(spyErr).toHaveBeenCalled();
-    
+
     spyErr.mockRestore();
   });
 });
