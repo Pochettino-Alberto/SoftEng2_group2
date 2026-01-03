@@ -1,101 +1,41 @@
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
-import db from '../src/dao/db'
+import sqlite3 from 'sqlite3'
 
-/**
- * Helpers to reset and teardown the test database used by the application.
- * db.ts already uses NODE_ENV=test to point to database/testdb.db so here
- * we just remove the file before the tests run to ensure a clean slate and
- * expose a teardown function that closes the sqlite connection.
- */
+const isMemory = process.env.TEST_DB_IN_MEMORY === 'true'
 
-// Determine the test DB path in the same way the application does.
-// If a DB path is provided via `DB_PATH` keep it; otherwise use a
-// per-worker tmp DB filename to avoid collisions in CI.
-const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1')
+const dbPath = isMemory
     ? ':memory:'
-    : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
+    : path.join(__dirname, 'test.db')
 
-export function resetTestDb() {
-    // If tests are configured to use an in-memory DB, nothing to delete on disk.
-    if (process.env.TEST_DB_IN_MEMORY === 'true' || process.env.TEST_DB_IN_MEMORY === '1') {
-        console.log('[testDb] using in-memory DB, skipping file reset')
-        return
-    }
-    console.log('[testDb] resetTestDb - testDbPath =', testDbPath)
-    if (fs.existsSync(testDbPath)) {
-        // Try to remove the file. On Windows the file can be briefly locked by the OS
-        // or another process; retry a few times with exponential backoff before giving up.
-        const maxAttempts = 12
-        let attempt = 0
-        while (attempt < maxAttempts) {
-            try {
-                fs.unlinkSync(testDbPath)
-                console.log('[testDb] removed existing test DB')
-                break
-            } catch (err: any) {
-                attempt += 1
-                console.warn('[testDb] unlink attempt', attempt, 'failed:', err && err.code ? err.code : err)
-                if (err && (err.code === 'EBUSY' || err.code === 'EPERM') && attempt < maxAttempts) {
-                    // small synchronous backoff (busy-wait) — acceptable during test startup
-                    // increase retries/backoff to handle Windows file-lock races
-                    const backoffMs = 50 * Math.pow(2, Math.min(attempt - 1, 8))
-                    const end = Date.now() + backoffMs
-                    while (Date.now() < end) { /* busy-wait */ }
-                    continue
-                }
-                // If still failing (or different error), warn and continue tests — don't throw.
-                console.warn('[testDb] could not remove test DB (proceeding):', err)
-                break
-            }
-        }
-    }
+const schemaDir = path.join(__dirname, '..', 'database')
+
+export async function resetTestDb() {
+    const db = new sqlite3.Database(dbPath)
+
+    const ddl = fs.readFileSync(
+        path.join(schemaDir, 'tables_DDL.sql'),
+        'utf8'
+    )
+
+    const defaults = fs.readFileSync(
+        path.join(schemaDir, 'tables_default_values.sql'),
+        'utf8'
+    )
+
+    await new Promise<void>((resolve, reject) => {
+        db.exec(ddl, err => (err ? reject(err) : resolve()))
+    })
+
+    await new Promise<void>((resolve, reject) => {
+        db.exec(defaults, err => (err ? reject(err) : resolve()))
+    })
+
+    db.close()
 }
 
-export async function teardownTestDb(): Promise<void> {
-    try {
-        // sqlite3 Database object exposes close via default export file `db`.
-        // The `db` object imported in other modules is the singleton from db.ts
-        // but TypeScript typing may not expose `close` so use any. Wrap close
-        // in a promise so callers can await the DB being fully closed.
-        const anyDb: any = db
-        if (anyDb && typeof anyDb.close === 'function') {
-            await new Promise<void>((resolve, reject) => {
-                anyDb.close((err: any) => {
-                    if (err) {
-                        console.error('[testDb] error closing DB', err)
-                        return reject(err)
-                    }
-                    resolve()
-                })
-            })
-        }
-    } catch (err) {
-        console.error('[testDb] teardown error', err)
-    }
-
-    // After ensuring DB is closed, attempt to remove the test DB file. Use
-    // retries/backoff like in resetTestDb to handle Windows file-lock races.
-    if (fs.existsSync(testDbPath)) {
-        const maxAttempts = 12
-        let attempt = 0
-        while (attempt < maxAttempts) {
-            try {
-                fs.unlinkSync(testDbPath)
-                console.log('[testDb] removed test DB during teardown')
-                break
-            } catch (err: any) {
-                attempt += 1
-                if ((err && (err.code === 'EBUSY' || err.code === 'EPERM')) && attempt < maxAttempts) {
-                    const backoffMs = 50 * Math.pow(2, Math.min(attempt - 1, 8))
-                    const end = Date.now() + backoffMs
-                    while (Date.now() < end) { /* busy-wait */ }
-                    continue
-                }
-                console.warn('[testDb] could not remove test DB during teardown (proceeding):', err)
-                break
-            }
-        }
+export async function teardownTestDb() {
+    if (!isMemory && fs.existsSync(dbPath)) {
+        fs.unlinkSync(dbPath)
     }
 }
