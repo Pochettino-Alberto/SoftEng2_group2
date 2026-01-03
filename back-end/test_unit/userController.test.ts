@@ -186,5 +186,20 @@ describe('UserController', () => {
       const ctrl = new UserController()
       await expect(ctrl.getRoles()).rejects.toThrow('dbfail')
     })
+
+    test('getPaginatedUsers applies default pagination when params are missing', async () => {
+      const UserDAO = require('../src/dao/userDAO').default;
+      const mockPaginated = { users: [], totalCount: 0 };
+      const pagSpy = jest.spyOn(UserDAO.prototype, 'getPaginatedUsers').mockResolvedValue(mockPaginated);
+
+      const UserController = require('../src/controllers/userController').default;
+      const ctrl = new UserController();
+
+      // Call with nulls to trigger default line 103-110
+      await ctrl.getPaginatedUsers(null, null, null, null, null, null);
+
+      // Expect defaults: page 1 (offset 0), size 10
+      expect(pagSpy).toHaveBeenCalledWith(null, null, null, null, 10, 0);
+    });
   })
 })
