@@ -47,6 +47,19 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
+function sqlFilesExist(): boolean {
+    const candidates = [
+        path.resolve(__dirname, '..', '..', '..', 'database'),
+        '/usr/src/app/database',
+        '/usr/src/app/sql'
+    ]
+
+    return candidates.some(dir =>
+        fs.existsSync(path.join(dir, 'tables_DDL.sql')) &&
+        fs.existsSync(path.join(dir, 'tables_default_values.sql'))
+    )
+}
+
 function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err
@@ -65,7 +78,7 @@ function onOpen(this: any, err: Error | null) {
         dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
-    if (isIntegrationTest) {
+    if (isIntegrationTest && sqlFilesExist()) {
         resolveDbReady()
         return
     }
@@ -78,12 +91,8 @@ function onOpen(this: any, err: Error | null) {
     dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        (_err: any, row: any) => {
-            if (!row) {
-                initializeDb(dbInstance)
-            } else {
-                initializeDb(dbInstance)
-            }
+        () => {
+            initializeDb(dbInstance)
         }
     )
 }
