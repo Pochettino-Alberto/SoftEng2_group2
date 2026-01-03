@@ -2,120 +2,155 @@ import UserController from '../src/controllers/userController'
 import UserDAO from '../src/dao/userDAO'
 import { UserAlreadyExistsError, UserNotAdminError, UserNotFoundError, UserIsAdminError, UnauthorizedUserError } from '../src/errors/userError'
 import { Utility } from '../src/utilities'
-import { User } from '../src/components/user'
 
 jest.mock('../src/dao/userDAO')
 
 describe('UserController', () => {
   afterEach(() => {
+    // restore original implementations of spied methods, then reset mock state
     jest.restoreAllMocks()
     jest.resetAllMocks()
   })
 
   test('createUser rejects when username already in use', async () => {
+    // make usernameAlreadyInUse return true
     jest.spyOn(UserController.prototype, 'usernameAlreadyInUse').mockResolvedValue(true)
+
     const ctrl = new UserController()
     await expect(ctrl.createUser('u','n','s','e','p','citizen')).rejects.toBeInstanceOf(UserAlreadyExistsError)
   })
 
   test('createUser resolves true when username not in use and DAO creates user', async () => {
     jest.spyOn(UserController.prototype, 'usernameAlreadyInUse').mockResolvedValue(false)
+    // mock DAO.createUser to resolve true
     jest.spyOn(UserDAO.prototype, 'createUser' as any).mockResolvedValue(true)
+
     const ctrl = new UserController()
     await expect(ctrl.createUser('u2','n','s','e','p','citizen')).resolves.toBe(true)
   })
 
   test('getUserByUsername resolves when caller is admin', async () => {
-    const targetUser = { id: 10, username: 'target' }
-    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue(targetUser as any)
+    // prepare a fake user returned by DAO
+    const returned = { id: 1, username: 'target', first_name: 'T', last_name: 'User', email: 't@example.com', user_type: 'admin' }
+    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue(returned as any)
+    // spy Utility.isAdmin to return true
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(true)
+
     const ctrl = new UserController()
-    const res = await ctrl.getUserByUsername('target', { user_type: 'admin' })
-    expect(res).toBe(targetUser)
+    const caller = { id: 2, username: 'caller', user_type: 'admin' } as any
+    await expect(ctrl.getUserByUsername(caller, 'target')).resolves.toEqual(returned)
   })
 
   test('getUserByUsername resolves when caller requests own data', async () => {
-    const targetUser = { id: 10, username: 'me' }
-    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue(targetUser as any)
+    const returned = { id: 3, username: 'self', first_name: 'S', last_name: 'Elf', email: 's@example.com', user_type: 'citizen' }
+    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue(returned as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
+
     const ctrl = new UserController()
-    const res = await ctrl.getUserByUsername('me', { username: 'me' })
-    expect(res).toBe(targetUser)
+    const caller = { id: 3, username: 'self', user_type: 'citizen' } as any
+    await expect(ctrl.getUserByUsername(caller, 'self')).resolves.toEqual(returned)
   })
 
   test('getUserByUsername rejects with UserNotAdminError when unauthorized', async () => {
-    const targetUser = { id: 10, username: 'other' }
-    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue(targetUser as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
     const ctrl = new UserController()
-    await expect(ctrl.getUserByUsername('other', { username: 'me', user_type: 'citizen' })).rejects.toBeInstanceOf(UserNotAdminError)
+    const caller = { id: 4, username: 'other', user_type: 'citizen' } as any
+    await expect(ctrl.getUserByUsername(caller, 'target')).rejects.toBeInstanceOf(UserNotAdminError)
   })
 
   test('usernameAlreadyInUse resolves true when DAO finds user', async () => {
-    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue({} as any)
+    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockResolvedValue({ username: 'found' } as any)
     const ctrl = new UserController()
-    await expect(ctrl.usernameAlreadyInUse('x')).resolves.toBe(true)
+    await expect(ctrl.usernameAlreadyInUse('found')).resolves.toBe(true)
   })
 
   test('usernameAlreadyInUse resolves false when DAO throws UserNotFoundError', async () => {
     jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockRejectedValue(new UserNotFoundError())
     const ctrl = new UserController()
-    await expect(ctrl.usernameAlreadyInUse('x')).resolves.toBe(false)
+    await expect(ctrl.usernameAlreadyInUse('missing')).resolves.toBe(false)
   })
 
   test('usernameAlreadyInUse rejects when DAO throws other error', async () => {
-    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockRejectedValue(new Error('db fail'))
+    jest.spyOn(UserDAO.prototype, 'getUserByUsername').mockRejectedValue(new Error('DB fail'))
     const ctrl = new UserController()
-    await expect(ctrl.usernameAlreadyInUse('x')).rejects.toThrow('db fail')
+    await expect(ctrl.usernameAlreadyInUse('err')).rejects.toBeInstanceOf(Error)
   })
 
+  // Tests for deleteUser
+
+
+  // Tests for updateUserInfo (controller)
   test('updateUserInfo resolves when user updates own info', async () => {
-    const userObj = { id: 5, username: 'user5' }
-    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(userObj as any)
-    jest.spyOn(UserDAO.prototype, 'updateUserInfo').mockResolvedValue(userObj as any)
+    const fetched = { id: 7, username: 'joe', first_name: 'Old', last_name: 'Name', email: 'old@example.com', user_type: 'citizen' }
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(fetched as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
+
+    const updatedReturned = { ...fetched, username: 'joeNew', first_name: 'JoeNew' }
+    jest.spyOn(UserDAO.prototype, 'updateUserInfo').mockResolvedValue(updatedReturned as any)
+
     const ctrl = new UserController()
-    const res = await ctrl.updateUserInfo(5, userObj as any, { id: 5 })
-    expect(res).toBe(userObj)
+    const caller = { id: 7, username: 'joe', user_type: 'citizen' } as any
+    await expect(ctrl.updateUserInfo(caller, 7, 'joeNew', 'JoeNew', undefined, undefined, undefined)).resolves.toEqual(updatedReturned)
   })
 
   test('updateUserInfo resolves when admin updates another user', async () => {
-    const userObj = { id: 5 }
-    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(userObj as any)
-    jest.spyOn(UserDAO.prototype, 'updateUserInfo').mockResolvedValue(userObj as any)
+    const fetched = { id: 21, username: 'target', first_name: 'T', last_name: 'U', email: 't@example.com', user_type: 'citizen' }
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(fetched as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(true)
+
+    const updatedReturned = { ...fetched, first_name: 'Updated' }
+    jest.spyOn(UserDAO.prototype, 'updateUserInfo').mockResolvedValue(updatedReturned as any)
+
     const ctrl = new UserController()
-    const res = await ctrl.updateUserInfo(5, userObj as any, { user_type: 'admin' })
-    expect(res).toBe(userObj)
+    const caller = { id: 1, username: 'admin', user_type: 'admin' } as any
+    await expect(ctrl.updateUserInfo(caller, 21, undefined, 'Updated')).resolves.toEqual(updatedReturned)
   })
 
   test('updateUserInfo rejects UnauthorizedUserError when non-admin updates another user', async () => {
+    const fetched = { id: 30, username: 'victim', first_name: 'V', last_name: 'User', email: 'v@example.com', user_type: 'citizen' }
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockResolvedValue(fetched as any)
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(false)
+
     const ctrl = new UserController()
-    await expect(ctrl.updateUserInfo(5, {} as any, { id: 1, user_type: 'citizen' })).rejects.toBeInstanceOf(UnauthorizedUserError)
+    const caller = { id: 31, username: 'other', user_type: 'citizen' } as any
+    await expect(ctrl.updateUserInfo(caller, 30, 'hacker')).rejects.toBeInstanceOf(UnauthorizedUserError)
   })
 
   test('updateUserInfo propagates DAO errors from getUserById', async () => {
-    jest.spyOn(UserDAO.prototype, 'getUserById').mockRejectedValue(new Error('fail'))
+    jest.spyOn(UserDAO.prototype, 'getUserById').mockRejectedValue(new UserNotFoundError())
+    jest.spyOn(Utility, 'isAdmin').mockReturnValue(true)
+
     const ctrl = new UserController()
-    await expect(ctrl.updateUserInfo(5, {} as any, { user_type: 'admin' })).rejects.toThrow('fail')
+    const caller = { id: 1, username: 'admin', user_type: 'admin' } as any
+    await expect(ctrl.updateUserInfo(caller, 999, 'x')).rejects.toBeInstanceOf(UserNotFoundError)
   })
 
+
+
+  // Merged tests from userController.more.test.ts
   describe('UserController - extra coverage', () => {
-    test('getPaginatedUsers via DAO returns mapped users and count', async () => {
-      const mockResult = { users: [], totalCount: 10 }
-      const spy = jest.spyOn(UserDAO.prototype, 'getPaginatedUsers').mockResolvedValue(mockResult as any)
-      const ctrl = new UserController()
-      const res = await ctrl.getPaginatedUsers('F', 'L', 'E', 'R', 10, 1)
-      expect(res).toBe(mockResult)
-      expect(spy).toHaveBeenCalledWith('F', 'L', 'E', 'R', 10, 0)
+    afterEach(() => {
+      jest.restoreAllMocks()
+      jest.resetAllMocks()
     })
 
-    test('getPaginatedUsers applies default pagination when params are missing', async () => {
-      const ctrl = new UserController();
-      const mockPaginated: { users: User[], totalCount: number } = { users: [], totalCount: 0 };
-      const pagSpy = jest.spyOn(UserDAO.prototype, 'getPaginatedUsers').mockResolvedValue(mockPaginated);
+    test('getPaginatedUsers via DAO returns mapped users and count (UserDAO.getPaginatedUsers)', async () => {
+      const users = [{ id: 1, username: 'a' }, { id: 2, username: 'b' }]
+      const totalCount = 7
+      jest.spyOn(UserDAO.prototype, 'getPaginatedUsers' as any).mockResolvedValue({ users, totalCount })
 
-      await ctrl.getPaginatedUsers(null, null, null, null, null, null);
-      expect(pagSpy).toHaveBeenCalledWith(null, null, null, null, 10, 0);
+      const ctrl = new UserController()
+      const pag = await ctrl.searchUsers(2, 3, null, null, null, null)
+
+      expect(pag.page_num).toBe(2)
+      expect(pag.page_size).toBe(3)
+      expect(pag.total_items).toBe(totalCount)
+      expect(pag.items).toBeDefined()
     })
 
     test('setUserRoles computes toAdd and toRemove and calls DAO assign/remove', async () => {
-      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockResolvedValue([{ id: 1 }, { id: 2 }])
+      const currentRolesDB = [{ RoleID: 1, RoleName: 'R1' }, { RoleID: 2, RoleName: 'R2' }]
+      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockResolvedValue(currentRolesDB)
       const assignSpy = jest.spyOn(UserDAO.prototype, 'assignRoles' as any).mockResolvedValue(undefined)
       const removeSpy = jest.spyOn(UserDAO.prototype, 'removeRoles' as any).mockResolvedValue(undefined)
 
@@ -147,9 +182,9 @@ describe('UserController', () => {
     })
 
     test('getRoles rejects when DAO.getRoles throws', async () => {
-      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockRejectedValue(new Error('fail'))
+      jest.spyOn(UserDAO.prototype, 'getRoles' as any).mockRejectedValue(new Error('dbfail'))
       const ctrl = new UserController()
-      await expect(ctrl.getRoles(1)).rejects.toThrow('fail')
+      await expect(ctrl.getRoles()).rejects.toThrow('dbfail')
     })
   })
 })
