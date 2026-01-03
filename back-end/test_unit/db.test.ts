@@ -27,22 +27,22 @@ describe('db module', () => {
   // Mocking sqlite3 with explicit types and async callbacks
   jest.doMock('sqlite3', () => {
     const mockDb: any = {
-      get: jest.fn((sql, params, cb) => {
+      get: jest.fn((sql: string, params: any, cb?: any): any => {
         const callback = typeof params === 'function' ? params : cb;
         callback(null, { count: 1 });
         return mockDb;
       }),
-      run: jest.fn((sql, params, cb) => {
+      run: jest.fn((sql: string, params: any, cb?: any): any => {
         const callback = typeof params === 'function' ? params : cb;
         callback(null);
         return mockDb;
       }),
-      exec: jest.fn((sql, cb) => {
+      exec: jest.fn((sql: string, cb: any): any => {
         cb(null);
         return mockDb;
       }),
-      serialize: jest.fn((fn) => fn()),
-      close: jest.fn((cb) => cb && cb(null)),
+      serialize: jest.fn((fn: any) => fn()),
+      close: jest.fn((cb: any) => cb && cb(null)),
       on: jest.fn()
     };
 
