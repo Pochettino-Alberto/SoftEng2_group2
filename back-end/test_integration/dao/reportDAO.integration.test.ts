@@ -409,6 +409,9 @@ describe('ReportDAO integration', () => {
       Database: function (dbPath: any, cb: any) {
         const fakeDb = {
           run: () => {},
+          get: (sql: string, params: any[], cb2: any) => {
+            if (typeof cb2 === 'function') setImmediate(() => cb2(null, null))
+          },
           exec: (sql: any, cb2: any) => { if (typeof cb2 === 'function') cb2(null) },
           serialize: (fn: any) => { if (typeof fn === 'function') fn() }
         }
@@ -431,19 +434,19 @@ describe('ReportDAO integration', () => {
     jest.resetModules()
     jest.unmock('sqlite3')
     jest.unmock('fs')
-    
+
     const ReportDAO = require('../../src/dao/reportDAO').default
     const { Report, ReportStatus } = require('../../src/components/report')
     const { dbReady } = require('../../src/dao/db')
     await dbReady
-    
+
     const dao = new ReportDAO()
 
     const rpt = new Report(0, 1, 'Status Update', 1, 1, ReportStatus.PENDING_APPROVAL, false)
     const saved = await dao.saveReport(rpt)
 
     await dao.updateReportStatus(saved.id, ReportStatus.RESOLVED, 'Fixed')
-    
+
     const updated = await dao.getReportById(saved.id)
     expect(updated.status).toBe(ReportStatus.RESOLVED)
     expect(updated.status_reason).toBe('Fixed')
@@ -461,7 +464,7 @@ describe('ReportDAO integration', () => {
     const dbModule = require('../../src/dao/db')
     const db = dbModule.default
     await dbModule.dbReady
-    
+
     const dao = new ReportDAO()
     const udao = new UserDAO()
 
@@ -470,7 +473,7 @@ describe('ReportDAO integration', () => {
 
     // 2. Create Role
     const roleId = await new Promise((resolve, reject) => {
-        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)", 
+        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
             ['technical_officer', 'Test Tech', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
         })
@@ -481,7 +484,7 @@ describe('ReportDAO integration', () => {
 
     // 4. Create Category
     const catId = await new Promise((resolve, reject) => {
-         db.run("INSERT INTO report_categories (name, icon, description) VALUES (?, ?, ?)", 
+         db.run("INSERT INTO report_categories (name, icon, description) VALUES (?, ?, ?)",
             ['Test Cat', 'X', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
         })
@@ -489,7 +492,7 @@ describe('ReportDAO integration', () => {
 
     // 5. Assign Responsibility
     await new Promise((resolve, reject) => {
-        db.run("INSERT INTO role_category_responsibility (role_id, category_id) VALUES (?, ?)", 
+        db.run("INSERT INTO role_category_responsibility (role_id, category_id) VALUES (?, ?)",
             [roleId, catId], function(err: any) {
             if (err) reject(err); else resolve(undefined);
         })
@@ -513,7 +516,7 @@ describe('ReportDAO integration', () => {
 
     // 2. Create Role
     const roleId = await new Promise((resolve, reject) => {
-        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)", 
+        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
             ['external_maintainer', 'Ext Maint', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
         })
@@ -592,7 +595,7 @@ describe('ReportDAO integration', () => {
   test('getMapReports returns all reports when no status filter provided', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const dao = new ReportDAO()
-    
+
     const reports = await dao.getMapReports(null)
     expect(reports).toBeDefined()
     expect(Array.isArray(reports)).toBe(true)
@@ -603,7 +606,7 @@ describe('ReportDAO integration', () => {
   test('getMapReports filters by single status', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const dao = new ReportDAO()
-    
+
     const reports = await dao.getMapReports(['Pending Approval'])
     expect(reports).toBeDefined()
     reports.forEach((r: any) => {
@@ -614,7 +617,7 @@ describe('ReportDAO integration', () => {
   test('getMapReports filters by multiple statuses', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const dao = new ReportDAO()
-    
+
     const reports = await dao.getMapReports(['Pending Approval', 'Assigned'])
     expect(reports).toBeDefined()
     reports.forEach((r: any) => {
@@ -625,7 +628,7 @@ describe('ReportDAO integration', () => {
   test('getMapReports returns empty array if no match', async () => {
     const ReportDAO = require('../../src/dao/reportDAO').default
     const dao = new ReportDAO()
-    
+
     const reports = await dao.getMapReports(['NonExistentStatus'])
     expect(reports).toEqual([])
   })
@@ -636,10 +639,10 @@ describe('ReportDAO integration', () => {
     const dao = new ReportDAO()
     const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
     const rpt = await dao.saveReport(report)
-    
+
     const newComment = new ReportComment(0, rpt.id, 1, 'This is a test comment', '2025-01-01', '2025-01-01')
     const savedComment = await dao.addCommentToReport(newComment)
-    
+
     expect(savedComment.id).toBeGreaterThan(0)
 
     const comments = await dao.getCommentsByReportId(rpt.id)
@@ -654,10 +657,10 @@ describe('ReportDAO integration', () => {
     const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
     const rpt = await dao.saveReport(report)
     const comment = await dao.addCommentToReport(new ReportComment(0, rpt.id, 1, 'Old text', '2025-01-01', '2025-01-01'))
-    
+
     comment.comment = 'New text'
     comment.updatedAt = '2025-01-02'
-    
+
     const updated = await dao.editCommentToReport(comment)
     expect(updated.comment).toBe('New text')
 
@@ -672,9 +675,9 @@ describe('ReportDAO integration', () => {
     const report = new Report(0, 1, 'Commented report', 0, 0, ReportStatus.IN_PROGRESS, true)
     const rpt = await dao.saveReport(report)
     const comment = await dao.addCommentToReport(new ReportComment(0, rpt.id, 1, 'To be deleted', '2025-01-01', '2025-01-01'))
-    
+
     await dao.deleteCommentToReport(comment)
-    
+
     const comments = await dao.getCommentsByReportId(rpt.id)
     expect(comments.length).toBe(0)
   })
