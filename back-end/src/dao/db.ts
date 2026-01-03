@@ -149,4 +149,20 @@ export function initializeDb(dbInstance: any) {
     }
 }
 
+export function closeDb(): Promise<void> {
+    return new Promise((resolve, reject) => {
+        if (!db) return resolve()
+        db.close(err => (err ? reject(err) : resolve()))
+    })
+}
+
+afterAll(async () => {
+    try {
+        const db = require('./src/dao/db')
+        if (db.closeDb) {
+            await db.closeDb()
+        }
+    } catch {}
+})
+
 export default db;
