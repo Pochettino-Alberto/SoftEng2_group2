@@ -12,6 +12,11 @@ const isTestEnv =
     typeof process.env.NODE_ENV === 'string' &&
     process.env.NODE_ENV.startsWith('test');
 
+const isIntegrationTest =
+    process.env.NODE_ENV === 'test' &&
+    (process.env.TEST_DB_IN_MEMORY === 'true' ||
+        process.env.CI_USE_FILE_DB === 'true');
+
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
 
@@ -60,7 +65,10 @@ function onOpen(this: any, err: Error | null) {
         dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
-    const skipDbInit = process.env.SKIP_DB_INIT === 'true'
+    if (isIntegrationTest) {
+        resolveDbReady()
+        return
+    }
 
     if (typeof dbInstance.get !== 'function') {
         resolveDbReady()
@@ -73,10 +81,8 @@ function onOpen(this: any, err: Error | null) {
         (_err: any, row: any) => {
             if (!row) {
                 initializeDb(dbInstance)
-            } else if (!skipDbInit) {
-                initializeDb(dbInstance)
             } else {
-                resolveDbReady()
+                initializeDb(dbInstance)
             }
         }
     )
