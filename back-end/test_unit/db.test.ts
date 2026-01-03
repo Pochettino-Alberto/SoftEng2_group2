@@ -36,39 +36,17 @@ describe('db module', () => {
     jest.spyOn(fs, 'readFileSync').mockImplementation(jest.fn());
 
     // Per sqlite3 usiamo ancora doMock perché dobbiamo intercettare il costruttore
-    jest.doMock('sqlite3', () => {
-      const mockDb = {
-        get: jest.fn((sql, params, cb) => {
-          if (typeof params === 'function') params(null, { count: 1 });
-          else cb(null, { count: 1 });
-          return mockDb;
-        }),
-        run: jest.fn((sql, params, cb) => {
-          if (typeof params === 'function') params(null);
-          else cb(null);
-          return mockDb;
-        }),
-        exec: jest.fn((sql, cb) => {
-          cb(null);
-          return mockDb;
-        }),
-        serialize: jest.fn((fn) => fn()),
-        close: jest.fn((cb) => cb && cb(null)),
-        on: jest.fn()
-      };
-
-      return {
-        verbose: () => ({
-          Database: function (path: string, mode: any, cb: any) {
-            const callback = typeof mode === 'function' ? mode : cb;
-            setTimeout(() => callback && callback(null), 0);
-            return mockDb;
-          },
-          OPEN_READWRITE: 1,
-          OPEN_CREATE: 2
-        })
-      };
-    });
+    jest.doMock('sqlite3', () => ({
+      Database: function (filePath: string, cb: any) {
+        const dbObj = {
+          run: jest.fn(),
+          exec: jest.fn(),
+          serialize: (fn: any) => fn(),
+        };
+        process.nextTick(() => cb(null));
+        return dbObj;
+      },
+    }));
 
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 

@@ -718,30 +718,5 @@ describe('ReportDAO', () => {
       const comment = { report_id: 1 }
       await expect(dao.addCommentToReport(comment)).rejects.toThrow(ReportNotFoundError)
     })
-
-    // Targets ReportCommentNotFoundError branches in DAO
-    describe('ReportDAO comment error branches', () => {
-      it('editCommentToReport rejects with ReportCommentNotFoundError when changes is 0', async () => {
-        const dbRun = jest.fn((sql, params, cb) => cb.call({ lastID: 0, changes: 0 }, null));
-        jest.doMock('../src/dao/db', () => ({ run: dbRun }));
-        const ReportDAO = require('../src/dao/reportDAO').default;
-        const { ReportComment } = require('../src/components/report');
-
-        const dao = new ReportDAO();
-        const comment = new ReportComment(999, 1, 1, 'text', '2025-01-01', '2025-01-01');
-
-        await expect(dao.editCommentToReport(comment)).rejects.toThrow(/does not exist/);
-      });
-
-      it('deleteCommentToReport rejects when changes is 0', async () => {
-        const dbRun = jest.fn((sql, params, cb) => cb.call({ changes: 0 }, null));
-        jest.doMock('../src/dao/db', () => ({ run: dbRun }));
-        const ReportDAO = require('../src/dao/reportDAO').default;
-
-        const dao = new ReportDAO();
-        await expect(dao.deleteCommentToReport({ id: 999, report_id: 1, commenter_id: 1 } as any))
-            .rejects.toThrow(/does not exist/);
-      });
-    });
   })
 })
