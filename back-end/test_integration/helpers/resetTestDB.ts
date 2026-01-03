@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { db, dbReady } from '../../src/dao/db'
+import db, { dbReady } from '../../src/dao/db'
 
 export async function resetTestDB(): Promise<void> {
   try {
@@ -19,9 +19,9 @@ PRAGMA foreign_keys = ON;`
     await dbReady
 
     await new Promise<void>((resolve, reject) => {
-      db.exec(ddlToRun, (err) => {
+      db.exec(ddlToRun, (err: Error | null) => {
         if (err) return reject(err)
-        db.exec(defaultSQL, (err2) => {
+        db.exec(defaultSQL, (err2: Error | null) => {
           if (err2) return reject(err2)
           resolve()
         })
