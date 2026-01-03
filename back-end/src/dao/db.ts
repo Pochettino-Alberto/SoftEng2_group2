@@ -49,7 +49,6 @@ function onOpen(this: any, err: Error | null) {
 
     const dbInstance: any = this ?? db
 
-    // Unit-test / mock safety: constructor callback may fire before db is assigned
     if (!dbInstance) {
         resolveDbReady()
         return
@@ -63,7 +62,6 @@ function onOpen(this: any, err: Error | null) {
 
     const skipDbInit = process.env.SKIP_DB_INIT === 'true'
 
-    // Unit-test safety: mocked DB often has no .get()
     if (typeof dbInstance.get !== 'function') {
         resolveDbReady()
         return
@@ -75,10 +73,10 @@ function onOpen(this: any, err: Error | null) {
         (_err: any, row: any) => {
             if (!row) {
                 initializeDb(dbInstance)
-            } else if (!skipDbInit) {
+            } else if (skipDbInit) {
                 initializeDb(dbInstance)
             } else {
-                resolveDbReady()
+                initializeDb(dbInstance)
             }
         }
     )
