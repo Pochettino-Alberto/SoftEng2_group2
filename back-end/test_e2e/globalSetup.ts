@@ -1,6 +1,5 @@
-export default async function globalSetup() {
-    if (!process.argv.some(a => a.includes('test_e2e'))) return
+import { resetTestDb } from './testDb'
 
-    const { resetTestDb } = await import('./testDb')
+export default async function globalSetup() {
     await resetTestDb()
 }

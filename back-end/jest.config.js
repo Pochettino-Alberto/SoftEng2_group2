@@ -11,8 +11,13 @@ module.exports = {
   testMatch: ['**/?(*.)+(spec|test).[tj]s?(x)'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
 
-  globalSetup: '<rootDir>/test_e2e/globalSetup.ts',
-  globalTeardown: '<rootDir>/test_e2e/globalTeardown.ts',
+  globalSetup: process.env.RUN_E2E === 'true'
+      ? '<rootDir>/test_e2e/globalSetup.ts'
+      : undefined,
+
+  globalTeardown: process.env.RUN_E2E === 'true'
+      ? '<rootDir>/test_e2e/globalTeardown.ts'
+      : undefined,
 
   collectCoverage: true,
   coverageDirectory: 'coverage',
@@ -26,4 +31,4 @@ module.exports = {
   ],
 
   testTimeout: 60000,
-};
+}
