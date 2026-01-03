@@ -21,19 +21,19 @@ describe('ReportDAO integration', () => {
 
     // create a minimal report object
     const rpt = new Report(
-      0, // id
-      1, // category_id (should exist in default data)
-      'Integration Report',
-      45.0,
-      9.0,
-      ReportStatus.PENDING_APPROVAL,
-      true,
-      undefined,
-      undefined,
-      'desc',
-      'reason',
-      undefined,
-      undefined
+        0, // id
+        1, // category_id (should exist in default data)
+        'Integration Report',
+        45.0,
+        9.0,
+        ReportStatus.PENDING_APPROVAL,
+        true,
+        undefined,
+        undefined,
+        'desc',
+        'reason',
+        undefined,
+        undefined
     )
 
     const saved = await dao.saveReport(rpt)
@@ -473,10 +473,10 @@ describe('ReportDAO integration', () => {
 
     // 2. Create Role
     const roleId = await new Promise((resolve, reject) => {
-        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
-            ['technical_officer', 'Test Tech', 'Desc'], function(err: any) {
+      db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
+          ['technical_officer', 'Test Tech', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
-        })
+          })
     })
 
     // 3. Assign Role to User
@@ -484,18 +484,18 @@ describe('ReportDAO integration', () => {
 
     // 4. Create Category
     const catId = await new Promise((resolve, reject) => {
-         db.run("INSERT INTO report_categories (name, icon, description) VALUES (?, ?, ?)",
-            ['Test Cat', 'X', 'Desc'], function(err: any) {
+      db.run("INSERT INTO report_categories (name, icon, description) VALUES (?, ?, ?)",
+          ['Test Cat', 'X', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
-        })
+          })
     })
 
     // 5. Assign Responsibility
     await new Promise((resolve, reject) => {
-        db.run("INSERT INTO role_category_responsibility (role_id, category_id) VALUES (?, ?)",
-            [roleId, catId], function(err: any) {
+      db.run("INSERT INTO role_category_responsibility (role_id, category_id) VALUES (?, ?)",
+          [roleId, catId], function(err: any) {
             if (err) reject(err); else resolve(undefined);
-        })
+          })
     })
 
     // 6. Test
@@ -516,10 +516,10 @@ describe('ReportDAO integration', () => {
 
     // 2. Create Role
     const roleId = await new Promise((resolve, reject) => {
-        db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
-            ['external_maintainer', 'Ext Maint', 'Desc'], function(err: any) {
+      db.run("INSERT INTO roles (role_type, label, description) VALUES (?, ?, ?)",
+          ['external_maintainer', 'Ext Maint', 'Desc'], function(err: any) {
             if (err) reject(err); else resolve(this.lastID);
-        })
+          })
     })
 
     // 3. Assign Role to User
@@ -610,7 +610,7 @@ describe('ReportDAO integration', () => {
     const reports = await dao.getMapReports(['Pending Approval'])
     expect(reports).toBeDefined()
     reports.forEach((r: any) => {
-        expect(r.status).toBe('Pending Approval')
+      expect(r.status).toBe('Pending Approval')
     })
   })
 
@@ -621,7 +621,7 @@ describe('ReportDAO integration', () => {
     const reports = await dao.getMapReports(['Pending Approval', 'Assigned'])
     expect(reports).toBeDefined()
     reports.forEach((r: any) => {
-        expect(['Pending Approval', 'Assigned']).toContain(r.status)
+      expect(['Pending Approval', 'Assigned']).toContain(r.status)
     })
   })
 

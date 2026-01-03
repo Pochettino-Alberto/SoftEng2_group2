@@ -83,7 +83,6 @@ function onOpen(this: any, err: Error | null) {
         return
     }
 
-    // Ensure get exists to avoid early exit during unit testing/mocking
     if (typeof dbInstance.get !== 'function') {
         resolveDbReady()
         return
@@ -92,7 +91,7 @@ function onOpen(this: any, err: Error | null) {
     dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        (err: Error | null, row: any) => {
+        () => {
             initializeDb(dbInstance)
         }
     )
