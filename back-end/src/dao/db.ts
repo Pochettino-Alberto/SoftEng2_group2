@@ -26,7 +26,7 @@ const defaultPath = useMemoryDb
 
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
-let resolveDbReady: () => void
+let resolveDbReady!: () => void
 export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
 
 const hasOpenFlags =
@@ -42,33 +42,41 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
-function onOpen(err: Error | null) {
+function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err
     }
 
-    try {
-        db.run("PRAGMA foreign_keys = ON")
-        db.run("PRAGMA journal_mode = WAL")
-        db.run("PRAGMA busy_timeout = 5000")
-    } catch {}
+    const dbInstance: any = this ?? db
 
-    const skipDbInit = process.env.SKIP_DB_INIT === 'true'
-
-    // 🔑 Unit-test safety: mocked DB has no get()
-    if (typeof (db as any).get !== 'function') {
+    // Unit-test / mock safety: constructor callback may fire before db is assigned
+    if (!dbInstance) {
         resolveDbReady()
         return
     }
 
-    db.get(
+    try {
+        dbInstance.run("PRAGMA foreign_keys = ON")
+        dbInstance.run("PRAGMA journal_mode = WAL")
+        dbInstance.run("PRAGMA busy_timeout = 5000")
+    } catch {}
+
+    const skipDbInit = process.env.SKIP_DB_INIT === 'true'
+
+    // Unit-test safety: mocked DB often has no .get()
+    if (typeof dbInstance.get !== 'function') {
+        resolveDbReady()
+        return
+    }
+
+    dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        (_err, row) => {
+        (_err: any, row: any) => {
             if (!row) {
-                initializeDb()
+                initializeDb(dbInstance)
             } else if (!skipDbInit) {
-                initializeDb()
+                initializeDb(dbInstance)
             } else {
                 resolveDbReady()
             }
@@ -76,8 +84,8 @@ function onOpen(err: Error | null) {
     )
 }
 
-function initializeDb() {
-    const candidates = []
+function initializeDb(dbInstance: any) {
+    const candidates: string[] = []
 
     if (process.env.DB_PATH) {
         candidates.push('/usr/src/app/database')
@@ -117,8 +125,8 @@ function initializeDb() {
         const finalDDL =
             `PRAGMA foreign_keys = OFF;\n${cleanedDDL}\nPRAGMA foreign_keys = ON;`
 
-        db.exec(finalDDL, () => {
-            db.exec(defaultSQL, () => {
+        dbInstance.exec(finalDDL, () => {
+            dbInstance.exec(defaultSQL, () => {
                 resolveDbReady()
             })
         })
