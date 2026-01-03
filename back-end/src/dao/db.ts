@@ -60,23 +60,19 @@ function onOpen(err: Error | null) {
 
     const skipDbInit = process.env.SKIP_DB_INIT === 'true'
 
-    let shouldInitialize = false
-
-    if (!isIntegrationTest) {
-        if (useMemoryDb) {
-            shouldInitialize = true
-        } else if (env === 'test') {
-            shouldInitialize = !fs.existsSync(dbFilePath)
-        } else {
-            shouldInitialize = !fs.existsSync(dbFilePath)
+    db.get(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
+        [],
+        (_err, row) => {
+            if (!row) {
+                initializeDb()
+            } else if (!skipDbInit) {
+                initializeDb()
+            } else {
+                resolveDbReady()
+            }
         }
-    }
-
-    if (shouldInitialize && !skipDbInit) {
-        initializeDb()
-    } else {
-        resolveDbReady()
-    }
+    )
 }
 
 function initializeDb() {
@@ -125,7 +121,8 @@ function initializeDb() {
                 resolveDbReady()
             })
         })
-    } catch {
+    } catch (err) {
+        console.error(err)
         resolveDbReady()
     }
 }
