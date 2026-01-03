@@ -59,15 +59,14 @@ function onOpen(err: Error | null) {
 
     let shouldInitialize = false
 
-    if (!isIntegrationTest) {
-        if (useMemoryDb) {
-            shouldInitialize = true
-        } else if (env === 'test') {
-            shouldInitialize = !fs.existsSync(dbFilePath)
-        } else {
-            shouldInitialize = !fs.existsSync(dbFilePath)
-        }
+    if (useMemoryDb) {
+        shouldInitialize = true
+    } else if (env === 'test') {
+        shouldInitialize = true
+    } else {
+        shouldInitialize = !fs.existsSync(dbFilePath)
     }
+
 
     if (shouldInitialize) {
         initializeDb()
