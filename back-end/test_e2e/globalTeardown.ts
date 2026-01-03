@@ -1,5 +1,3 @@
-import { teardownTestDb } from './testDb'
-
 export default async function globalTeardown() {
-    await teardownTestDb()
+    if (!process.argv.some(a => a.includes('test_e2e'))) return
 }

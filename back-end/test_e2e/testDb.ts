@@ -1,26 +1,24 @@
 import fs from 'fs'
 import path from 'path'
 import sqlite3 from 'sqlite3'
-
-const isMemory = process.env.TEST_DB_IN_MEMORY === 'true'
-
-const dbPath = isMemory
-    ? ':memory:'
-    : path.join(__dirname, 'test.db')
-
-const schemaDir = path.join(__dirname, '..', 'database')
+import { DB_PATH } from '../src/dao/db'
 
 export async function resetTestDb() {
-    const db = new sqlite3.Database(dbPath)
+    const inMemory = process.env.TEST_DB_IN_MEMORY === 'true'
+
+    if (!inMemory && fs.existsSync(DB_PATH)) {
+        fs.unlinkSync(DB_PATH)
+    }
+
+    const db = new sqlite3.Database(inMemory ? ':memory:' : DB_PATH)
 
     const ddl = fs.readFileSync(
-        path.join(schemaDir, 'tables_DDL.sql'),
-        'utf8'
+        path.join(__dirname, '../database/tables_DDL.sql'),
+        'utf-8'
     )
-
     const defaults = fs.readFileSync(
-        path.join(schemaDir, 'tables_default_values.sql'),
-        'utf8'
+        path.join(__dirname, '../database/defaults.sql'),
+        'utf-8'
     )
 
     await new Promise<void>((resolve, reject) => {
@@ -32,10 +30,4 @@ export async function resetTestDb() {
     })
 
     db.close()
-}
-
-export async function teardownTestDb() {
-    if (!isMemory && fs.existsSync(dbPath)) {
-        fs.unlinkSync(dbPath)
-    }
 }
