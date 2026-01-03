@@ -1,20 +1,9 @@
-import fs from 'fs'
-import path from 'path'
-import sqlite3 from 'sqlite3'
+import request from 'supertest'
+import app from '../index'
+import { dbReady } from '../src/dao/db'
 
-const DB_PATH = path.join(__dirname, '../database/testdb.db')
-const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql')
+beforeAll(async () => {
+    await dbReady
+})
 
-export default async function globalSetup() {
-    if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH)
-
-    const db = new sqlite3.Database(DB_PATH)
-
-    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8')
-
-    await new Promise((resolve, reject) => {
-        db.exec(schema, err => (err ? reject(err) : resolve(null)))
-    })
-
-    db.close()
-}
+export default request(app)
