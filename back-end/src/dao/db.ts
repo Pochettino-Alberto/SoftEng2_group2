@@ -12,20 +12,16 @@ const isTestEnv =
     typeof process.env.NODE_ENV === 'string' &&
     process.env.NODE_ENV.startsWith('test');
 
-const isIntegrationTest =
-    process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
-
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
 
+// Ensure the default path logic is consistent across all test modules
 const defaultPath = useMemoryDb
     ? ':memory:'
     : (env === "test"
         ? path.join(
             os.tmpdir(),
-            `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`
+            `testdb-${process.env.JEST_WORKER_ID || 'main'}.db`
         )
         : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db'));
 
@@ -47,19 +43,6 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
-function sqlFilesExist(): boolean {
-    const candidates = [
-        path.resolve(__dirname, '..', '..', '..', 'database'),
-        '/usr/src/app/database',
-        '/usr/src/app/sql'
-    ]
-
-    return candidates.some(dir =>
-        fs.existsSync(path.join(dir, 'tables_DDL.sql')) &&
-        fs.existsSync(path.join(dir, 'tables_default_values.sql'))
-    )
-}
-
 function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err
@@ -72,27 +55,24 @@ function onOpen(this: any, err: Error | null) {
         return
     }
 
-    try {
+    // Set pragmas for performance and constraints
+    dbInstance.serialize(() => {
         dbInstance.run("PRAGMA foreign_keys = ON")
         dbInstance.run("PRAGMA journal_mode = WAL")
         dbInstance.run("PRAGMA busy_timeout = 5000")
-    } catch {}
+    })
 
-    if (isIntegrationTest && sqlFilesExist()) {
-        resolveDbReady()
-        return
-    }
-
-    if (typeof dbInstance.get !== 'function') {
-        resolveDbReady()
-        return
-    }
-
+    // RELIABILITY FIX: Check if the users table actually exists in the file.
+    // If it doesn't, we must run the DDL regardless of the environment.
     dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        () => {
-            initializeDb(dbInstance)
+        (err: Error | null, row: any) => {
+            if (err || !row) {
+                initializeDb(dbInstance)
+            } else {
+                resolveDbReady()
+            }
         }
     )
 }
@@ -103,17 +83,12 @@ export function initializeDb(dbInstance: any) {
     if (process.env.DB_PATH) {
         candidates.push('/usr/src/app/database')
     }
-
     candidates.push(path.resolve(__dirname, '..', '..', '..', 'database'))
     candidates.push('/usr/src/app/sql')
 
     let sqlDir: string | null = null
-
     for (const cand of candidates) {
-        if (
-            fs.existsSync(path.join(cand, 'tables_DDL.sql')) &&
-            fs.existsSync(path.join(cand, 'tables_default_values.sql'))
-        ) {
+        if (fs.existsSync(path.join(cand, 'tables_DDL.sql'))) {
             sqlDir = cand
             break
         }
@@ -125,26 +100,21 @@ export function initializeDb(dbInstance: any) {
 
     try {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8')
-        const defaultSQL = fs.readFileSync(
-            path.join(sqlDir, 'tables_default_values.sql'),
-            'utf8'
-        )
+        const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8')
 
-        const cleanedDDL = ddlSQL.replace(
-            /PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi,
-            ''
-        )
+        // Ensure PRAGMAs don't conflict during execution
+        const cleanedDDL = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '')
+        const finalDDL = `PRAGMA foreign_keys = OFF;\n${cleanedDDL}\nPRAGMA foreign_keys = ON;`
 
-        const finalDDL =
-            `PRAGMA foreign_keys = OFF;\n${cleanedDDL}\nPRAGMA foreign_keys = ON;`
-
-        dbInstance.exec(finalDDL, () => {
-            dbInstance.exec(defaultSQL, () => {
+        dbInstance.exec(finalDDL, (err1: any) => {
+            if (err1) console.error("DDL Error:", err1)
+            dbInstance.exec(defaultSQL, (err2: any) => {
+                if (err2) console.error("Default Values Error:", err2)
                 resolveDbReady()
             })
         })
     } catch (err) {
-        console.error(err)
+        console.error("Initialization failed to read SQL files:", err)
         resolveDbReady()
     }
 }
