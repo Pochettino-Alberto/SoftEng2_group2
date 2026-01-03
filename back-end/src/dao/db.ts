@@ -12,12 +12,17 @@ const isTestEnv =
     typeof process.env.NODE_ENV === 'string' &&
     process.env.NODE_ENV.startsWith('test');
 
-const skipDbInit =
-    process.env.NODE_ENV === 'test' &&
-    process.env.SKIP_DB_INIT === 'true';
-
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
+
+/**
+ * Skip DB init ONLY for mocked / in-memory test DBs.
+ * Never skip for real integration DBs.
+ */
+const skipDbInit =
+    isTestEnv &&
+    process.env.SKIP_DB_INIT === 'true' &&
+    useMemoryDb;
 
 const defaultPath = useMemoryDb
     ? ':memory:'
@@ -64,6 +69,7 @@ function onOpen(this: any, err: Error | null) {
         dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
+    // Skip ONLY for mocked/in-memory DBs
     if (skipDbInit) {
         resolveDbReady()
         return
