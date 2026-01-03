@@ -14,8 +14,7 @@ const isTestEnv =
 
 const isIntegrationTest =
     process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
+    process.env.SKIP_DB_INIT === 'true';
 
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
