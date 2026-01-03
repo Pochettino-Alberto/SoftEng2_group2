@@ -12,11 +12,6 @@ const isTestEnv =
     typeof process.env.NODE_ENV === 'string' &&
     process.env.NODE_ENV.startsWith('test');
 
-const isIntegrationTest =
-    process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
-
 const useMemoryDb =
     isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
 
@@ -59,6 +54,12 @@ function onOpen(err: Error | null) {
     } catch {}
 
     const skipDbInit = process.env.SKIP_DB_INIT === 'true'
+
+    // 🔑 Unit-test safety: mocked DB has no get()
+    if (typeof (db as any).get !== 'function') {
+        resolveDbReady()
+        return
+    }
 
     db.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
