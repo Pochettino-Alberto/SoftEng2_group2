@@ -1,5 +1,3 @@
-export default async fuimport { teardownTestDb } from './testDb'
-
 export default async function globalTeardown() {
-    await teardownTestDb()
-}nction globalTeardown() {}
+    if (!process.argv.some(a => a.includes('test_e2e'))) return
+}
