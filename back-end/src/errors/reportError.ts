@@ -21,7 +21,7 @@ class ReportRejectedWithoutReasonError extends Error {
     customMessage: string
     customCode: number
     constructor() {
-        super()
+        super('Report rejected without reason');
         this.customMessage = "Status reason is required when rejecting a report"
         this.customCode = 400
     }
@@ -34,7 +34,7 @@ class ReportCommentNotFoundError extends Error {
     customMessage: string
     customCode: number
     constructor(commentId: number, reportId: number, commenterId: number) {
-        super()
+        super('Report comment not found');
         this.customMessage = `The report comment {comment_id: ${commentId}, report_id: ${reportId}, commenter_id: ${commenterId}} does not exist`
         this.customCode = 404
     }

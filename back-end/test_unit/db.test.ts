@@ -24,41 +24,22 @@ describe('db module', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  // Mocking sqlite3 with explicit types and async callbacks
-  jest.doMock('sqlite3', () => {
-    const mockDb: any = {
-      get: jest.fn((sql: string, params: any, cb?: any): any => {
-        const callback = typeof params === 'function' ? params : cb;
-        callback(null, { count: 1 });
-        return mockDb;
-      }),
-      run: jest.fn((sql: string, params: any, cb?: any): any => {
-        const callback = typeof params === 'function' ? params : cb;
-        callback(null);
-        return mockDb;
-      }),
-      exec: jest.fn((sql: string, cb: any): any => {
-        cb(null);
-        return mockDb;
-      }),
-      serialize: jest.fn((fn: any) => fn()),
-      close: jest.fn((cb: any) => cb && cb(null)),
-      on: jest.fn()
-    };
-
-    return {
-      verbose: () => ({
-        Database: function (path: string, mode: any, cb: any) {
-          const callback = typeof mode === 'function' ? mode : cb;
-          // Use timeout to ensure async behavior to avoid locking
-          setTimeout(() => callback && callback(null), 0);
-          return mockDb;
-        },
-        OPEN_READWRITE: 1,
-        OPEN_CREATE: 2
-      })
-    };
+  const mockDatabase = jest.fn(function (
+      _path: string,
+      _modeOrCb: any,
+      cb?: any
+  ) {
+    if (typeof _modeOrCb === 'function') {
+      _modeOrCb(null);
+    }
+    if (cb) cb(null);
   });
+
+  jest.mock('sqlite3', () => ({
+    Database: mockDatabase,
+    OPEN_READWRITE: 1,
+    OPEN_CREATE: 2
+  }));
 
   it('connects to existing DB and does not initialize when file exists', async () => {
     delete process.env.DB_PATH;
