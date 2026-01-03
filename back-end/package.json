@@ -9,7 +9,7 @@
     "build": "tsc",
     "test": "cross-env NODE_ENV=test TEST_DB_IN_MEMORY=true jest --runInBand --coverage --colors --detectOpenHandles --forceExit --verbose --testTimeout=60000",
     "test_unit": "cross-env NODE_ENV=test TEST_DB_IN_MEMORY=true jest --runInBand --coverage --coverageDirectory=coverage/unit --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_unit --testTimeout=60000",
-    "test_integration": "cross-env NODE_ENV=test jest --runInBand --coverage --coverageDirectory=coverage/integration --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_integration --testTimeout=60000",
+    "test_integration": "cross-env NODE_ENV=test SKIP_DB_INIT=true jest --runInBand --coverage --coverageDirectory=coverage/integration --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_integration --testTimeout=60000",
     "test_e2e": "cross-env NODE_ENV=test jest --runInBand --coverage --coverageDirectory=coverage/e2e --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_e2e --testTimeout=60000",
     "test_e2e_fast": "cross-env NODE_ENV=test TEST_DB_IN_MEMORY=true jest --runInBand --colors --verbose --testPathPattern=test_e2e --testTimeout=20000",
     "test_ui": "cross-env NODE_ENV=test jest --runInBand --coverage --coverageDirectory=coverage/ui --colors --detectOpenHandles --forceExit --verbose --testPathPattern=test_ui --testTimeout=90000",
