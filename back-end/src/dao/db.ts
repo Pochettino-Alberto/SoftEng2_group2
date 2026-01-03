@@ -49,7 +49,6 @@ function onOpen(this: any, err: Error | null) {
 
     const dbInstance: any = this ?? db
 
-    // Unit-test / mock safety
     if (!dbInstance) {
         resolveDbReady()
         return
@@ -63,7 +62,6 @@ function onOpen(this: any, err: Error | null) {
 
     const skipDbInit = process.env.SKIP_DB_INIT === 'true'
 
-    // Mocked DB safety
     if (typeof dbInstance.get !== 'function') {
         resolveDbReady()
         return
@@ -84,7 +82,7 @@ function onOpen(this: any, err: Error | null) {
     )
 }
 
-function initializeDb(dbInstance: any) {
+export function initializeDb(dbInstance: any) {
     const candidates: string[] = []
 
     if (process.env.DB_PATH) {
@@ -131,8 +129,7 @@ function initializeDb(dbInstance: any) {
             })
         })
     } catch (err) {
-        // ✅ REQUIRED FOR TEST COVERAGE
-        console.error('[db.initializeDb] Failed to read SQL initialization files:', err)
+        console.error(err)
         resolveDbReady()
     }
 }
