@@ -71,15 +71,31 @@ function onOpen(this: any, err: Error | null) {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
         (_err: any, row: any) => {
+
             if (!row) {
                 initializeDb(dbInstance)
-            } else if (skipDbInit) {
-                initializeDb(dbInstance)
-            } else {
-                initializeDb(dbInstance)
+                return
             }
+
+            if (skipDbInit) {
+                logSqlReadErrorIfAny()
+                resolveDbReady()
+                return
+            }
+
+            resolveDbReady()
         }
     )
+}
+
+function logSqlReadErrorIfAny() {
+    try {
+        const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database')
+        fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8')
+        fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8')
+    } catch (err) {
+        console.error(err)
+    }
 }
 
 function initializeDb(dbInstance: any) {
