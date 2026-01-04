@@ -24,16 +24,44 @@ export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = re
 const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
 const globalObj = global as any;
 
-// Initialization callback
+/**
+ * Executes DDL and default values scripts.
+ */
+export function initializeDb(dbInstance: Database) {
+    const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
+    try {
+        const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
+        const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8');
+
+        dbInstance.serialize(() => {
+            dbInstance.exec("PRAGMA foreign_keys = OFF;");
+            dbInstance.exec(ddlSQL);
+            dbInstance.exec(defaultSQL);
+            dbInstance.exec("PRAGMA foreign_keys = ON;", () => {
+                globalObj[GLOBAL_INIT_KEY] = 'done';
+                resolveDbReady();
+            });
+        });
+    } catch (err) {
+        console.error("Critical DB Initialization Error:", err);
+        globalObj[GLOBAL_INIT_KEY] = 'done';
+        resolveDbReady();
+    }
+}
+
+/**
+ * Handles the opening of the SQLite connection.
+ */
 function onOpen(this: Database, err: Error | null) {
     if (err) {
         console.error("Failed to open database:", err);
         return;
     }
 
-    // CRITICAL: Use 'this' instead of 'db' to avoid ReferenceError
+    // We use 'this' to refer to the current database instance safely.
     const dbInstance = this;
 
+    // Singleton check: avoid running DDL twice in the same process
     if (globalObj[GLOBAL_INIT_KEY]) {
         if (globalObj[GLOBAL_INIT_KEY] === 'done') resolveDbReady();
         return;
@@ -59,28 +87,10 @@ function onOpen(this: Database, err: Error | null) {
     });
 }
 
-export function initializeDb(dbInstance: Database) {
-    const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
-    try {
-        const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
-        const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8');
-
-        dbInstance.serialize(() => {
-            dbInstance.exec("PRAGMA foreign_keys = OFF;");
-            dbInstance.exec(ddlSQL);
-            dbInstance.exec(defaultSQL);
-            dbInstance.exec("PRAGMA foreign_keys = ON;", (err: any) => {
-                globalObj[GLOBAL_INIT_KEY] = 'done';
-                resolveDbReady();
-            });
-        });
-    } catch (err) {
-        globalObj[GLOBAL_INIT_KEY] = 'done';
-        resolveDbReady();
-    }
-}
-
-// Create the database instance
-const db: Database = new sqlite.Database(dbFilePath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE, onOpen);
+const db: Database = new sqlite.Database(
+    dbFilePath,
+    sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE,
+    onOpen
+);
 
 export default db;
