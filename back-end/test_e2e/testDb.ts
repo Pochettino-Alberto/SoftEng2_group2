@@ -10,19 +10,24 @@ const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true')
 export function resetTestDb() {
     if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
         try {
-            fs.unlinkSync(testDbPath) // Force removal to trigger re-init
+            fs.unlinkSync(testDbPath);
         } catch (err) {
-            console.warn('[testDb] File locked, proceeding...')
+            // Log but don't crash; the singleton logic in db.ts handles existing tables
+            console.log('[testDb] reset: file was locked or missing.');
         }
     }
 }
 
 export async function teardownTestDb(): Promise<void> {
-    const anyDb: any = db
+    const anyDb: any = db;
     if (anyDb && typeof anyDb.close === 'function') {
-        await new Promise<void>((resolve) => anyDb.close(() => resolve()))
+        await new Promise<void>((resolve) => {
+            anyDb.close(() => resolve());
+        });
     }
+
+    // Clean up temporary file
     if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
-        try { fs.unlinkSync(testDbPath) } catch (e) {}
+        try { fs.unlinkSync(testDbPath); } catch (e) {}
     }
 }
