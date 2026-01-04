@@ -40,8 +40,18 @@ describe('db unit module', () => {
     delete process.env.SKIP_DB_INIT
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks()
+
+    // ensure sqlite teardown does not leave open handles
+    try {
+      const mod = await import('../../src/dao/db')
+      if (mod?.default?.close) {
+        mod.default.close()
+      }
+    } catch {
+      // ignore
+    }
   })
 
   test('mocks sqlite and resolves dbReady', async () => {
