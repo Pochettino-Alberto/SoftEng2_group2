@@ -8,7 +8,7 @@ const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true')
     : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`));
 
 export const resetTestDb = () => {
-    // Clear global sync keys
+    // Reset singleton state
     const GLOBAL_INIT_STARTED = Symbol.for('app.db.init_started');
     const GLOBAL_READY_KEY = Symbol.for('app.db.ready_promise');
     delete (global as any)[GLOBAL_INIT_STARTED];
@@ -18,7 +18,7 @@ export const resetTestDb = () => {
         try {
             fs.unlinkSync(testDbPath);
         } catch (e) {
-            console.log('[testDb] Reset: file busy or already removed.');
+            // Ignore if file busy
         }
     }
 };

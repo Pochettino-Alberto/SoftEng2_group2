@@ -39,7 +39,6 @@ const resolveGlobalReady = () => {
 
 /**
  * Executes DDL and default values scripts.
- * Strips internal PRAGMAs to avoid constraint errors during batch execution.
  */
 export function initializeDb(dbInstance: Database) {
     const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
@@ -51,11 +50,12 @@ export function initializeDb(dbInstance: Database) {
         const cleanDefault = defaultSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
 
         dbInstance.serialize(() => {
-            dbInstance.exec("PRAGMA foreign_keys = OFF;");
-            dbInstance.exec(cleanDDL);
-            dbInstance.exec(cleanDefault);
+            // FIXED: Added error callbacks to every call to prevent unhandled 'error' events
+            dbInstance.exec("PRAGMA foreign_keys = OFF;", (err) => { if (err) console.error("DB Init FK OFF Error:", err); });
+            dbInstance.exec(cleanDDL, (err) => { if (err) console.error("DB Init DDL Error:", err); });
+            dbInstance.exec(cleanDefault, (err) => { if (err) console.error("DB Init Default Data Error (Check your SQL values):", err); });
             dbInstance.exec("PRAGMA foreign_keys = ON;", (err) => {
-                if (err) console.error("DDL Execution Error:", err);
+                if (err) console.error("DB Init FK ON Error:", err);
                 globalObj[GLOBAL_INIT_STARTED] = 'done';
                 resolveGlobalReady();
             });
@@ -73,6 +73,11 @@ function onOpen(this: Database, err: Error | null) {
         return;
     }
     const dbInstance = this;
+
+    // FIXED: Instance-level error listener prevents process crash on any unhandled DB error
+    dbInstance.on('error', (err) => {
+        console.error("Database Instance emitted unhandled error:", err.message);
+    });
 
     if (globalObj[GLOBAL_INIT_STARTED]) {
         if (globalObj[GLOBAL_INIT_STARTED] === 'done') resolveGlobalReady();

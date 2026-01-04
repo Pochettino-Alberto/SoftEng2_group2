@@ -33,15 +33,18 @@ describe('db unit module', () => {
             if (typeof params === 'function') params(null);
             if (cb) cb(null);
           }),
+          // Force it to return a row so db.ts thinks tables already exist
           get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
           exec: jest.fn((sql, cb) => cb && cb(null)),
           serialize: jest.fn(function(this: any, fn: () => void) { fn.call(this); }),
+          on: jest.fn(),
           close: jest.fn((cb) => cb && cb(null))
         };
 
+        // Delay to ensure the 'db' variable assignment in db.ts completes first
         setTimeout(() => {
           callback.call(mockInstance, null);
-        }, 0);
+        }, 10);
 
         return mockInstance;
       }
