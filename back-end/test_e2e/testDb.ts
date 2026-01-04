@@ -36,3 +36,9 @@ export const teardownTestDb = async (): Promise<void> => {
     }
     resetTestDb();
 };
+
+export const TEST_DB_ENV = {
+    NODE_ENV: "test",
+    SKIP_DB_INIT: "true",
+    TEST_DB_IN_MEMORY: "false"
+};
