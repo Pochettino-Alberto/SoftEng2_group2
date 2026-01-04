@@ -61,8 +61,13 @@ function onOpen(this: any, err: Error | null) {
 
     try {
         dbInstance.run("PRAGMA foreign_keys = ON")
-        dbInstance.run("PRAGMA journal_mode = WAL")
+
+        if (dbFilePath !== ":memory:") {
+            dbInstance.run("PRAGMA journal_mode = WAL")
+        }
+
         dbInstance.run("PRAGMA busy_timeout = 5000")
+
     } catch {}
 
     if (typeof dbInstance.get !== "function") {
