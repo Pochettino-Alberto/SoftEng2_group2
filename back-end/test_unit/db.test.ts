@@ -5,7 +5,6 @@ describe('db unit module', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    // Clear global symbols used for singleton locking
     const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
     delete (global as any)[GLOBAL_INIT_KEY];
 
@@ -27,16 +26,16 @@ describe('db unit module', () => {
       Database: function (path: any, mode: any, cb: any) {
         const callback = typeof mode === 'function' ? mode : cb;
 
-        // Setup mock instance
-        const mockInstance = {
+        // Define mockInstance as 'any' to avoid TS7022 (implicitly has type any)
+        const mockInstance: any = {
           run: jest.fn((sql, params, cb) => cb && cb(null)),
           get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
           exec: jest.fn((sql, cb) => cb && cb(null)),
-          serialize: jest.fn((fn) => fn.call(mockInstance)),
+          serialize: jest.fn(function(this: any, fn: () => void) { fn.call(this); }),
           close: jest.fn((cb) => cb && cb(null))
         };
 
-        // Use setTimeout to simulate async open and prevent TDZ
+        // Delay callback to ensure the variable 'db' is assigned in db.ts
         setTimeout(() => {
           callback.call(mockInstance, null);
         }, 0);

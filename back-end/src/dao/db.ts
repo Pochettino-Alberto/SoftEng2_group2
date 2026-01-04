@@ -1,12 +1,12 @@
 "use strict"
 
 import { Database } from "sqlite3";
-import path from 'path'
+import path from 'path';
 import fs from 'fs';
-import os from 'os'
-const sqlite = require("sqlite3")
+import os from 'os';
+const sqlite = require("sqlite3");
 
-const env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
+const env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development";
 const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
 const useMemoryDb = isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
 
@@ -18,8 +18,8 @@ const defaultPath = useMemoryDb
 
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
-let resolveDbReady!: () => void
-export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
+let resolveDbReady!: () => void;
+export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res; });
 
 const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
 const globalObj = global as any;
@@ -58,10 +58,9 @@ function onOpen(this: Database, err: Error | null) {
         return;
     }
 
-    // We use 'this' to refer to the current database instance safely.
+    // Use 'this' context provided by sqlite3 to avoid ReferenceError
     const dbInstance = this;
 
-    // Singleton check: avoid running DDL twice in the same process
     if (globalObj[GLOBAL_INIT_KEY]) {
         if (globalObj[GLOBAL_INIT_KEY] === 'done') resolveDbReady();
         return;

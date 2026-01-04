@@ -1,53 +1,42 @@
+import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import db from '../src/dao/db';
 
-describe('db unit module', () => {
-    const ORIGINAL_ENV = process.env;
+const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true')
+    ? ':memory:'
+    : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`));
 
-    beforeEach(() => {
-        jest.resetModules();
-        // Clear global symbols used for singleton locking to ensure test isolation
-        const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
-        delete (global as any)[GLOBAL_INIT_KEY];
+/**
+ * Exported helper to clear the DB state and file.
+ */
+export function resetTestDb() {
+    // Clear the singleton lock symbol from the global scope
+    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+    delete (global as any)[GLOBAL_INIT_KEY];
 
-        process.env = {
-            ...ORIGINAL_ENV,
-            NODE_ENV: 'test',
-            TEST_DB_IN_MEMORY: 'true'
-        };
-    });
+    if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
+        try {
+            fs.unlinkSync(testDbPath);
+        } catch (err) {
+            // Log if file is busy, but logic in db.ts handles existing files
+            console.log('[testDb] reset: file busy or missing.');
+        }
+    }
+}
 
-    afterEach(() => {
-        process.env = ORIGINAL_ENV;
-    });
+export async function teardownTestDb(): Promise<void> {
+    const anyDb: any = db;
+    if (anyDb && typeof anyDb.close === 'function') {
+        await new Promise<void>((resolve) => {
+            anyDb.close(() => resolve());
+        });
+    }
 
-    it('mocks sqlite and resolves dbReady', async () => {
-        jest.doMock('sqlite3', () => ({
-            OPEN_READWRITE: 1,
-            OPEN_CREATE: 2,
-            Database: function (path: any, mode: any, cb: any) {
-                const callback = typeof mode === 'function' ? mode : cb;
+    if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
+        try { fs.unlinkSync(testDbPath); } catch (e) {}
+    }
 
-                // Fix TS7022: Define mockInstance with 'any' to allow self-reference in serialize
-                const mockInstance: any = {
-                    run: jest.fn((sql, params, cb) => cb && cb(null)),
-                    get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
-                    exec: jest.fn((sql, cb) => cb && cb(null)),
-                    serialize: jest.fn(function(this: any, fn: Function) { fn.call(this); }),
-                    close: jest.fn((cb) => cb && cb(null))
-                };
-
-                // Use setTimeout to ensure the Database object is fully constructed
-                // before the callback fires, preventing "ReferenceError: db before initialization"
-                setTimeout(() => {
-                    callback.call(mockInstance, null);
-                }, 0);
-
-                return mockInstance;
-            }
-        }));
-
-        // Import the module after the mock is established
-        const { dbReady } = require('../src/dao/db');
-        await expect(dbReady).resolves.toBeUndefined();
-    });
-});
+    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+    delete (global as any)[GLOBAL_INIT_KEY];
+}
