@@ -1,4 +1,5 @@
 import path from 'path';
+import {closeDb} from "../src/dao/db";
 
 describe('db unit module', () => {
   const ORIGINAL_ENV = process.env;
@@ -51,5 +52,9 @@ describe('db unit module', () => {
 
     const { dbReady } = require('../src/dao/db');
     await expect(dbReady).resolves.toBeUndefined();
+  });
+
+  afterAll(async () => {
+    await closeDb();
   });
 });
