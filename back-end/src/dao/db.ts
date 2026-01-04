@@ -18,14 +18,28 @@ const defaultPath = useMemoryDb
 
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
-let resolveDbReady!: () => void;
-export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res; });
-
-const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+// --- Global Readiness Synchronization ---
+const GLOBAL_READY_KEY = Symbol.for('app.db.ready_promise');
+const GLOBAL_INIT_STARTED = Symbol.for('app.db.init_started');
 const globalObj = global as any;
 
+if (!globalObj[GLOBAL_READY_KEY]) {
+    let resolver: () => void;
+    globalObj[GLOBAL_READY_KEY] = new Promise<void>((res) => { resolver = res; });
+    (globalObj[GLOBAL_READY_KEY] as any)._resolve = resolver!;
+}
+
+export const dbReady: Promise<void> = globalObj[GLOBAL_READY_KEY];
+
+const resolveGlobalReady = () => {
+    if (globalObj[GLOBAL_READY_KEY] && (globalObj[GLOBAL_READY_KEY] as any)._resolve) {
+        (globalObj[GLOBAL_READY_KEY] as any)._resolve();
+    }
+};
+
 /**
- * Executes DDL and default values scripts with Foreign Keys temporarily disabled.
+ * Executes DDL and default values scripts.
+ * Strips internal PRAGMAs to avoid constraint errors during batch execution.
  */
 export function initializeDb(dbInstance: Database) {
     const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
@@ -33,7 +47,6 @@ export function initializeDb(dbInstance: Database) {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
         const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8');
 
-        // Remove any PRAGMA foreign_keys commands from the SQL files to prevent conflicts
         const cleanDDL = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
         const cleanDefault = defaultSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
 
@@ -42,37 +55,34 @@ export function initializeDb(dbInstance: Database) {
             dbInstance.exec(cleanDDL);
             dbInstance.exec(cleanDefault);
             dbInstance.exec("PRAGMA foreign_keys = ON;", (err) => {
-                if (err) console.error("Initialization SQL Error:", err);
-                globalObj[GLOBAL_INIT_KEY] = 'done';
-                resolveDbReady();
+                if (err) console.error("DDL Execution Error:", err);
+                globalObj[GLOBAL_INIT_STARTED] = 'done';
+                resolveGlobalReady();
             });
         });
     } catch (err) {
-        console.error("Initialization File Error:", err);
-        globalObj[GLOBAL_INIT_KEY] = 'done';
-        resolveDbReady();
+        console.error("DDL File Access Error:", err);
+        globalObj[GLOBAL_INIT_STARTED] = 'done';
+        resolveGlobalReady();
     }
 }
 
 function onOpen(this: Database, err: Error | null) {
     if (err) {
-        console.error("Failed to open database:", err);
+        console.error("SQLite Open Error:", err);
         return;
     }
     const dbInstance = this;
 
-    if (globalObj[GLOBAL_INIT_KEY]) {
-        if (globalObj[GLOBAL_INIT_KEY] === 'done') resolveDbReady();
+    if (globalObj[GLOBAL_INIT_STARTED]) {
+        if (globalObj[GLOBAL_INIT_STARTED] === 'done') resolveGlobalReady();
         return;
     }
-    globalObj[GLOBAL_INIT_KEY] = 'in_progress';
+    globalObj[GLOBAL_INIT_STARTED] = 'in_progress';
 
     dbInstance.serialize(() => {
-        // Prepare the environment
         dbInstance.run("PRAGMA foreign_keys = ON");
         dbInstance.run("PRAGMA journal_mode = WAL");
-
-        // Check if we need to run scripts
         dbInstance.get(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
             [],
@@ -80,8 +90,8 @@ function onOpen(this: Database, err: Error | null) {
                 if (!row) {
                     initializeDb(dbInstance);
                 } else {
-                    globalObj[GLOBAL_INIT_KEY] = 'done';
-                    resolveDbReady();
+                    globalObj[GLOBAL_INIT_STARTED] = 'done';
+                    resolveGlobalReady();
                 }
             }
         );

@@ -5,8 +5,10 @@ describe('db unit module', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
-    delete (global as any)[GLOBAL_INIT_KEY];
+    const GLOBAL_INIT_STARTED = Symbol.for('app.db.init_started');
+    const GLOBAL_READY_KEY = Symbol.for('app.db.ready_promise');
+    delete (global as any)[GLOBAL_INIT_STARTED];
+    delete (global as any)[GLOBAL_READY_KEY];
 
     process.env = {
       ...ORIGINAL_ENV,
@@ -27,14 +29,16 @@ describe('db unit module', () => {
         const callback = typeof mode === 'function' ? mode : cb;
 
         const mockInstance: any = {
-          run: jest.fn((sql, params, cb) => { if (cb) cb(null); if (typeof params === 'function') params(null); }),
-          get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })), // Prevent initializeDb call
+          run: jest.fn((sql, params, cb) => {
+            if (typeof params === 'function') params(null);
+            if (cb) cb(null);
+          }),
+          get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
           exec: jest.fn((sql, cb) => cb && cb(null)),
           serialize: jest.fn(function(this: any, fn: () => void) { fn.call(this); }),
           close: jest.fn((cb) => cb && cb(null))
         };
 
-        // Prevents TDZ ReferenceError by ensuring the db variable is assigned before callback
         setTimeout(() => {
           callback.call(mockInstance, null);
         }, 0);
