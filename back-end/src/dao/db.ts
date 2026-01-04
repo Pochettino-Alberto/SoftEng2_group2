@@ -6,145 +6,65 @@ import fs from 'fs';
 import os from 'os'
 const sqlite = require("sqlite3")
 
-let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
+// Environment detection
+const env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
+const isTestEnv = typeof process.env.NODE_ENV === 'string' && process.env.NODE_ENV.startsWith('test');
+const useMemoryDb = isTestEnv && (process.env.TEST_DB_IN_MEMORY === 'true');
 
-const isTestEnv =
-    typeof process.env.NODE_ENV === 'string' &&
-    process.env.NODE_ENV.startsWith('test');
-
-const isIntegrationTest =
-    process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
-
-const useMemoryDb =
-    isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
-
+// Determine path: E2E uses unique files per worker, Unit/Integration can use memory
 const defaultPath = useMemoryDb
     ? ':memory:'
     : (env === "test"
-        ? path.join(
-            os.tmpdir(),
-            `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`
-        )
+        ? path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`)
         : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db'));
 
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
+// Signal for tests to wait until DB is ready
 let resolveDbReady!: () => void
 export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
 
-const hasOpenFlags =
-    typeof sqlite.OPEN_READWRITE === 'number' &&
-    typeof sqlite.OPEN_CREATE === 'number'
-
-let db: Database
-
-if (hasOpenFlags) {
-    const openMode = sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE
-    db = new sqlite.Database(dbFilePath, openMode, onOpen) as Database
-} else {
-    db = new sqlite.Database(dbFilePath, onOpen) as Database
-}
-
-function sqlFilesExist(): boolean {
-    const candidates = [
-        path.resolve(__dirname, '..', '..', '..', 'database'),
-        '/usr/src/app/database',
-        '/usr/src/app/sql'
-    ]
-
-    return candidates.some(dir =>
-        fs.existsSync(path.join(dir, 'tables_DDL.sql')) &&
-        fs.existsSync(path.join(dir, 'tables_default_values.sql'))
-    )
-}
+const openMode = sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE
+const db: Database = new sqlite.Database(dbFilePath, openMode, onOpen);
 
 function onOpen(this: any, err: Error | null) {
-    if (err) {
-        throw err
-    }
-
+    if (err) throw err
     const dbInstance: any = this ?? db
 
-    if (!dbInstance) {
-        resolveDbReady()
-        return
-    }
-
+    // Basic SQLite optimization
     try {
         dbInstance.run("PRAGMA foreign_keys = ON")
         dbInstance.run("PRAGMA journal_mode = WAL")
-        dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
-    if (isIntegrationTest && sqlFilesExist()) {
-        resolveDbReady()
-        return
-    }
-
-    if (typeof dbInstance.get !== 'function') {
-        resolveDbReady()
-        return
-    }
-
+    // Check if initialization is needed
     dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        () => {
-            initializeDb(dbInstance)
+        (err: any, row: any) => {
+            if (!row) {
+                initializeDb(dbInstance)
+            } else {
+                resolveDbReady()
+            }
         }
     )
 }
 
 export function initializeDb(dbInstance: any) {
-    const candidates: string[] = []
-
-    if (process.env.DB_PATH) {
-        candidates.push('/usr/src/app/database')
-    }
-
-    candidates.push(path.resolve(__dirname, '..', '..', '..', 'database'))
-    candidates.push('/usr/src/app/sql')
-
-    let sqlDir: string | null = null
-
-    for (const cand of candidates) {
-        if (
-            fs.existsSync(path.join(cand, 'tables_DDL.sql')) &&
-            fs.existsSync(path.join(cand, 'tables_default_values.sql'))
-        ) {
-            sqlDir = cand
-            break
-        }
-    }
-
-    if (!sqlDir) {
-        sqlDir = path.resolve(__dirname, '..', '..', '..', 'database')
-    }
-
+    const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
     try {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8')
-        const defaultSQL = fs.readFileSync(
-            path.join(sqlDir, 'tables_default_values.sql'),
-            'utf8'
-        )
+        const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8')
 
-        const cleanedDDL = ddlSQL.replace(
-            /PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi,
-            ''
-        )
-
-        const finalDDL =
-            `PRAGMA foreign_keys = OFF;\n${cleanedDDL}\nPRAGMA foreign_keys = ON;`
-
-        dbInstance.exec(finalDDL, () => {
-            dbInstance.exec(defaultSQL, () => {
-                resolveDbReady()
-            })
+        dbInstance.serialize(() => {
+            dbInstance.exec("PRAGMA foreign_keys = OFF;")
+            dbInstance.exec(ddlSQL)
+            dbInstance.exec(defaultSQL)
+            dbInstance.exec("PRAGMA foreign_keys = ON;", () => resolveDbReady())
         })
     } catch (err) {
-        console.error(err)
+        console.error("DB Init Error:", err)
         resolveDbReady()
     }
 }

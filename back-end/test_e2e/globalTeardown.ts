@@ -1,3 +1,6 @@
+import { teardownTestDb } from './testDb'
+
 export default async function globalTeardown() {
-    if (!process.argv.some(a => a.includes('test_e2e'))) return
+    // This ensures the SQLite connection is closed and the temp file is unlinked
+    await teardownTestDb();
 }
