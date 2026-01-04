@@ -46,6 +46,8 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
+db.on("error", () => {})
+
 function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err

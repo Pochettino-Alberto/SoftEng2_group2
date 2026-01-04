@@ -1,20 +1,14 @@
-const path = require("path")
-const os = require("os")
-const fs = require("fs")
-
 module.exports = async () => {
     try {
-        // Force SQLite to release file locks
-        const dbFile = path.join(
-            os.tmpdir(),
-            `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`
-        )
+        const db = require("../src/db/db").default
 
-        if (fs.existsSync(dbFile)) {
-            fs.unlinkSync(dbFile)
+        if (db && typeof db.close === "function") {
+            await new Promise(resolve => {
+                db.close(() => resolve())
+            })
         }
     } catch (err) {
-        // Never fail teardown
-        console.error("Global teardown error:", err)
+        // NEVER fail teardown
+        console.error("globalTeardown cleanup error:", err)
     }
 }
