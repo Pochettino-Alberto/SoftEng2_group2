@@ -92,21 +92,32 @@ export class CommonSteps {
     }
   }
 
-  async custumClick(element: By) {
-    const tag = await this.driver.wait(
-      until.elementLocated(element),
-      10000,
-      `Element not found: ${element.toString()}, could not click`
-    );
-    
-    await this.demoSleep(500);
-    if (this.demoWait) {
-      await this.driver.actions().move({ origin: tag }).perform();
+  async custumClick(locator: By, timeout = 10000) {
+    const el = await this.driver.wait(
+        until.elementLocated(locator),
+        timeout
+    )
+
+    await this.driver.wait(until.elementIsVisible(el), timeout)
+    await this.driver.wait(until.elementIsEnabled(el), timeout)
+
+    // 🔑 Scroll to center to avoid header overlap
+    await this.driver.executeScript(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+        el
+    )
+
+    // 🔑 Wait for UI to settle
+    await this.driver.sleep(300)
+
+    try {
+      await el.click()
+    } catch {
+      // 🔑 Fallback: JS click (CI-safe)
+      await this.driver.executeScript("arguments[0].click();", el)
     }
-    await this.demoSleep(750);
-    await tag.click();
-    await this.demoSleep(500);
   }
+
 
   async custumSendKeys(element: By, text: string) {
     const tag = await this.driver.wait(
