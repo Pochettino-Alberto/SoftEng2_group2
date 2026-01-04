@@ -133,4 +133,14 @@ function initializeDb(dbInstance: any) {
     }
 }
 
+/* ✅ THIS IS THE MISSING PIECE */
+export const closeDb = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        db.close(err => {
+            if (err) reject(err)
+            else resolve()
+        })
+    })
+}
+
 export default db

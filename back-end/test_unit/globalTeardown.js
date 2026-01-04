@@ -1,9 +1,11 @@
-const db = require("../src/dao/db").default;
+const { closeDb } = require('../src/dao/db');
 
 module.exports = async () => {
-    if (db) {
-        await new Promise((resolve) => {
-            db.close(() => resolve());
-        });
+    try {
+        if (typeof closeDb === 'function') {
+            await closeDb();
+        }
+    } catch {
+        // never fail teardown
     }
 };
