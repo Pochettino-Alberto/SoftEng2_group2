@@ -7,11 +7,8 @@ const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true')
     ? ':memory:'
     : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`));
 
-/**
- * Exported helper to clear the DB state and file.
- */
-export function resetTestDb() {
-    // Clear the singleton lock symbol from the global scope
+export const resetTestDb = () => {
+    // Reset singleton state
     const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
     delete (global as any)[GLOBAL_INIT_KEY];
 
@@ -19,13 +16,12 @@ export function resetTestDb() {
         try {
             fs.unlinkSync(testDbPath);
         } catch (err) {
-            // Log if file is busy, but logic in db.ts handles existing files
-            console.log('[testDb] reset: file busy or missing.');
+            console.log('[testDb] Reset skipped: file busy or already removed.');
         }
     }
-}
+};
 
-export async function teardownTestDb(): Promise<void> {
+export const teardownTestDb = async (): Promise<void> => {
     const anyDb: any = db;
     if (anyDb && typeof anyDb.close === 'function') {
         await new Promise<void>((resolve) => {
@@ -39,4 +35,4 @@ export async function teardownTestDb(): Promise<void> {
 
     const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
     delete (global as any)[GLOBAL_INIT_KEY];
-}
+};

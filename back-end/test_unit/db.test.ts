@@ -26,16 +26,15 @@ describe('db unit module', () => {
       Database: function (path: any, mode: any, cb: any) {
         const callback = typeof mode === 'function' ? mode : cb;
 
-        // Define mockInstance as 'any' to avoid TS7022 (implicitly has type any)
         const mockInstance: any = {
-          run: jest.fn((sql, params, cb) => cb && cb(null)),
-          get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
+          run: jest.fn((sql, params, cb) => { if (cb) cb(null); if (typeof params === 'function') params(null); }),
+          get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })), // Prevent initializeDb call
           exec: jest.fn((sql, cb) => cb && cb(null)),
           serialize: jest.fn(function(this: any, fn: () => void) { fn.call(this); }),
           close: jest.fn((cb) => cb && cb(null))
         };
 
-        // Delay callback to ensure the variable 'db' is assigned in db.ts
+        // Prevents TDZ ReferenceError by ensuring the db variable is assigned before callback
         setTimeout(() => {
           callback.call(mockInstance, null);
         }, 0);

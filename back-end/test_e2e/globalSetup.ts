@@ -1,4 +1,4 @@
-import { resetTestDb } from './testDb'
+import { resetTestDb } from './testDb';
 
 export default function globalSetup() {
     resetTestDb();

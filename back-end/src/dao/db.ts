@@ -25,7 +25,7 @@ const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
 const globalObj = global as any;
 
 /**
- * Executes DDL and default values scripts.
+ * Executes DDL and default values scripts with Foreign Keys temporarily disabled.
  */
 export function initializeDb(dbInstance: Database) {
     const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
@@ -33,32 +33,32 @@ export function initializeDb(dbInstance: Database) {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
         const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8');
 
+        // Remove any PRAGMA foreign_keys commands from the SQL files to prevent conflicts
+        const cleanDDL = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
+        const cleanDefault = defaultSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
+
         dbInstance.serialize(() => {
             dbInstance.exec("PRAGMA foreign_keys = OFF;");
-            dbInstance.exec(ddlSQL);
-            dbInstance.exec(defaultSQL);
-            dbInstance.exec("PRAGMA foreign_keys = ON;", () => {
+            dbInstance.exec(cleanDDL);
+            dbInstance.exec(cleanDefault);
+            dbInstance.exec("PRAGMA foreign_keys = ON;", (err) => {
+                if (err) console.error("Initialization SQL Error:", err);
                 globalObj[GLOBAL_INIT_KEY] = 'done';
                 resolveDbReady();
             });
         });
     } catch (err) {
-        console.error("Critical DB Initialization Error:", err);
+        console.error("Initialization File Error:", err);
         globalObj[GLOBAL_INIT_KEY] = 'done';
         resolveDbReady();
     }
 }
 
-/**
- * Handles the opening of the SQLite connection.
- */
 function onOpen(this: Database, err: Error | null) {
     if (err) {
         console.error("Failed to open database:", err);
         return;
     }
-
-    // Use 'this' context provided by sqlite3 to avoid ReferenceError
     const dbInstance = this;
 
     if (globalObj[GLOBAL_INIT_KEY]) {
@@ -68,13 +68,15 @@ function onOpen(this: Database, err: Error | null) {
     globalObj[GLOBAL_INIT_KEY] = 'in_progress';
 
     dbInstance.serialize(() => {
+        // Prepare the environment
         dbInstance.run("PRAGMA foreign_keys = ON");
         dbInstance.run("PRAGMA journal_mode = WAL");
 
+        // Check if we need to run scripts
         dbInstance.get(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
             [],
-            (err: any, row: any) => {
+            (err, row) => {
                 if (!row) {
                     initializeDb(dbInstance);
                 } else {
