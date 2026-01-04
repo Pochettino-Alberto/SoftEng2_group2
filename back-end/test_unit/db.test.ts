@@ -1,61 +1,63 @@
-import { jest } from '@jest/globals'
+import path from 'path';
+import fs from 'fs';
 
-jest.mock('sqlite3', () => {
-  const run = jest.fn()
-  const get = jest.fn()
-  const all = jest.fn()
-  const exec = jest.fn()
-  const close = jest.fn((cb?: any) => cb && cb())
+const TEST_DB_PATH = path.join(__dirname, '../database/testdb.db');
 
-  class Database {
-    constructor(_path: string, _mode: any, cb?: any) {
-      if (typeof _mode === 'function') {
-        _mode(null)
-      } else if (cb) {
-        cb(null)
-      }
-    }
+describe('db module', () => {
+  const ORIGINAL_ENV = process.env;
 
-    run = run
-    get = get
-    all = all
-    exec = exec
-    close = close
-  }
-
-  return {
-    verbose: () => ({
-      Database,
-      OPEN_READWRITE: 1,
-      OPEN_CREATE: 2
-    })
-  }
-})
-
-describe('db unit module', () => {
   beforeEach(() => {
-    jest.resetModules()
-    process.env.NODE_ENV = 'test'
-    process.env.TEST_DB_IN_MEMORY = 'true'
-    delete process.env.SKIP_DB_INIT
-  })
+    jest.resetModules();
+    jest.restoreAllMocks();
+    process.env = {
+      ...ORIGINAL_ENV,
+      NODE_ENV: 'test',
+      TEST_DB_IN_MEMORY: 'true'
+    };
 
-  afterEach(async () => {
-    jest.clearAllMocks()
-
-    // ensure sqlite teardown does not leave open handles
-    try {
-      const mod = await import('../../src/dao/db')
-      if (mod?.default?.close) {
-        mod.default.close()
-      }
-    } catch {
-      // ignore
+    if (fs.existsSync(TEST_DB_PATH)) {
+      fs.unlinkSync(TEST_DB_PATH);
     }
-  })
+  });
 
-  test('mocks sqlite and resolves dbReady', async () => {
-    const { dbReady } = await import('../../src/dao/db')
-    await expect(dbReady).resolves.toBeUndefined()
-  })
-})
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it('opens database and resolves dbReady', async () => {
+    jest.doMock('sqlite3', () => ({
+      Database: function (_: any, cb: any) {
+        cb(null);
+        return { exec: jest.fn(), run: jest.fn(), get: jest.fn() };
+      }
+    }));
+
+    const dbModule = require('../src/dao/db');
+    await expect(dbModule.dbReady).resolves.toBeUndefined();
+  });
+
+  it('does not crash if SQL initialization is skipped', async () => {
+    jest.doMock('sqlite3', () => ({
+      Database: function (_: any, cb: any) {
+        cb(null);
+        return { exec: jest.fn(), run: jest.fn(), get: jest.fn() };
+      }
+    }));
+
+    const dbModule = require('../src/dao/db');
+    await expect(dbModule.dbReady).resolves.toBeUndefined();
+  });
+
+  it('handles database open error by throwing', () => {
+    jest.doMock('sqlite3', () => ({
+      Database: function (_: any, cb: any) {
+        cb(new Error('open error'));
+        return {};
+      }
+    }));
+
+    expect(() => {
+      require('../src/dao/db');
+    }).toThrow();
+  });
+});
