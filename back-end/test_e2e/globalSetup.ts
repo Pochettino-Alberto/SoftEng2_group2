@@ -1,9 +1,5 @@
-import { resetTestDB } from "../test_integration/helpers/resetTestDB";
+import { resetTestDb } from './testDb'
 
-export default async function globalSetup() {
-    process.env.NODE_ENV = "test";
-    process.env.TEST_DB_IN_MEMORY = "false";
-    process.env.SKIP_DB_INIT = "true";
-
-    await resetTestDB();
+export default function globalSetup() {
+    resetTestDb()
 }

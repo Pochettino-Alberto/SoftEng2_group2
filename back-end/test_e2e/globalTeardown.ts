@@ -1,5 +1,3 @@
-import { closeDb } from "../src/dao/db";
-
 export default async function globalTeardown() {
-    await closeDb();
+    if (!process.argv.some(a => a.includes('test_e2e'))) return
 }
