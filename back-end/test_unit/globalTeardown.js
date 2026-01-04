@@ -1,4 +1,4 @@
-const { closeDb } = require("../src/db")
+const { closeDb } = require("../src/dao/db")
 
 module.exports = async () => {
     try {
