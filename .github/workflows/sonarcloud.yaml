@@ -41,8 +41,6 @@ jobs:
         working-directory: back-end
         env:
           NODE_ENV: 'test'
-          CI_USE_FILE_DB: 'true'
-          DB_PATH: ${{ github.workspace }}/database/testdb.db
 
       # 5. Run Integration Tests
       # Questo crea il report in coverage/integration/lcov.info
