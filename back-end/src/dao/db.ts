@@ -46,22 +46,23 @@ export function initializeDb(dbInstance: Database) {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
         const defaultSQL = fs.readFileSync(path.join(sqlDir, 'tables_default_values.sql'), 'utf8');
 
+        // Strip internal PRAGMAs to prevent conflicts during batch execution
         const cleanDDL = ddlSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
         const cleanDefault = defaultSQL.replace(/PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi, '');
 
         dbInstance.serialize(() => {
-            // FIXED: Added error callbacks to every call to prevent unhandled 'error' events
-            dbInstance.exec("PRAGMA foreign_keys = OFF;", (err) => { if (err) console.error("DB Init FK OFF Error:", err); });
-            dbInstance.exec(cleanDDL, (err) => { if (err) console.error("DB Init DDL Error:", err); });
-            dbInstance.exec(cleanDefault, (err) => { if (err) console.error("DB Init Default Data Error (Check your SQL values):", err); });
+            // Provide callbacks to every call to prevent unhandled 'error' events
+            dbInstance.exec("PRAGMA foreign_keys = OFF;", (err) => { if (err) console.error("FK OFF Error:", err.message); });
+            dbInstance.exec(cleanDDL, (err) => { if (err) console.error("DDL Error:", err.message); });
+            dbInstance.exec(cleanDefault, (err) => { if (err) console.error("Seed Data Error:", err.message); });
             dbInstance.exec("PRAGMA foreign_keys = ON;", (err) => {
-                if (err) console.error("DB Init FK ON Error:", err);
+                if (err) console.error("FK ON Error:", err.message);
                 globalObj[GLOBAL_INIT_STARTED] = 'done';
                 resolveGlobalReady();
             });
         });
     } catch (err) {
-        console.error("DDL File Access Error:", err);
+        console.error("Database SQL Files missing or unreadable:", err);
         globalObj[GLOBAL_INIT_STARTED] = 'done';
         resolveGlobalReady();
     }
@@ -69,14 +70,14 @@ export function initializeDb(dbInstance: Database) {
 
 function onOpen(this: Database, err: Error | null) {
     if (err) {
-        console.error("SQLite Open Error:", err);
+        console.error("SQLite Connection Error:", err);
         return;
     }
     const dbInstance = this;
 
-    // FIXED: Instance-level error listener prevents process crash on any unhandled DB error
-    dbInstance.on('error', (err) => {
-        console.error("Database Instance emitted unhandled error:", err.message);
+    // Prevent process crash on any unhandled DB error (e.g. Constraint violations)
+    dbInstance.on('error', (dbErr) => {
+        console.error("Database emitted error event:", dbErr.message);
     });
 
     if (globalObj[GLOBAL_INIT_STARTED]) {
@@ -86,8 +87,8 @@ function onOpen(this: Database, err: Error | null) {
     globalObj[GLOBAL_INIT_STARTED] = 'in_progress';
 
     dbInstance.serialize(() => {
-        dbInstance.run("PRAGMA foreign_keys = ON");
-        dbInstance.run("PRAGMA journal_mode = WAL");
+        dbInstance.run("PRAGMA foreign_keys = ON", (err) => { if (err) console.error(err); });
+        dbInstance.run("PRAGMA journal_mode = WAL", (err) => { if (err) console.error(err); });
         dbInstance.get(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
             [],
