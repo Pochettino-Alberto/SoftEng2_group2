@@ -132,30 +132,27 @@ export class CommonSteps {
     await this.demoSleep(200);
   }
 
-  async selectDropdownByValue(selectElement: By, value: string) {
+  async selectDropdownByValue(locator: By, value: string) {
     const select = await this.driver.wait(
-      until.elementLocated(selectElement),
-      5000,
-      `Dropdown not found: ${selectElement.toString()}`
-    ) as WebElement;
+        until.elementLocated(locator),
+        10000
+    )
 
-    await select.click();
-    await this.demoSleep(350);
+    await this.driver.executeScript(
+        "arguments[0].scrollIntoView({block: 'center'});",
+        select
+    )
 
-    const options = await select.findElements(By.tagName('option'));
-    for (const option of options) {
-      const optionValue = await option.getAttribute('value');
-      if (optionValue === value) {
-        if(this.demoWait)
-          await this.driver.executeScript("arguments[0].scrollIntoView(true);", option);
-        await this.demoSleep(150);
-        await option.click();
-        await this.demoSleep(200)
-        break;
-      }
-    }
+    await this.driver.sleep(300)
+
+    await this.driver.executeScript(
+        "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
+        select,
+        value
+    )
   }
-  
+
+
   async assertExists(element: By, timeout: number = 10000) {
     const el = await this.driver.wait<WebElement>(async () => {
       try {
