@@ -8,12 +8,15 @@ const testDbPath = (process.env.TEST_DB_IN_MEMORY === 'true')
     : (process.env.DB_PATH || path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`))
 
 export function resetTestDb() {
+    // Clear the singleton lock
+    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+    delete (global as any)[GLOBAL_INIT_KEY];
+
     if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
         try {
             fs.unlinkSync(testDbPath);
         } catch (err) {
-            // Log but don't crash; the singleton logic in db.ts handles existing tables
-            console.log('[testDb] reset: file was locked or missing.');
+            console.log('[testDb] reset skip: file busy or missing');
         }
     }
 }
@@ -26,8 +29,10 @@ export async function teardownTestDb(): Promise<void> {
         });
     }
 
-    // Clean up temporary file
     if (testDbPath !== ':memory:' && fs.existsSync(testDbPath)) {
         try { fs.unlinkSync(testDbPath); } catch (e) {}
     }
+
+    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+    delete (global as any)[GLOBAL_INIT_KEY];
 }

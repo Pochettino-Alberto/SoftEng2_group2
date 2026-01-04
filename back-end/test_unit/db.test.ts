@@ -1,22 +1,47 @@
 import path from 'path';
 
 describe('db unit module', () => {
+  const ORIGINAL_ENV = process.env;
+
   beforeEach(() => {
     jest.resetModules();
-    process.env.NODE_ENV = 'test';
-    process.env.TEST_DB_IN_MEMORY = 'true';
+    // Clear global symbols used for singleton locking
+    const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
+    delete (global as any)[GLOBAL_INIT_KEY];
+
+    process.env = {
+      ...ORIGINAL_ENV,
+      NODE_ENV: 'test',
+      TEST_DB_IN_MEMORY: 'true'
+    };
+  });
+
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
   });
 
   it('mocks sqlite and resolves dbReady', async () => {
     jest.doMock('sqlite3', () => ({
-      Database: function (_: any, __: any, cb: any) {
-        const callback = typeof __ === 'function' ? __ : cb;
-        callback(null); // Simulate successful open
-        return {
-          run: jest.fn(),
-          get: jest.fn((q, p, cb) => cb(null, { name: 'users' })), // Simulate table exists
-          serialize: jest.fn((fn) => fn())
+      OPEN_READWRITE: 1,
+      OPEN_CREATE: 2,
+      Database: function (path: any, mode: any, cb: any) {
+        const callback = typeof mode === 'function' ? mode : cb;
+
+        // Setup mock instance
+        const mockInstance = {
+          run: jest.fn((sql, params, cb) => cb && cb(null)),
+          get: jest.fn((sql, params, cb) => cb(null, { name: 'users' })),
+          exec: jest.fn((sql, cb) => cb && cb(null)),
+          serialize: jest.fn((fn) => fn.call(mockInstance)),
+          close: jest.fn((cb) => cb && cb(null))
         };
+
+        // Use setTimeout to simulate async open and prevent TDZ
+        setTimeout(() => {
+          callback.call(mockInstance, null);
+        }, 0);
+
+        return mockInstance;
       }
     }));
 

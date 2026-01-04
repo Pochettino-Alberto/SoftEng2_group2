@@ -18,26 +18,23 @@ const defaultPath = useMemoryDb
 
 const dbFilePath = process.env.DB_PATH || defaultPath;
 
-// Signal for tests to wait until DB is ready
 let resolveDbReady!: () => void
 export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
 
-// Use the global object to prevent multiple initializations across Jest module resets
 const GLOBAL_INIT_KEY = Symbol.for('app.db.init_started');
 const globalObj = global as any;
 
-const db: Database = new sqlite.Database(dbFilePath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE, onOpen);
-
-function onOpen(this: any, err: Error | null) {
+// Initialization callback
+function onOpen(this: Database, err: Error | null) {
     if (err) {
         console.error("Failed to open database:", err);
         return;
     }
-    const dbInstance: any = this ?? db;
 
-    // Return early if another instance is already initializing this process's DB
+    // CRITICAL: Use 'this' instead of 'db' to avoid ReferenceError
+    const dbInstance = this;
+
     if (globalObj[GLOBAL_INIT_KEY]) {
-        // If already initialized once, resolve immediately
         if (globalObj[GLOBAL_INIT_KEY] === 'done') resolveDbReady();
         return;
     }
@@ -62,7 +59,7 @@ function onOpen(this: any, err: Error | null) {
     });
 }
 
-export function initializeDb(dbInstance: any) {
+export function initializeDb(dbInstance: Database) {
     const sqlDir = path.resolve(__dirname, '..', '..', '..', 'database');
     try {
         const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8');
@@ -73,16 +70,17 @@ export function initializeDb(dbInstance: any) {
             dbInstance.exec(ddlSQL);
             dbInstance.exec(defaultSQL);
             dbInstance.exec("PRAGMA foreign_keys = ON;", (err: any) => {
-                if (err) console.error("DDL Execution Error:", err);
                 globalObj[GLOBAL_INIT_KEY] = 'done';
                 resolveDbReady();
             });
         });
     } catch (err) {
-        console.error("DB Initialization File Error:", err);
         globalObj[GLOBAL_INIT_KEY] = 'done';
         resolveDbReady();
     }
 }
+
+// Create the database instance
+const db: Database = new sqlite.Database(dbFilePath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE, onOpen);
 
 export default db;
