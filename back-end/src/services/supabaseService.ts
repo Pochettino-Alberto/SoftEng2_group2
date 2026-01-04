@@ -3,34 +3,24 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { SupabaseFailedToUpload, SupabaseFailedToDelete } from '../errors/supabaseError';
 
-/**
- * IMPORTANT:
- * Supabase MUST be optional in test / CI / UI environments.
- * We lazily initialize the client and never throw at import-time.
- */
+// --- Environment detection ---
+const NODE_ENV = process.env.NODE_ENV;
 
+// --- Configuration ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+// UI tests must NEVER fail uploads
+const isUITest = NODE_ENV === 'test_ui';
+
+// Initialize Supabase client only if usable
 let supabase: SupabaseClient | null = null;
 
-function getSupabase(): SupabaseClient {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-        throw new SupabaseFailedToUpload(
-            'Supabase disabled in test environment: Cannot upload the provided file on supabase'
-        );
-    }
-
-    if (!supabase) {
-        supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-    }
-
-    return supabase;
+if (!isUITest && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 }
 
-/**
- * Generates a unique file path for the Supabase storage bucket.
- */
+// --- Helpers ---
 const generateFilePath = (originalName: string, directoryPath: string): string => {
     const randomString = crypto.randomBytes(6).toString('hex');
     const fileExtension = path.extname(originalName);
@@ -38,6 +28,7 @@ const generateFilePath = (originalName: string, directoryPath: string): string =
     return `${directoryPath}/${randomString}${fileExtension}`;
 };
 
+// Buckets
 export enum SupabaseBucket {
     REPORT_PHOTOS_BUCKET = 'reports'
 }
@@ -50,10 +41,22 @@ class SupabaseService {
         supabaseBucket: SupabaseBucket
     ): Promise<{ publicUrl: string; filePath: string }> {
 
-        const filePath = generateFilePath(file.originalname, directoryPath);
-        const client = getSupabase();
+        // ✅ UI TEST MODE: ALWAYS SUCCEED
+        if (isUITest) {
+            const fakePath = generateFilePath(file.originalname, directoryPath);
+            return {
+                filePath: fakePath,
+                publicUrl: `http://localhost:3001/fake-supabase/${fakePath}`
+            };
+        }
 
-        const { error } = await client.storage
+        if (!supabase) {
+            throw new SupabaseFailedToUpload('Supabase not configured');
+        }
+
+        const filePath = generateFilePath(file.originalname, directoryPath);
+
+        const { error } = await supabase.storage
             .from(supabaseBucket)
             .upload(filePath, file.buffer, {
                 contentType: file.mimetype,
@@ -61,13 +64,11 @@ class SupabaseService {
             });
 
         if (error) {
-            console.error('Supabase Upload Error:', error);
             throw new SupabaseFailedToUpload(filePath);
         }
 
-        const publicUrl = client.storage
-            .from(supabaseBucket)
-            .getPublicUrl(filePath).data.publicUrl;
+        const publicUrl =
+            supabase.storage.from(supabaseBucket).getPublicUrl(filePath).data.publicUrl;
 
         return { publicUrl, filePath };
     }
@@ -83,10 +84,11 @@ class SupabaseService {
     }
 
     async deleteFile(filePath: string, supabaseBucket: SupabaseBucket): Promise<void> {
-        if (!filePath) return;
+        if (!filePath || isUITest) return;
 
-        const client = getSupabase();
-        const { error } = await client.storage
+        if (!supabase) return;
+
+        const { error } = await supabase.storage
             .from(supabaseBucket)
             .remove([filePath]);
 
