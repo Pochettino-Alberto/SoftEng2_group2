@@ -1,42 +1,41 @@
 "use strict"
 
-import { Database } from "sqlite3";
-import path from 'path'
-import fs from 'fs';
-import os from 'os'
+import { Database } from "sqlite3"
+import path from "path"
+import fs from "fs"
+import os from "os"
+
 const sqlite = require("sqlite3")
 
-let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
+const env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
 
 const isTestEnv =
-    typeof process.env.NODE_ENV === 'string' &&
-    process.env.NODE_ENV.startsWith('test');
+    typeof process.env.NODE_ENV === "string" &&
+    process.env.NODE_ENV.startsWith("test")
 
-const isIntegrationTest =
-    process.env.NODE_ENV === 'test' &&
-    (process.env.TEST_DB_IN_MEMORY === 'true' ||
-        process.env.CI_USE_FILE_DB === 'true');
+const isE2E = process.env.TEST_DB_E2E === "true"
 
 const useMemoryDb =
-    isTestEnv && process.env.TEST_DB_IN_MEMORY === 'true';
+    isTestEnv &&
+    process.env.TEST_DB_IN_MEMORY === "true" &&
+    !isE2E
 
 const defaultPath = useMemoryDb
-    ? ':memory:'
-    : (env === "test"
-        ? path.join(
-            os.tmpdir(),
-            `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`
-        )
-        : path.resolve(__dirname, '..', '..', '..', 'database', 'database.db'));
+    ? ":memory:"
+    : isE2E
+        ? path.join(os.tmpdir(), "participium-e2e.db")
+        : env === "test"
+            ? path.join(os.tmpdir(), `testdb-${process.env.JEST_WORKER_ID || process.pid}.db`)
+            : path.resolve(__dirname, "..", "..", "..", "database", "database.db")
 
-const dbFilePath = process.env.DB_PATH || defaultPath;
+const dbFilePath = process.env.DB_PATH || defaultPath
 
 let resolveDbReady!: () => void
-export const dbReady: Promise<void> = new Promise((res) => { resolveDbReady = res })
+export const dbReady: Promise<void> = new Promise(res => { resolveDbReady = res })
 
 const hasOpenFlags =
-    typeof sqlite.OPEN_READWRITE === 'number' &&
-    typeof sqlite.OPEN_CREATE === 'number'
+    typeof sqlite.OPEN_READWRITE === "number" &&
+    typeof sqlite.OPEN_CREATE === "number"
 
 let db: Database
 
@@ -47,26 +46,12 @@ if (hasOpenFlags) {
     db = new sqlite.Database(dbFilePath, onOpen) as Database
 }
 
-function sqlFilesExist(): boolean {
-    const candidates = [
-        path.resolve(__dirname, '..', '..', '..', 'database'),
-        '/usr/src/app/database',
-        '/usr/src/app/sql'
-    ]
-
-    return candidates.some(dir =>
-        fs.existsSync(path.join(dir, 'tables_DDL.sql')) &&
-        fs.existsSync(path.join(dir, 'tables_default_values.sql'))
-    )
-}
-
 function onOpen(this: any, err: Error | null) {
     if (err) {
         throw err
     }
 
     const dbInstance: any = this ?? db
-
     if (!dbInstance) {
         resolveDbReady()
         return
@@ -78,12 +63,7 @@ function onOpen(this: any, err: Error | null) {
         dbInstance.run("PRAGMA busy_timeout = 5000")
     } catch {}
 
-    if (isIntegrationTest && sqlFilesExist()) {
-        resolveDbReady()
-        return
-    }
-
-    if (typeof dbInstance.get !== 'function') {
+    if (typeof dbInstance.get !== "function") {
         resolveDbReady()
         return
     }
@@ -91,28 +71,32 @@ function onOpen(this: any, err: Error | null) {
     dbInstance.get(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
         [],
-        () => {
-            initializeDb(dbInstance)
+        (_err: any, row: any) => {
+            if (!row) {
+                initializeDb(dbInstance)
+            } else {
+                resolveDbReady()
+            }
         }
     )
 }
 
-export function initializeDb(dbInstance: any) {
+function initializeDb(dbInstance: any) {
     const candidates: string[] = []
 
     if (process.env.DB_PATH) {
-        candidates.push('/usr/src/app/database')
+        candidates.push("/usr/src/app/database")
     }
 
-    candidates.push(path.resolve(__dirname, '..', '..', '..', 'database'))
-    candidates.push('/usr/src/app/sql')
+    candidates.push(path.resolve(__dirname, "..", "..", "..", "database"))
+    candidates.push("/usr/src/app/sql")
 
     let sqlDir: string | null = null
 
     for (const cand of candidates) {
         if (
-            fs.existsSync(path.join(cand, 'tables_DDL.sql')) &&
-            fs.existsSync(path.join(cand, 'tables_default_values.sql'))
+            fs.existsSync(path.join(cand, "tables_DDL.sql")) &&
+            fs.existsSync(path.join(cand, "tables_default_values.sql"))
         ) {
             sqlDir = cand
             break
@@ -120,19 +104,19 @@ export function initializeDb(dbInstance: any) {
     }
 
     if (!sqlDir) {
-        sqlDir = path.resolve(__dirname, '..', '..', '..', 'database')
+        sqlDir = path.resolve(__dirname, "..", "..", "..", "database")
     }
 
     try {
-        const ddlSQL = fs.readFileSync(path.join(sqlDir, 'tables_DDL.sql'), 'utf8')
+        const ddlSQL = fs.readFileSync(path.join(sqlDir, "tables_DDL.sql"), "utf8")
         const defaultSQL = fs.readFileSync(
-            path.join(sqlDir, 'tables_default_values.sql'),
-            'utf8'
+            path.join(sqlDir, "tables_default_values.sql"),
+            "utf8"
         )
 
         const cleanedDDL = ddlSQL.replace(
             /PRAGMA\s+foreign_keys\s*=\s*(ON|OFF);?/gi,
-            ''
+            ""
         )
 
         const finalDDL =
@@ -149,4 +133,4 @@ export function initializeDb(dbInstance: any) {
     }
 }
 
-export default db;
+export default db

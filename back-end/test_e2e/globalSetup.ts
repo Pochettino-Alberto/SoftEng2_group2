@@ -1,5 +1,6 @@
-import { resetTestDb } from './testDb'
+import { resetTestDB } from "./resetTestDB"
 
-export default function globalSetup() {
-    resetTestDb()
+export default async () => {
+    process.env.TEST_DB_E2E = "true"
+    await resetTestDB()
 }
