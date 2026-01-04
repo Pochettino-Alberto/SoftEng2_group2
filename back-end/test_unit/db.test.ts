@@ -28,7 +28,7 @@ describe('db module', () => {
     jest.doMock('sqlite3', () => ({
       Database: function (_: any, cb: any) {
         cb(null);
-        return { exec: jest.fn(), run: jest.fn(), get: jest.fn() };
+        return { exec: jest.fn(), run: jest.fn(), get: jest.fn(), on: jest.fn() };
       }
     }));
 
@@ -40,7 +40,7 @@ describe('db module', () => {
     jest.doMock('sqlite3', () => ({
       Database: function (_: any, cb: any) {
         cb(null);
-        return { exec: jest.fn(), run: jest.fn(), get: jest.fn() };
+        return { exec: jest.fn(), run: jest.fn(), get: jest.fn(), on: jest.fn() };
       }
     }));
 
