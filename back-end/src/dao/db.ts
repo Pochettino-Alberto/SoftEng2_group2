@@ -32,19 +32,16 @@ export const dbReady: Promise<void> = new Promise((res) => {
 });
 
 let db: Database;
+let isClosed = false;
 
 db = new sqlite3.Database(dbFilePath, (err: Error | null) => {
-    if (err) {
-        throw err;
-    }
+    if (err) throw err;
 
-    // 🔑 CRITICAL: serialize ALL operations
     db.serialize(() => {
         try {
             db.run("PRAGMA foreign_keys = ON");
             db.run("PRAGMA busy_timeout = 5000");
 
-            // WAL breaks in-memory teardown → disable for memory DB
             if (!useMemoryDb) {
                 db.run("PRAGMA journal_mode = WAL");
             }
@@ -54,7 +51,7 @@ db = new sqlite3.Database(dbFilePath, (err: Error | null) => {
     resolveDbReady();
 });
 
-function initializeDb(dbInstance: Database) {
+export function initializeDb(dbInstance: Database) {
     const candidates: string[] = [];
 
     if (process.env.DB_PATH) {
@@ -111,20 +108,16 @@ function initializeDb(dbInstance: Database) {
     }
 }
 
-// 🔑 SINGLE, SAFE CLOSE
 export function closeDb(): Promise<void> {
+    if (isClosed) return Promise.resolve();
+
+    isClosed = true;
+
     return new Promise((resolve) => {
         db.serialize(() => {
             db.close(() => resolve());
         });
     });
 }
-
-// 🔑 ABSOLUTE GUARANTEE
-process.on("exit", () => {
-    try {
-        db.close();
-    } catch {}
-});
 
 export default db;
