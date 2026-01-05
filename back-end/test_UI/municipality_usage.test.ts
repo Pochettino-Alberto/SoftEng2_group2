@@ -66,8 +66,11 @@ describe('Municipality usages: ', () => {
     const noDataPresent = await steps.driver.findElements(By.id("no-data-in-table"));
     expect(noDataPresent.length).toBe(0);
 
-    const firstRow = By.css("#report-table tbody tr:first-child");
-    await steps.custumClick(firstRow);
+    const statusNeeded = "Pending Approval"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
 
     await steps.custumClick(By.id("acceptAssignAction"));
     await steps.scrollToElementGlobal(By.id("submmitChoice"));
@@ -97,7 +100,11 @@ describe('Municipality usages: ', () => {
     
     const noData = await steps.driver.findElements(By.id("no-data-in-table"));
     expect(noData.length).toBe(0);
-    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+    const statusNeeded = "Pending Approval"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
 
     await steps.demoSleep();
     await steps.custumClick(By.id("rejectAction"));
@@ -119,8 +126,11 @@ describe('Municipality usages: ', () => {
     
     const noData = await steps.driver.findElements(By.id("no-data-in-table"));
     expect(noData.length).toBe(0);
-    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
-
+    const statusNeeded = "Assigned"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
     await steps.demoSleep();
     await steps.custumClick(By.id("assignMaintainerAction"));
     await steps.demoSleep();
