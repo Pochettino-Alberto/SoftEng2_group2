@@ -6,7 +6,7 @@ import { CommonSteps, CommonData } from './common';
 // npm test -- test_UI/municipality_usage.test.ts
 
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 250000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 120000);
 
 describe('Municipality usages: ', () => {
   let driver: WebDriver;

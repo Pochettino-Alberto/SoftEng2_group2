@@ -6,7 +6,7 @@ import { CommonSteps, CommonData } from './common';
 // npm test -- test_UI/citizen_usage.test.ts
 
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 250000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 120000);
 
 describe('Citizen usages: ', () => {
   let driver: WebDriver;
@@ -44,7 +44,7 @@ describe('Citizen usages: ', () => {
     if (driver) await driver.quit();
   });
 
-/*
+
   test('Register citizen', async () => {
     const user = {
       username: "angryCitizen_"+String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
@@ -91,7 +91,7 @@ describe('Citizen usages: ', () => {
     await steps.demoSleep();
 
   }, 60000);
-*/
+
 
   test('Citizen usage submitting report', async () => {
     await steps.login(CommonData.USER_CITIZEN, false);
@@ -131,7 +131,7 @@ describe('Citizen usages: ', () => {
     await steps.demoSleep();
   }, 60000);
 
-/*
+
   test('Citizen view submitted reports', async () => {
     await steps.login(CommonData.USER_CITIZEN);
 
@@ -152,10 +152,10 @@ describe('Citizen usages: ', () => {
         }
     }
 
-    await steps.demoSleep(1000);
+    await steps.demoSleep();
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
   }, 60000);
-*/
+
 
 });

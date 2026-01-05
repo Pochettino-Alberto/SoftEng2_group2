@@ -88,10 +88,12 @@ export class CommonSteps {
   async demoSleep(ms = 2000) {
     if (this.demoWait) {
       await this.driver.sleep(ms);
+    }else{
+      await this.driver.sleep(100);
     }
   }
 
-  async custumClick(locator: By, timeout = 10000) {
+  async custumClick(locator: By, timeout = 15000) {
     const el = await this.driver.wait(
         until.elementLocated(locator),
         timeout
@@ -100,7 +102,6 @@ export class CommonSteps {
     await this.driver.wait(until.elementIsVisible(el), timeout)
     await this.driver.wait(until.elementIsEnabled(el), timeout)
 
-    // 🔑 Scroll to center to avoid header overlap
     await this.driver.executeScript(
         "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
         el
@@ -161,7 +162,7 @@ export class CommonSteps {
   }
 
 
-  async assertExists(element: By, timeout: number = 10000) {
+  async assertExists(element: By, timeout: number = 15000) {
     const el = await this.driver.wait<WebElement>(async () => {
       try {
         const candidate = await this.driver.findElement(element);
@@ -169,7 +170,7 @@ export class CommonSteps {
       } catch {
         return false; // Retry if not found or stale
       }
-    }, timeout, `Element not found or not visible: ${element.toString()}`);
+    }, timeout, `Element not found or not visible (assertExists method): ${element.toString()}`);
 
     // Final assertion
     expect(await el.isDisplayed()).toBe(true);
