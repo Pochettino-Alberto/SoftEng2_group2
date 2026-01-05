@@ -44,7 +44,22 @@ describe('Municipality usages: ', () => {
     if (driver) await driver.quit();
   });
 
-  
+  afterEach(async () => {
+    try {
+      const logoutBtn = await driver.findElements(By.id("logoutBtn"));
+      if (logoutBtn.length > 0) {
+        await steps.demoSleep();
+        await steps.custumClick(By.id("logoutBtn"));
+        await steps.demoSleep();
+      }
+    } catch (error) {
+      console.log("UI Logout failed or was blocked. Forcing session clear...", error);
+    } finally {
+      await driver.manage().deleteAllCookies();
+      await driver.executeScript('window.localStorage.clear(); window.sessionStorage.clear();');
+    }
+  });
+
   test('Accept report', async () => {
     await steps.login(CommonData.USER_MUNICIPAL_PUBLIC_RELATIONS_OFFICER);
     await steps.assertExists(By.id("report-table"));
@@ -73,9 +88,6 @@ describe('Municipality usages: ', () => {
     await steps.demoSleep();
     await steps.selectDropdownByValue(By.id("status-filter"), "all");
     await steps.demoSleep();
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
   }, 60000);
       
 
@@ -98,10 +110,6 @@ describe('Municipality usages: ', () => {
 
     await steps.demoSleep();
     await steps.selectDropdownByValue(By.id("status-filter"), "all");
-
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
   }, 60000);
 
 
@@ -133,10 +141,6 @@ describe('Municipality usages: ', () => {
 
     await steps.demoSleep();
     await steps.selectDropdownByValue(By.id("status-filter"), "all");
-
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
     
   }, 60000);
 
@@ -162,10 +166,6 @@ describe('Municipality usages: ', () => {
     
     await steps.assertExists(By.id('toast_message_success'));
     
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
-    
   }, 60000);
 
 
@@ -178,9 +178,6 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(By.css("#report-table tbody tr:first-child"));
 
     await steps.custumClick(By.id("markResolved"));
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
     
   }, 60000);
 

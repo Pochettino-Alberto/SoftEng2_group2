@@ -44,6 +44,23 @@ describe('Citizen usages: ', () => {
     if (driver) await driver.quit();
   });
 
+  
+  afterEach(async () => {
+    try {
+      const logoutBtn = await driver.findElements(By.id("logoutBtn"));
+      if (logoutBtn.length > 0) {
+        await steps.demoSleep();
+        await steps.custumClick(By.id("logoutBtn"));
+        await steps.demoSleep();
+      }
+    } catch (error) {
+      console.log("UI Logout failed or was blocked. Forcing session clear...", error);
+    } finally {
+      await driver.manage().deleteAllCookies();
+      await driver.executeScript('window.localStorage.clear(); window.sessionStorage.clear();');
+    }
+  });
+
 
   test('Register citizen', async () => {
     const user = {
@@ -86,10 +103,6 @@ describe('Citizen usages: ', () => {
     await steps.custumClick(By.id('registerBtnSubmit'));
     await steps.scrollToTop();
 
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
-
   }, 60000);
 
 
@@ -126,9 +139,6 @@ describe('Citizen usages: ', () => {
     await steps.assertExists(By.id('toast_message_success'));
     await steps.scrollToTop();
 
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
   }, 60000);
 
 
@@ -152,9 +162,6 @@ describe('Citizen usages: ', () => {
         }
     }
 
-    await steps.demoSleep();
-    await steps.custumClick(By.id("logoutBtn"));
-    await steps.demoSleep();
   }, 60000);
 
 
