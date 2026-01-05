@@ -122,6 +122,7 @@ describe('Citizen usages: ', () => {
       await steps.moveMap(By.id('mapReport'), deltaX, deltaY);
     }
     await steps.clickRandomInMiddle('clickable-report-marker');
+    await steps.assertExists(By.id('scrollableFormSubmitReport'));
     await steps.selectDropdownByValue(By.id('reportType'), '3');
     await steps.custumSendKeys(By.id('title'), 'Sewer Issue in Downtown');
     await steps.custumSendKeys(By.id('description'), 'Sewer leacking in Downtown');

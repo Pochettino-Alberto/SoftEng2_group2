@@ -183,24 +183,36 @@ export class CommonSteps {
     });
 
     const { width, height } = size!;
-    let x = Math.floor(width / 2 + (Math.random() * 50 - 25));
-    let y = Math.floor(height / 2 + (Math.random() * 50 - 25));
+    let x = Math.floor(width / 2 + (Math.random() * 40 - 20));
+    let y = Math.floor(height / 2 + (Math.random() * 40 - 20));
 
     if (avoidClass !== "") {
         let attempts = 0;
         let isBlocked = true;
 
         while (isBlocked && attempts < 20) {
-            isBlocked = await this.driver.executeScript<boolean>((targetX: number, targetY: number, className: string) => {
+            isBlocked = await this.driver.executeScript<boolean>((targetX:number, targetY:number, className:string) => {
                 const element = document.elementFromPoint(targetX, targetY);
                 return element ? !!element.closest(`.${className}`) : false;
             }, x, y, avoidClass);
 
             if (isBlocked) {
-                // Shift coordinates to search for a clear spot
-                x += 50; 
+                // Generate a random jump between -50 and +50 for both axes
+                const shiftX = Math.floor(Math.random() * 100 - 50);
+                const shiftY = Math.floor(Math.random() * 100 - 50);
+                
+                x += shiftX;
+                y += shiftY;
+
+                x = Math.max(10, Math.min(width - 10, x));
+                y = Math.max(10, Math.min(height - 10, y));
+                
                 attempts++;
             }
+        }
+        
+        if (isBlocked) {
+            console.warn(`Could not find a clear spot after ${attempts} attempts.`);
         }
     }
 
