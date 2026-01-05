@@ -662,7 +662,7 @@ const ReportDetail: React.FC = () => {
                     </div>
                 )}
 
-                {isMaintainer && (report.status === 'Assigned' || report.status === 'In Progress') && (
+                {isMaintainer && (report.status === 'Assigned' || report.status  === 'Suspended' || report.status === 'In Progress' ) && (
                     <div className="mt-6 pt-4 border-t border-gray-200">
                         <h4 className="font-semibold mb-3">Update Work Progress</h4>
                         <div className="flex gap-3">
@@ -675,14 +675,37 @@ const ReportDetail: React.FC = () => {
                                     Start Work
                                 </Button>
                             )}
-                            <Button
-                                id="markResolved"
-                                onClick={() => handleMaintainerStatusUpdate('Resolved')}
-                                style={{ backgroundColor: '#10B981' }}
-                                disabled={loading}
-                            >
-                                Mark as Resolved
-                            </Button>
+                            {report.status === 'Suspended' ? (
+                                <Button
+                                    id="markInProgress"
+                                    onClick={() => handleMaintainerStatusUpdate('In Progress')}
+                                    style={{ backgroundColor: '#3B82F6' }}
+                                    disabled={loading}
+                                >
+                                    Mark as In progress
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        id="markResolved"
+                                        onClick={() => handleMaintainerStatusUpdate('Resolved')}
+                                        style={{ backgroundColor: '#10B981' }}
+                                        disabled={loading}
+                                    >
+                                        Mark as Resolved
+                                    </Button>
+                                    
+                                    <Button
+                                        id="markSuspended"
+                                        onClick={() => handleMaintainerStatusUpdate('Suspended')}
+                                        style={{ backgroundColor: '#f59e0b' }}
+                                        disabled={loading}
+                                    >
+                                        Mark as In Suspended
+                                    </Button>
+                                </>
+                            )}
+                            
                         </div>
                     </div>
                 )}

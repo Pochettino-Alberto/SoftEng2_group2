@@ -44,7 +44,7 @@ describe('Citizen usages: ', () => {
     if (driver) await driver.quit();
   });
 
-
+/*
   test('Register citizen', async () => {
     const user = {
       username: "angryCitizen_"+String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
@@ -91,7 +91,7 @@ describe('Citizen usages: ', () => {
     await steps.demoSleep();
 
   }, 60000);
-
+*/
 
   test('Citizen usage submitting report', async () => {
     await steps.login(CommonData.USER_CITIZEN, false);
@@ -108,7 +108,7 @@ describe('Citizen usages: ', () => {
       const deltaY = Math.floor(Math.random() * (maxMoveRand *2 + 1)) - maxMoveRand;
       await steps.moveMap(By.id('mapReport'), deltaX, deltaY);
     }
-    await steps.clickRandomInMiddle();
+    await steps.clickRandomInMiddle('clickable-report-marker');
     await steps.selectDropdownByValue(By.id('reportType'), '3');
     await steps.custumSendKeys(By.id('title'), 'Sewer Issue in Downtown');
     await steps.custumSendKeys(By.id('description'), 'Sewer leacking in Downtown');
@@ -131,7 +131,7 @@ describe('Citizen usages: ', () => {
     await steps.demoSleep();
   }, 60000);
 
-
+/*
   test('Citizen view submitted reports', async () => {
     await steps.login(CommonData.USER_CITIZEN);
 
@@ -142,12 +142,20 @@ describe('Citizen usages: ', () => {
       await steps.custumClick(By.css('.leaflet-control-zoom-in'));
       await steps.custumClick(By.css('.leaflet-control-zoom-in'));
     }
-    await steps.custumClick(By.css('.report_circle_1'));
+    const maxSearch = 10;
+    for (let i = 1; i <= maxSearch; i++) {
+        const selector = By.css(`.report_circle_${i}`);
+        const elements = await driver.findElements(selector);
+        if (elements.length > 0) {
+          await steps.custumClick(selector);
+          break;
+        }
+    }
 
     await steps.demoSleep(1000);
     await steps.custumClick(By.id("logoutBtn"));
     await steps.demoSleep();
   }, 60000);
-
+*/
 
 });

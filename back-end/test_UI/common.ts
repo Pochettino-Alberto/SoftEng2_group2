@@ -1,5 +1,4 @@
 import { WebDriver, until, By, WebElement } from 'selenium-webdriver';
-
 // for all 'npm run test_ui'
 
 // npm test -- test_UI/citizen_usage.test.ts
@@ -143,13 +142,22 @@ export class CommonSteps {
         select
     )
 
-    await this.driver.sleep(300)
+    await this.demoSleep(400)
 
     await this.driver.executeScript(
-        "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
+        `
+        const select = arguments[0];
+        const valueToSet = arguments[1];
+        
+        select.value = valueToSet;
+        
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        `,
         select,
         value
     )
+    await this.demoSleep(200)
   }
 
 
@@ -168,17 +176,34 @@ export class CommonSteps {
   }
 
 
-  async clickRandomInMiddle() {
+  async clickRandomInMiddle(avoidClass: string = "") {
     const size = await this.driver.executeScript<{ width: number; height: number }>(() => {
       return { width: window.innerWidth, height: window.innerHeight };
     });
 
-    const { width, height } = size!; // non-null assertion
+    const { width, height } = size!;
+    let x = Math.floor(width / 2 + (Math.random() * 50 - 25));
+    let y = Math.floor(height / 2 + (Math.random() * 50 - 25));
+
+    if (avoidClass !== "") {
+        let attempts = 0;
+        let isBlocked = true;
+
+        while (isBlocked && attempts < 20) {
+            isBlocked = await this.driver.executeScript<boolean>((targetX: number, targetY: number, className: string) => {
+                const element = document.elementFromPoint(targetX, targetY);
+                return element ? !!element.closest(`.${className}`) : false;
+            }, x, y, avoidClass);
+
+            if (isBlocked) {
+                // Shift coordinates to search for a clear spot
+                x += 50; 
+                attempts++;
+            }
+        }
+    }
 
     const actions = this.driver.actions({ bridge: true });
-    const x = Math.floor(width / 2 + (Math.random() * 50 - 25)); // +/- 10px jitter
-    const y = Math.floor(height / 2 + (Math.random() * 50 - 25));
-
     await this.demoSleep();
     await actions.move({ x, y }).click().perform();
     await this.demoSleep();

@@ -502,3 +502,25 @@ VALUES
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
 VALUES ((SELECT MAX(id) FROM reports), 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+
+
+-- ===========================
+-- REPORT 19 — private_safety_hazard
+-- ===========================
+INSERT INTO reports
+(category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, 
+ title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
+VALUES
+(5, 
+ NULL,
+ NULL, 
+ NULL, 
+ NULL, 
+ NULL, 
+ 'Sensitive: Illegal Dumping behind Private Property', 
+ 'Someone is dumping hazardous materials behind the warehouse. I wish to remain anonymous as I fear retaliation.',
+ 0,
+ 45.081200, 7.698500, 'Pending Approval', NULL, '2026-01-02', '2026-01-02');
+
+INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
+VALUES ((SELECT MAX(id) FROM reports), 1, '4/7/220520f56738.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/220520f56738.jpg');

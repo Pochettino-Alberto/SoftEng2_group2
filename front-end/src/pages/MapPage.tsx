@@ -190,6 +190,7 @@ const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedRepo
           key={idx}
           position={[cluster.lat, cluster.lng]}
           icon={L.icon({
+            className: 'clickable-report-marker',
             iconUrl: cluster.isCluster && cluster.reports.length > 1 
               ? 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="%233b82f6" stroke="white" stroke-width="2"/><text x="20" y="24" text-anchor="middle" font-size="14" font-weight="bold" fill="white">' + cluster.reports.length + '</text></svg>'
               : icon,

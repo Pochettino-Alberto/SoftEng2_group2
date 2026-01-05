@@ -11,6 +11,16 @@ interface CommentsPanelProps {
   onClose?: () => void
 }
 
+const formatCommentDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  
+  return `${hours}:${minutes} ${day}/${month}`;
+};
+
 const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
   const { user } = useAuth()
   const [comments, setComments] = useState<ReportComment[]>([])
@@ -137,12 +147,18 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({ reportId, onClose }) => {
             <Card key={comment.id} className="p-3 bg-gray-50">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
-                  <div className="font-semibold text-sm text-gray-900">
-                    {user && user.id === comment.commenter_id ? 'You' : (
-                      (comment as any).userdata ? 
-                        `${(comment as any).userdata.first_name} ${(comment as any).userdata.last_name}` 
-                        : `User ${comment.commenter_id}`
-                    )}
+                  <div className="flex items-center gap-2"> {/* Added Flex container */}
+                    <div className="font-semibold text-sm text-gray-900">
+                      {user && user.id === comment.commenter_id ? 'You' : (
+                        (comment as any).userdata ? 
+                          `${(comment as any).userdata.first_name} ${(comment as any).userdata.last_name}` 
+                          : `User ${comment.commenter_id}`
+                      )}
+                    </div>
+                    {/* --- TIMESTAMP VIEW ADDED HERE --- */}
+                    <span className="text-[10px] text-gray-400 font-normal">
+                      {formatCommentDate(comment.updatedAt)}
+                    </span>
                   </div>
                 </div>
                 {canEditOrDelete(comment) && (
