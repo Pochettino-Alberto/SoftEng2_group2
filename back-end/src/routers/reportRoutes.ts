@@ -329,18 +329,13 @@ class ReportRoutes {
             express.urlencoded({ limit: SERVER_CONFIG.MAX_URL_SIZE, extended: SERVER_CONFIG.USE_QS_LIBRARY_FOR_URL_ENCODING }),
             this.authService.hasRoleMaintainer,
             (req: any, res: any, next: any) => {
-                try {
-                    const maintainerId = req.user.id;
-                    this.controller.getReportsAssignedToMaintainer(maintainerId)
-                        .then((reports: Report[]) => res.status(200).json(reports))
-                        .catch((err: any) => {
-                            console.error('[GET /reports/assigned-to-maintainer] controller error:', err);
-                            next(err);
-                        });
-                } catch (err) {
-                    console.error('[GET /reports/assigned-to-maintainer] unexpected error:', err);
-                    next(err);
-                }
+                const maintainerId = req.user.id;
+                this.controller.getReportsAssignedToMaintainer(maintainerId)
+                    .then((reports: Report[]) => res.status(200).json(reports))
+                    .catch((err: any) => {
+                        console.error('[GET /reports/assigned-to-maintainer] controller error:', err);
+                        next(err);
+                    });
             }
         );
 

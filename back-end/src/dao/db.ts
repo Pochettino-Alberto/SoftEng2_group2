@@ -142,19 +142,12 @@ export const closeDb = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         try {
             // 🔑 REQUIRED for WAL mode
-            db.exec("PRAGMA wal_checkpoint(TRUNCATE);", err => {
-                if (err) {
-                    // even if checkpoint fails, still try to close
-                    db.close(closeErr => {
-                        if (closeErr) reject(closeErr)
-                        else resolve()
-                    })
-                } else {
-                    db.close(closeErr => {
-                        if (closeErr) reject(closeErr)
-                        else resolve()
-                    })
-                }
+            db.exec("PRAGMA wal_checkpoint(TRUNCATE);", _err => {
+                // even if checkpoint fails, still try to close
+                db.close(closeErr => {
+                    if (closeErr) reject(closeErr)
+                    else resolve()
+                })
             })
         } catch (e) {
             // last-resort close
