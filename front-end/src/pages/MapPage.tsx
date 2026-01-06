@@ -15,6 +15,8 @@ import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import FileInput from '../components/FileInput';
 import { reverseGeocode } from '../utils';
+import { useAuth } from '../context/AuthContext';
+import { UserType } from '../types/user';
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -42,12 +44,12 @@ interface Cluster {
 
 const clusterReports = (reports: Report[], zoomLevel: number): Cluster[] => {
   if (!reports || reports.length === 0) return [];
-  
+
 
   const validReports = reports.filter(r => r.location && typeof r.location.lat === 'number' && typeof r.location.lng === 'number');
-  
+
   if (validReports.length === 0) return [];
-  
+
   if (zoomLevel >= 15) {
     return validReports.map(report => ({
       lat: report.location.lat,
@@ -56,45 +58,45 @@ const clusterReports = (reports: Report[], zoomLevel: number): Cluster[] => {
       isCluster: false
     }));
   }
-  
+
   let radiusInDegrees: number;
   if (zoomLevel >= 14) {
-    radiusInDegrees = 0.002; 
+    radiusInDegrees = 0.002;
   } else if (zoomLevel >= 13) {
     radiusInDegrees = 0.005;
   } else if (zoomLevel >= 12) {
-    radiusInDegrees = 0.01; 
+    radiusInDegrees = 0.01;
   } else if (zoomLevel >= 11) {
-    radiusInDegrees = 0.02; 
+    radiusInDegrees = 0.02;
   } else {
-    radiusInDegrees = 0.05; 
+    radiusInDegrees = 0.05;
   }
-  
+
   const clusters: Cluster[] = [];
   const processed = new Set<number>();
-  
+
   validReports.forEach((report, index) => {
     if (processed.has(index)) return;
-    
+
     const nearbyReports = [report];
     processed.add(index);
-    
+
     validReports.forEach((otherReport, otherIndex) => {
       if (processed.has(otherIndex)) return;
-      
+
       const latDiff = Math.abs(report.location.lat - otherReport.location.lat);
       const lngDiff = Math.abs(report.location.lng - otherReport.location.lng);
-      
+
       if (latDiff <= radiusInDegrees && lngDiff <= radiusInDegrees) {
         nearbyReports.push(otherReport);
         processed.add(otherIndex);
       }
     });
-    
+
     if (nearbyReports.length > 1) {
       const avgLat = nearbyReports.reduce((sum, r) => sum + r.location.lat, 0) / nearbyReports.length;
       const avgLng = nearbyReports.reduce((sum, r) => sum + r.location.lng, 0) / nearbyReports.length;
-      
+
       clusters.push({
         lat: avgLat,
         lng: avgLng,
@@ -110,32 +112,35 @@ const clusterReports = (reports: Report[], zoomLevel: number): Cluster[] => {
       });
     }
   });
-  
+
   return clusters;
 };
 
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'Resolved':
-      return '#10b981'; 
+      return '#10b981';
     case 'In Progress':
-      return '#3b82f6'; 
+      return '#3b82f6';
     case 'Assigned':
       return '#3b82f6';
     case 'Suspended':
-      return '#f59e0b'; 
+      return '#f59e0b';
     default:
-      return '#6b7280'; 
+      return '#6b7280';
   }
 };
 
-const LocationMarker: React.FC<{ 
-  onLocationSelect: (loc: Location | null) => void; 
+const LocationMarker: React.FC<{
+  canCreateReport: boolean;
+  onLocationSelect: (loc: Location | null) => void;
   selectedLocation: Location | null;
   onBoundaryWarning: () => void;
-}> = ({ onLocationSelect, selectedLocation, onBoundaryWarning }) => {
+}> = ({ canCreateReport, onLocationSelect, selectedLocation, onBoundaryWarning }) => {
   useMapEvents({
     click(e) {
+      if (!canCreateReport) return;
+
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
 
@@ -160,7 +165,7 @@ const LocationMarker: React.FC<{
   });
 
   return selectedLocation ? (
-    <Marker 
+    <Marker
       position={[selectedLocation.lat, selectedLocation.lng]}
       icon={L.icon({
         iconUrl: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41"><path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 12.5 12.5 28.3 12.5 28.3s12.5-15.8 12.5-28.3C25 5.6 19.4 0 12.5 0z" fill="%23999999"/><circle cx="12.5" cy="12.5" r="4" fill="white"/></svg>',
@@ -174,15 +179,15 @@ const LocationMarker: React.FC<{
 const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedReports }) => {
   const map = useMap();
   const [zoom, setZoom] = useState(12);
-  
+
   useMapEvents({
     zoomend() {
       setZoom(map.getZoom());
     }
   });
-  
+
   const clusters = clusterReports(approvedReports, zoom);
-  
+
   return (
     <>
       {clusters.map((cluster, idx) => (
@@ -191,7 +196,7 @@ const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedRepo
           position={[cluster.lat, cluster.lng]}
           icon={L.icon({
             className: 'clickable-report-marker',
-            iconUrl: cluster.isCluster && cluster.reports.length > 1 
+            iconUrl: cluster.isCluster && cluster.reports.length > 1
               ? 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="%233b82f6" stroke="white" stroke-width="2"/><text x="20" y="24" text-anchor="middle" font-size="14" font-weight="bold" fill="white">' + cluster.reports.length + '</text></svg>'
               : icon,
             iconSize: cluster.isCluster && cluster.reports.length > 1 ? [40, 40] : [25, 41],
@@ -214,7 +219,7 @@ const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedRepo
                           {report.status}
                         </span>
                         <span className="text-gray-500">
-                          {report.is_public 
+                          {report.is_public
                             ? `${report.reporter?.first_name || ''} ${report.reporter?.last_name || ''}`.trim()
                             : 'Anonymous'}
                         </span>
@@ -236,7 +241,7 @@ const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedRepo
                 <p className="text-sm text-gray-700 mb-3">{cluster.reports[0].description}</p>
                 <div className="mb-3 text-sm">
                   <p><strong>Category:</strong> {cluster.reports[0].category?.name || 'Unknown'}</p>
-                  <p><strong>Reporter:</strong> {cluster.reports[0].is_public 
+                  <p><strong>Reporter:</strong> {cluster.reports[0].is_public
                     ? `${cluster.reports[0].reporter?.first_name || ''} ${cluster.reports[0].reporter?.last_name || ''}`.trim()
                     : 'Anonymous'}</p>
                   <p className="text-xs text-gray-500"><strong>Updated:</strong> {new Date(cluster.reports[0].updatedAt).toLocaleDateString()}</p>
@@ -271,6 +276,9 @@ const MapZoomListener: React.FC<{ approvedReports: Report[] }> = ({ approvedRepo
 };
 
 const MapPage: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
+  const canCreateReport = isAuthenticated && user?.user_type === UserType.CITIZEN;
+
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -288,7 +296,7 @@ const MapPage: React.FC = () => {
   const formScrollRef = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
-  
+
   // New state for approved reports display
   const [approvedReports, setApprovedReports] = useState<Report[]>([]);
 
@@ -400,7 +408,7 @@ const MapPage: React.FC = () => {
     return error == '';
   }
 
-  
+
   const handleFileChange = (files: File[]) => {
     setPhotos(files);
   };
@@ -450,7 +458,7 @@ const MapPage: React.FC = () => {
         message={'Location must be inside the city of Torino!'}
         type={'warning'}
       />
-     
+
       <Modal
         isOpen={formWarning !== ''}
         onClose={() => setFormWarning('')}
@@ -466,10 +474,10 @@ const MapPage: React.FC = () => {
         message={formError}
         type={'error'}
       />
-  
+
       <Toast message={formSuccessMessage} type={'success'} onDismiss={() => setFormSuccessMessage('')} />
 
-    
+
       {isUploading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
           <div className="bg-white rounded-lg p-6 flex items-center gap-4 shadow-lg">
@@ -487,18 +495,18 @@ const MapPage: React.FC = () => {
 
       <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] w-full">
 
-       
+
         {isFormVisible && selectedLocation && (
   <div className="relative flex flex-col md:w-1/3 md:h-full w-full max-h-[60vh] md:max-h-none border-t md:border-t-0 md:border-r border-gray-200 bg-gray-50">
-        
+
           <div
             ref={formScrollRef}
             id="scrollableFormSubmitReport"
             onScroll={handleFormScroll}
-   
+
             className={`transition-all duration-500 ease-in-out overflow-y-auto relative p-6 md:h-full`}
         >
-      
+
           {isFormVisible && selectedLocation && (
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -509,7 +517,7 @@ const MapPage: React.FC = () => {
                   className="text-gray-500 hover:text-gray-900 transition-colors"
                   title="Close Form"
                 >
-        
+
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -519,7 +527,7 @@ const MapPage: React.FC = () => {
               </p>
               <form onSubmit={handleCreateReport} className="space-y-4">
 
-               
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Latitude</label>
                   <input
@@ -530,7 +538,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-        
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Longitude</label>
                   <input
@@ -541,7 +549,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-          
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Address</label>
                   <input
@@ -552,7 +560,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-             
+
                 <div>
                   <label htmlFor="reportType" className="block text-sm font-medium text-gray-700">Report Type</label>
                   <select
@@ -577,7 +585,7 @@ const MapPage: React.FC = () => {
                   </select>
                 </div>
 
-             
+
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
                   <input
@@ -590,7 +598,7 @@ const MapPage: React.FC = () => {
                   />
                 </div>
 
-            
+
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
@@ -601,7 +609,7 @@ const MapPage: React.FC = () => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
                   />
                 </div>
-            
+
                 <label htmlFor="anonymous" className="flex items-center space-x-2 cursor-pointer group">
                   <div className="relative flex items-center h-5">
                     <input
@@ -609,11 +617,11 @@ const MapPage: React.FC = () => {
                       type='checkbox'
                       checked={isAnonymous}
                       onChange={() => setIsAnonymous(!isAnonymous)}
-                 
+
                       className="hidden"
                     />
 
-              
+
                     <div
                       className={`w-5 h-5 rounded-md border-2 transition-all duration-200 
                 ${isAnonymous
@@ -622,7 +630,7 @@ const MapPage: React.FC = () => {
                         }
                 flex items-center justify-center`}
                     >
-                      
+
                       {isAnonymous && (
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -639,8 +647,8 @@ const MapPage: React.FC = () => {
                 <FileInput
                   name="photos"
                   accept="image/*"
-                  multiple={true} 
-                  maxFiles={3} 
+                  multiple={true}
+                  maxFiles={3}
                   onChange={handleFileChange}
                 />
 
@@ -666,7 +674,7 @@ const MapPage: React.FC = () => {
             </div>
           )}
           </div>
-          
+
           {/* Scroll indicator - at bottom of form container, hidden when scrolled to bottom */}
           {!isScrolledToBottom && isFormVisible && selectedLocation && (
             <button
@@ -753,6 +761,7 @@ const MapPage: React.FC = () => {
             {approvedReports && approvedReports.length > 0 && <MapZoomListener approvedReports={approvedReports} />}
 
             <LocationMarker
+              canCreateReport={canCreateReport}
               onLocationSelect={handleLocationSelect}
               selectedLocation={selectedLocation}
               onBoundaryWarning={() => setBoundaryWarning(true)}

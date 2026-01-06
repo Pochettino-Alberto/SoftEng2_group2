@@ -45,7 +45,9 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-
+          <Link to="/map" className="text-sm font-medium hover:text-[#5199CD]">
+              Map
+            </Link>
             {isAuthenticated ? (
               <>
                 <Link 
@@ -114,6 +116,21 @@ const Navbar: React.FC = () => {
         <div className="md:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
 
+            <Link
+              to="/map"
+              style={{ color: '#5199CD' }}
+              className={`
+                px-3 py-2 rounded-md text-sm font-medium transition-colors
+                ${location.pathname === '/map'
+                  ? "opacity-40 pointer-events-none cursor-not-allowed"
+                  : "hover:opacity-80 text-[#5199CD]"
+                }
+              `}
+              onClick={closeMenu}
+            >
+              Map
+            </Link>
+
             {isAuthenticated ? (
               <>
 
@@ -128,6 +145,7 @@ const Navbar: React.FC = () => {
                       : "hover:opacity-80 text-[#5199CD]"
                     }
                   `}
+                  onClick={closeMenu}
                 >
                   {getProfileButtonLabel()}
                 </Link>

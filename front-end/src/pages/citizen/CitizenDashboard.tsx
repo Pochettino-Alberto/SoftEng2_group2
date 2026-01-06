@@ -1,29 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/Card';
 import { Link } from 'react-router-dom';
-import ReportsMap from '../../components/Map';
-import { reportAPI } from '../../api/reports';
-import type { Report } from '../../types/report';
 
 const CitizenDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [approvedReports, setApprovedReports] = useState<Report[]>([]);
-
-  useEffect(() => {
-    const fetchApprovedReports = async () => {
-      try {
-        const approvedStatuses = ["Assigned", "In Progress", "Suspended"]
-        const reports = await reportAPI.getMapReports(approvedStatuses);
-        setApprovedReports(reports || []);
-      } catch (error) {
-        console.error('Failed to load approved reports:', error);
-        setApprovedReports([]);
-      }
-    };
-
-    fetchApprovedReports();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
@@ -68,20 +49,6 @@ const CitizenDashboard: React.FC = () => {
               </div>
             </Card>
           </Link>
-        </div>
-
-        <div className="mt-8 sm:mt-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Citizens' Reports</h2>
-          <Card className="p-2 sm:p-3 overflow-hidden">
-            <div className="h-96 rounded-lg overflow-hidden">
-              <ReportsMap 
-                reports={approvedReports}
-                currentPopUp={null}
-                setCurrentPopUp={() => {}}
-                hasSelect={false}
-              />
-            </div>
-          </Card>
         </div>
       </div>
     </div>

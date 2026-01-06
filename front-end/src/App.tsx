@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { UserType } from './types/user';
 import DynamicMeta from './components/DynamicMeta';
+
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -14,14 +15,13 @@ import Reports from './pages/Reports';
 import Statistics from './pages/Statistics';
 import CitizenDashboard from './pages/citizen/CitizenDashboard';
 import Profile from './pages/citizen/Profile';
-import MapPage from './pages/MapPage.tsx';
+import MapPage from './pages/MapPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
 import ReportsPage from './pages/municipality/ReportsPage';
-import ReportDetail from './pages/municipality/ReportDetail.tsx';
-import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
-import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
-
+import ReportDetail from './pages/municipality/ReportDetail';
+import AdminCreateMunicipalityUser from './pages/admin/AdminCreateMunicipalityUser';
+import AdminAssignRoles from './pages/admin/AdminAssignRoles';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -51,6 +51,7 @@ function App() {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/map" element={<MapPage />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/auth/account" element={<Account />} />
