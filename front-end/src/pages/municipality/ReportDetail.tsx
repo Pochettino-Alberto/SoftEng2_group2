@@ -47,9 +47,15 @@ const ReportDetail: React.FC = () => {
     const [address, setAddress] = useState<string | null>(null)
     const [addressLoading, setAddressLoading] = useState(false)
 
-    const [showComments, setShowComments] = useState(false)
+    const [showComments, setShowComments] = useState(() => {
+        return localStorage.getItem('report_detail_show_comments') === 'true'
+    })
   
     const DETAIL_MAP_ZOOM = 15
+
+    useEffect(() => {
+        localStorage.setItem('report_detail_show_comments', String(showComments))
+    }, [showComments])
 
     const fetchReport = useCallback(async (reportId: number) => {
         setLoading(true)
