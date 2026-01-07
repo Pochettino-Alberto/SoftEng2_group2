@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const getProfileButtonLabel = () => {
+    if (user?.user_type === 'admin' || user?.user_type === 'municipality') {
+      return 'Dashboard';
+    }
+    return 'My Profile';
+  };
 
   const handleLogout = async () => {
     try {
@@ -37,17 +45,26 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-
-
+          <Link to="/map" className="text-sm font-medium hover:text-[#5199CD]">
+              Map
+            </Link>
             {isAuthenticated ? (
               <>
                 <Link 
+                  id="gotoDashboardBtn"
                   to={`/${user?.user_type}`} 
                   style={{ color: '#5199CD' }}
-                  className="hover:opacity-80 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className={`
+                    px-3 py-2 rounded-md text-sm font-medium transition-colors
+                    ${location.pathname === `/${user?.user_type}`
+                      ? "opacity-40 pointer-events-none cursor-not-allowed" 
+                      : "hover:opacity-80 text-[#5199CD]"
+                    }
+                  `}
                 >
-                  My Profile
+                  {getProfileButtonLabel()}
                 </Link>
+                    
                 <button
                   id="logoutBtn"
                   onClick={handleLogout}
@@ -99,17 +116,40 @@ const Navbar: React.FC = () => {
         <div className="md:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
 
+            <Link
+              to="/map"
+              style={{ color: '#5199CD' }}
+              className={`
+                px-3 py-2 rounded-md text-sm font-medium transition-colors
+                ${location.pathname === '/map'
+                  ? "opacity-40 pointer-events-none cursor-not-allowed"
+                  : "hover:opacity-80 text-[#5199CD]"
+                }
+              `}
+              onClick={closeMenu}
+            >
+              Map
+            </Link>
 
             {isAuthenticated ? (
               <>
+
                 <Link 
+                  id="gotoDashboardBtn"
                   to={`/${user?.user_type}`} 
-                  onClick={closeMenu}
                   style={{ color: '#5199CD' }}
-                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors"
+                  className={`
+                    px-3 py-2 rounded-md text-sm font-medium transition-colors
+                    ${location.pathname === `/${user?.user_type}`
+                      ? "opacity-40 pointer-events-none cursor-not-allowed" 
+                      : "hover:opacity-80 text-[#5199CD]"
+                    }
+                  `}
+                  onClick={closeMenu}
                 >
-                  My Profile
+                  {getProfileButtonLabel()}
                 </Link>
+
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-base font-medium transition-colors"
@@ -119,6 +159,7 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <Link
+                id="SignIn_SignUp"
                 to="/auth/account"
                 onClick={closeMenu}
                 style={{ backgroundColor: '#5199CD' }}

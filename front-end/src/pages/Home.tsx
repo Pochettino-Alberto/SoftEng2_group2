@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 
 const Home: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <div id="homePage" className="min-h-screen">
@@ -31,29 +31,29 @@ const Home: React.FC = () => {
               Report local issues, track their progress, and collaborate with your municipality 
               to create a better urban environment for everyone in Turin.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 px-4">
               {isAuthenticated ? (
-                <Link to="/citizen" className="w-full sm:w-auto">
-                  <Button size="lg" className="text-base sm:text-lg w-full sm:w-auto">
-                    Go to Dashboard
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/citizen" className="w-full sm:w-auto">
+                    <Button size="lg" style={{ border: '2px solid white' }} className="text-base sm:text-lg w-full sm:w-auto">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                  {user?.user_type === 'citizen' && (
+                    <Link to="/citizen/report/new" className="w-full sm:w-auto">
+                      <Button size="lg" style={{ backgroundColor: 'white', color: '#5199CD' }} className="text-base sm:text-lg hover:bg-gray-100 w-full sm:w-auto">
+                        Create New Report
+                      </Button>
+                    </Link>
+                  )}
+                </>
               ) : (
                 <>
-                  <Link to="/auth/account" className="w-full sm:w-auto">
+                  <Link to="/auth/account" className="w-full sm:w-auto mx-auto">
                     <Button size="lg" style={{ backgroundColor: 'white', color: '#5199CD' }} className="text-base sm:text-lg hover:bg-gray-100 w-full sm:w-auto">
                       Get Started
                     </Button>
                   </Link>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="text-base sm:text-lg border-white text-white/50 cursor-not-allowed w-full sm:w-auto" 
-                    disabled
-                    title="Coming Soon"
-                  >
-                    View Reports
-                  </Button>
                 </>
               )}
             </div>

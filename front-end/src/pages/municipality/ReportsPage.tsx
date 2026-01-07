@@ -7,11 +7,14 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../components/Button'
 import { ReportStatus } from '../../types/report'
 import { useAuth } from '../../context/AuthContext'
+import { getStatusClass } from '../../components/Map';
 
 export default function ReportsPage() {
   const { user } = useAuth();
   const isPublicRelationsOfficer = user?.userRoles.some((r) => r.role_type === 'publicRelations_officer') ?? false;
   const isTechnicalOfficer = user?.userRoles.some((r) => r.role_type === 'technical_officer') ?? false;
+  const isExternalMaintainer = user?.userRoles.some((r) => r.role_type === 'external_maintainer') ?? false;
+
   const [pageSize] = useState(5)
   const [paginated, setPaginated] = useState({ page_num: 1, page_size: pageSize, total_pages: 1, total_items: 0, items: [] as Report[] })
   const [loading, setLoading] = useState(false)
@@ -24,6 +27,7 @@ export default function ReportsPage() {
     try {
       const params: any = { page_num: p, page_size: pageSize }
       if (selectedStatus && selectedStatus !== 'all') params.status = selectedStatus
+
       const toPaginated = (items: Report[]) => ({
         page_num: 1,
         page_size: pageSize,
@@ -38,12 +42,17 @@ export default function ReportsPage() {
         res = await reportAPI.searchReportsPaginated(params)
         //console.log('Municipal Public Relations Officer - can see all reports');
       } else if(isTechnicalOfficer){
-        res = toPaginated(await reportAPI.getTechnicalOfficerReports());
-        //console.log('Municipal Technical Officer - can see only assigned reports');
-      } else if (user?.userRoles.some((r) => r.role_type === 'external_maintainer')){
-        // Shows reports assigned to the external maintainer
-        // TODO API endpoint to get reports assigned to external maintainer
-        res = toPaginated([]);
+        let reports = await reportAPI.getTechnicalOfficerReports();
+        if (selectedStatus && selectedStatus !== 'all') {
+          reports = reports.filter(r => r.status === selectedStatus);
+        }
+        res = toPaginated(reports);
+      } else if (isExternalMaintainer){
+        let reports = await reportAPI.getExternalMaintainerReports();
+        if (selectedStatus && selectedStatus !== 'all') {
+          reports = reports.filter(r => r.status === selectedStatus);
+        }
+        res = toPaginated(reports);
         console.log('External Maintainer - can see only assigned reports');
       } else {
         console.warn('No valid municipal role found - no reports to show');
@@ -59,6 +68,12 @@ export default function ReportsPage() {
   }
 
   useEffect(() => {
+    if ((isTechnicalOfficer || isExternalMaintainer) && selectedStatus === ReportStatus.PENDING_APPROVAL) {
+      setSelectedStatus('all');
+    }
+  }, [isTechnicalOfficer, isExternalMaintainer]);
+
+  useEffect(() => {
     fetchPage(1)
     // load categories for display in table (fallback when report list doesn't include nested category)
     const loadCategories = async () => {
@@ -72,12 +87,13 @@ export default function ReportsPage() {
       }
     }
     loadCategories()
-  }, [selectedStatus, isPublicRelationsOfficer, isTechnicalOfficer])
+  }, [selectedStatus, isPublicRelationsOfficer, isTechnicalOfficer, isExternalMaintainer])
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= paginated.total_pages) fetchPage(p)
   }
   const truncateDescription = (text: string, maxLength: number = 70) => {
+    if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
@@ -121,7 +137,7 @@ export default function ReportsPage() {
     { header: 'Category', accessor: (r: Report) => (r.category_id ? categoriesMap[r.category_id] || '' : '') },
     {
       header: 'Status', accessor: (r: Report) => (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${r.status === ReportStatus.RESOLVED ? 'bg-green-100 text-green-700' : r.status === ReportStatus.IN_PROGRESS ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{r.status}</span>
+        <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusClass(r.status)}`}>{r.status}</span>
       )
     },
     {
@@ -147,8 +163,8 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto mt-8">
-      <div className="mb-6">
+    <div className="mx-auto mt-4 sm:mt-8 px-4 sm:px-6 lg:px-0 max-w-6xl">
+      <div className="mb-4 sm:mb-6">
         <h2 className="text-2xl font-bold mb-2">
           {isPublicRelationsOfficer ? 'Reports Management' : isTechnicalOfficer ? 'Assigned Reports' : 'Reports'}
         </h2>
@@ -159,8 +175,29 @@ export default function ReportsPage() {
               ? 'These are the reports assigned to you. Click a row to see details.'
               : 'Reports overview.'}
         </p>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between mt-4">
           {isPublicRelationsOfficer ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <label htmlFor="status-filter" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Filter by Status:
+              </label>
+              <select
+                id="status-filter"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm w-full sm:w-auto"
+                disabled={loading}
+              >
+                <option value="all">All Statuses</option>
+                <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>
+                <option value={ReportStatus.ASSIGNED}>Assigned</option>
+                <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
+                <option value={ReportStatus.SUSPENDED}>Suspended</option>
+                <option value={ReportStatus.REJECTED}>Rejected</option>
+                <option value={ReportStatus.RESOLVED}>Resolved</option>
+              </select>
+            </div>
+          ) : isTechnicalOfficer ? (
             <div className="flex items-center space-x-3">
               <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
                 Filter by Status:
@@ -173,11 +210,9 @@ export default function ReportsPage() {
                 disabled={loading}
               >
                 <option value="all">All Statuses</option>
-                <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>
+                {isPublicRelationsOfficer && <option value={ReportStatus.PENDING_APPROVAL}>Pending Approval</option>}
                 <option value={ReportStatus.ASSIGNED}>Assigned</option>
                 <option value={ReportStatus.IN_PROGRESS}>In Progress</option>
-                <option value={ReportStatus.SUSPENDED}>Suspended</option>
-                <option value={ReportStatus.REJECTED}>Rejected</option>
                 <option value={ReportStatus.RESOLVED}>Resolved</option>
               </select>
             </div>
@@ -187,7 +222,7 @@ export default function ReportsPage() {
             size="md"
             onClick={handleReload}
             disabled={loading}
-            className="flex items-center space-x-2"
+            className="flex items-center justify-center sm:justify-start space-x-2 w-full sm:w-auto"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -203,6 +238,7 @@ export default function ReportsPage() {
         onPageChange={handlePageChange}
         onRowClick={(r) => navigate(`/municipality/report/${(r as Report).id}`, { state: { report: r } })}
         className={loading ? 'opacity-70' : ''}
+        addMap={false}
         tableId = "report-table"
       />
     </div>

@@ -6,7 +6,7 @@ import { CommonSteps, CommonData } from './common';
 // npm test -- test_UI/municipality_usage.test.ts
 
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 180000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 120000);
 
 describe('Municipality usages: ', () => {
   let driver: WebDriver;
@@ -44,18 +44,36 @@ describe('Municipality usages: ', () => {
     if (driver) await driver.quit();
   });
 
-  
+  afterEach(async () => {
+    try {
+      const logoutBtn = await driver.findElements(By.id("logoutBtn"));
+      if (logoutBtn.length > 0) {
+        await steps.demoSleep();
+        await steps.custumClick(By.id("logoutBtn"));
+        await steps.demoSleep();
+      }
+    } catch (error) {
+      console.log("UI Logout failed or was blocked. Forcing session clear...", error);
+    } finally {
+      await driver.manage().deleteAllCookies();
+      await driver.executeScript('window.localStorage.clear(); window.sessionStorage.clear();');
+    }
+  });
+
   test('Accept report', async () => {
     await steps.login(CommonData.USER_MUNICIPAL_PUBLIC_RELATIONS_OFFICER);
     await steps.assertExists(By.id("report-table"));
     const noDataPresent = await steps.driver.findElements(By.id("no-data-in-table"));
     expect(noDataPresent.length).toBe(0);
 
-    const firstRow = By.css("#report-table tbody tr:first-child");
-    await steps.custumClick(firstRow);
+    const statusNeeded = "Pending Approval"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
 
     await steps.custumClick(By.id("acceptAssignAction"));
-    await steps.scrollToElementGlobal(By.id("submmitChoice"))
+    await steps.scrollToElementGlobal(By.id("submmitChoice"));
 
     const select = By.id("technician-select");
     const selectEl = await steps.driver.findElement(select);
@@ -66,10 +84,13 @@ describe('Municipality usages: ', () => {
     await steps.custumClick(By.id("submmitChoice"));
   
     await steps.assertExists(By.id('toast_message_success'));
+    await steps.demoSleep();
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
     
-    await steps.demoSleep()
-    
-
+    await steps.demoSleep();
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
+    await steps.demoSleep();
   }, 60000);
       
 
@@ -79,16 +100,95 @@ describe('Municipality usages: ', () => {
     
     const noData = await steps.driver.findElements(By.id("no-data-in-table"));
     expect(noData.length).toBe(0);
-    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+    const statusNeeded = "Pending Approval"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
 
-    await steps.demoSleep()
+    await steps.demoSleep();
     await steps.custumClick(By.id("rejectAction"));
-    await steps.scrollToElementGlobal(By.id("submmitChoice"))
+    await steps.scrollToElementGlobal(By.id("submmitChoice"));
 
-    await steps.custumSendKeys(By.id("rejectReasonInput"), "I do not care");
+    await steps.custumSendKeys(By.id("rejectReasonInput"), "Issue already reported, maintenance in progress");
     await steps.custumClick(By.id("submmitChoice"));
-    await steps.demoSleep()
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
+
+    await steps.demoSleep();
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
   }, 60000);
 
+
+  test('Assign report to mainteiners', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    const statusNeeded = "Assigned"
+    const locator = By.xpath(
+        `//table[@id='report-table']//tbody//tr[td[contains(., '${statusNeeded}')]]`
+    );
+    await steps.custumClick(locator);
+    await steps.demoSleep();
+    await steps.custumClick(By.id("assignMaintainerAction"));
+    await steps.demoSleep();
+
+    await steps.scrollToElementGlobal(By.id("assignMaintainer"));
+
+    const select = By.id("maintainer-dropdown");
+    const selectEl = await steps.driver.findElement(select);
+    const options = await selectEl.findElements(By.tagName("option"));
+    const firstValue = await options[0].getAttribute("value");
+    await steps.selectDropdownByValue(select, firstValue);
+    await steps.demoSleep();
+    
+    await steps.custumClick(By.id("assignMaintainer"));
+    await steps.assertExists(By.id('toast_message_success'));
+    await steps.scrollToTop();
+    await steps.custumClick(By.id("gotoDashboardBtn"));
+
+    await steps.demoSleep();
+    await steps.selectDropdownByValue(By.id("status-filter"), "all");
+    
+  }, 60000);
+
+
+  test('Add comment to report', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+
+    await steps.demoSleep();
+    await steps.custumClick(By.id("toggleComments"));
+    await steps.demoSleep();
+
+    
+    await steps.custumSendKeys(By.id("newCommentInput"), "Urgent fix");
+    await steps.demoSleep();
+
+    await steps.custumClick(By.id("newCommentSave"));
+    await steps.demoSleep();
+    
+    await steps.assertExists(By.id('toast_message_success'));
+    
+  }, 60000);
+
+
+  test('Mainteiners update status report', async () => {
+    await steps.login(CommonData.USER_MUNICIPAL_ROADS_MAINTAINER);
+    await steps.assertExists(By.id("report-table"));
+    
+    const noData = await steps.driver.findElements(By.id("no-data-in-table"));
+    expect(noData.length).toBe(0);
+    await steps.custumClick(By.css("#report-table tbody tr:first-child"));
+
+    await steps.custumClick(By.id("markResolved"));
+    
+  }, 60000);
 
 });

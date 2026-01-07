@@ -35,6 +35,10 @@ class Utility {
         return new Date().toISOString().split("T")[0];
     };
 
+    static nowTimestamp(): string {
+        return new Date().toISOString();
+    }
+
 }
 
 class DateError extends Error {

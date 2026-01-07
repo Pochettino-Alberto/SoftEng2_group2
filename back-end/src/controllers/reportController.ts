@@ -1,7 +1,8 @@
-import { Report, ReportCategory, ReportStatusType } from "../components/report"
+import { Report, ReportCategory, ReportComment, ReportStatusType } from "../components/report"
 import { PaginatedResult } from "../components/common";
 import ReportDAO from "../dao/reportDAO"
-import {User} from "../components/user";
+import { User } from "../components/user";
+import UserDAO from "../dao/userDAO";
 
 /**
  * Represents a controller for managing users.
@@ -9,13 +10,15 @@ import {User} from "../components/user";
  */
 class ReportController {
     private dao: ReportDAO
+    private userDao: UserDAO
 
     constructor() {
         this.dao = new ReportDAO
+        this.userDao = new UserDAO()
     }
 
 
-    async saveReport(report: Report): Promise<Report>  {
+    async saveReport(report: Report): Promise<Report> {
         try {
             return await this.dao.saveReport(report);
         } catch (error) {
@@ -55,6 +58,29 @@ class ReportController {
         }
     }
 
+    /**
+     * Fetch all comments for a specific report
+     * @param reportId - The ID of the report
+     * @returns Promise resolving with an array of ReportComment
+     */
+    async getCommentsByReportId(reportId: number): Promise<ReportComment[]> {
+        try {
+            // Check if report exists (throws ReportNotFoundError if not found)
+            await this.getReportById(reportId);
+            let reportComments = await this.dao.getCommentsByReportId(reportId);
+
+            // Enrich comments with user data
+            for (const comment of reportComments) {
+                const user =  await this.userDao.getUserById(comment.commenter_id);
+                comment.userdata = user;
+            }
+            return reportComments;
+        } catch (error) {
+            console.error("Error fetching report comments:", error);
+            throw error;
+        }
+    }
+
     async updateReportStatus(reportId: number, status: ReportStatusType, statusReason?: string): Promise<void> {
         try {
             return await this.dao.updateReportStatus(reportId, status, statusReason);
@@ -72,27 +98,36 @@ class ReportController {
         is_public: boolean | null,
         category_id: number | null
     ): Promise<PaginatedResult<Report>> {
-        return new Promise<PaginatedResult<Report>>(async (resolve, reject) => {
-            try {
-                const page = page_num ? Number(page_num) : 1;
-                const size = page_size ? Number(page_size) : 10;
-                const offset = (page - 1) * size;
+        try {
+            const page = page_num ? Number(page_num) : 1;
+            const size = page_size ? Number(page_size) : 10;
+            const offset = (page - 1) * size;
 
-                const { reports, totalCount } = await this.dao.getPaginatedReports(
-                    status,
-                    is_public,
-                    category_id,
-                    size,
-                    offset
-                );
+            const { reports, totalCount } = await this.dao.getPaginatedReports(
+                status,
+                is_public,
+                category_id,
+                size,
+                offset
+            );
 
-                const pagReports = new PaginatedResult<Report>(page, size, totalCount, reports);
+            const pagReports = new PaginatedResult<Report>(page, size, totalCount, reports);
 
-                resolve(pagReports);
-            } catch (err) {
-                reject(err);
-            }
-        });
+            return pagReports;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async getMapReports(
+        status: Array<String> | null,
+    ): Promise<Report[]> {
+        try {
+            const reports = await this.dao.getMapReports(status);
+            return reports;
+        } catch (err) {
+            throw err;
+        }
     }
 
     /**
@@ -111,6 +146,21 @@ class ReportController {
     }
 
     /**
+     * This controller function calls the reportDAO function in charge of getting all the reports with status
+     * "In Progress" or "Suspended" and with a specific "maintainer_id"
+     * @param maintainer_id
+     * @returns Array of reports 
+     */
+    async getReportsAssignedToMaintainer(maintainer_id: number): Promise<Report[]> {
+        try {
+            return await this.dao.getReportsAssignedToMaintainer(maintainer_id);
+        } catch (error) {
+            console.error(`Error fetching reports assigned to maintainer ${maintainer_id}:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Returns all municipality users whose roles are responsible for a given category ID.
      * @param categoryId - The ID of the report category.
      * @returns A Promise that resolves to an array of relevant TOS users.
@@ -120,6 +170,15 @@ class ReportController {
             return await this.dao.getTOSUsersByCategory(categoryId);
         } catch (error) {
             console.error(`Error fetching TOS users for category ${categoryId}:`, error);
+            throw error;
+        }
+    }
+
+    async getAllMaintainers(): Promise<User[]> {
+        try {
+            return await this.dao.getAllMaintainers();
+        } catch (error) {
+            console.error("Error fetching maintainers:", error);
             throw error;
         }
     }
@@ -160,6 +219,47 @@ class ReportController {
         }
     }
 
+    /**
+     * Adds a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the added ReportComment object.
+     */
+    async addCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        try {
+            return await this.dao.addCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error adding comment to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Edit a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the edited ReportComment object.
+     */
+    async editCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        try {
+            return await this.dao.editCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error editing comment ${reportComment.id} to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to nothing.
+     */
+    async deleteCommentToReport(reportComment: ReportComment): Promise<void> {
+        try {
+            return await this.dao.deleteCommentToReport(reportComment);
+        } catch (error) {
+            console.error(`Error deleting comment ${reportComment.id} to report ${reportComment.report_id}:`, error);
+            throw error;
+        }
+    }
 }
 
 export default ReportController

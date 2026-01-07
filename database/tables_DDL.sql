@@ -2,13 +2,14 @@
 
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS roles;
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS report_comments;
 DROP TABLE IF EXISTS report_photos;
 DROP TABLE IF EXISTS reports;
-DROP TABLE IF EXISTS report_categories;
 DROP TABLE IF EXISTS role_category_responsibility;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS report_categories;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;
 
 -- ===============================
 -- USERS (citizens + municipality users)
@@ -49,6 +50,18 @@ CREATE TABLE user_roles (
 
 
 -- ===============================
+-- REPORT_CATEGORIES
+-- ===============================
+CREATE TABLE report_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    description TEXT,
+    active INTEGER NOT NULL CHECK (active IN (0,1)) DEFAULT 1
+);
+
+
+-- ===============================
 -- ROLE-CATEGORY RESPONSIBILITY
 -- Links TOS roles to the categories they are responsible for.
 -- ===============================
@@ -58,18 +71,6 @@ CREATE TABLE role_category_responsibility (
     PRIMARY KEY (role_id, category_id),
     FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES report_categories (id) ON DELETE CASCADE
-);
-
-
--- ===============================
--- REPORT_CATEGORIES
--- ===============================
-CREATE TABLE report_categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    icon TEXT NOT NULL,
-    description TEXT,
-    active INTEGER NOT NULL CHECK (active IN (0,1)) DEFAULT 1
 );
 
 
@@ -117,4 +118,18 @@ CREATE TABLE report_photos (
     photo_path TEXT NOT NULL, -- relative path inside the supabase bucket
     photo_public_url TEXT NOT NULL, -- public URL of the photo
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
+);
+
+-- ===============================
+-- REPORTS_COMMENTS (only for internal users)
+-- ===============================
+CREATE TABLE report_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    commenter_id INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    createdAt TEXT NOT NULL,    -- when getting comments, order by createdAt
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE,
+    FOREIGN KEY (commenter_id) REFERENCES users (id) ON DELETE CASCADE
 );

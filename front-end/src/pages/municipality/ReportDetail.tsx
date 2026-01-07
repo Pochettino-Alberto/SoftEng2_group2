@@ -1,31 +1,61 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { getStatusColor } from '../../components/Map'
+import L from 'leaflet'
+import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { reportAPI } from '../../api/reports'
-import type { Report, ReportCategory } from '../../types/report'
+import type { Report, ReportCategory, ReportStatus } from '../../types/report'
 import type { User } from '../../types/user'
 import Button from '../../components/Button'
 import Card from '../../components/Card'
+import CommentsPanel from '../../components/CommentsPanel'
 import Toast from '../../components/Toast'
+import { useAuth } from '../../context/AuthContext'
+import { reverseGeocode } from '../../utils'
 
 const ReportDetail: React.FC = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
+    const { user } = useAuth()
 
     const [report, setReport] = useState<Report | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [reason, setReason] = useState('')
-    const [selectedAction, setSelectedAction] = useState<'accept' | 'reject'>('reject')
+    const [selectedAction, setSelectedAction] = useState<'accept' | 'reject'>('accept')
     const [categoriesCache, setCategoriesCache] = useState<ReportCategory[] | null>(null)
 
     const [tosUsers, setTosUsers] = useState<User[]>([])
     const [selectedTechnicianId, setSelectedTechnicianId] = useState<number | null>(null)
     const [tosLoading, setTosLoading] = useState(false)
 
+    const [maintainers, setMaintainers] = useState<User[]>([])
+    const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null)
+    const [loadingMaintainers, setLoadingMaintainers] = useState(false)
+    const [assigningMaintainer, setAssigningMaintainer] = useState(false)
+    const [showMaintainerDropdown, setShowMaintainerDropdown] = useState(false)
+
     const fetchedCategoriesRef = useRef<Set<number>>(new Set())
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+    const [isCarouselOpen, setIsCarouselOpen] = useState(false)
+    const [carouselIndex, setCarouselIndex] = useState(0)
+
+    const [address, setAddress] = useState<string | null>(null)
+    const [addressLoading, setAddressLoading] = useState(false)
+
+    const [showComments, setShowComments] = useState(() => {
+        return localStorage.getItem('report_detail_show_comments') === 'true'
+    })
+  
+    const DETAIL_MAP_ZOOM = 15
+
+    useEffect(() => {
+        localStorage.setItem('report_detail_show_comments', String(showComments))
+    }, [showComments])
 
     const fetchReport = useCallback(async (reportId: number) => {
         setLoading(true)
@@ -63,6 +93,23 @@ const ReportDetail: React.FC = () => {
         }
     }, [])
 
+    const fetchMaintainers = useCallback(async () => {
+        setLoadingMaintainers(true)
+        try {
+            const users = await reportAPI.getAllMaintainers()
+            setMaintainers(users)
+            if (users.length > 0) {
+                setSelectedMaintainerId(users[0].id)
+            }
+        } catch (err) {
+            console.error('Error fetching maintainers:', err)
+            setMaintainers([])
+            setSelectedMaintainerId(null)
+        } finally {
+            setLoadingMaintainers(false)
+        }
+    }, [])
+
     useEffect(() => {
         const stateReport = (location.state as any)?.report as Report | undefined
         if (stateReport) {
@@ -81,7 +128,20 @@ const ReportDetail: React.FC = () => {
 
     useEffect(() => {
         if (!report) return
-        console.log(report);
+        const lat = report.location?.lat
+        const lon = report.location?.lng
+        if (typeof lat === 'number' && typeof lon === 'number') {
+            setAddressLoading(true)
+            reverseGeocode(lat, lon)
+                .then((addr) => {
+                    setAddress(addr)
+                })
+                .catch((e) => {
+                    console.warn('Failed to reverse-geocode:', e)
+                    setAddress(null)
+                })
+                .finally(() => setAddressLoading(false))
+        }
 
         if (selectedAction === 'accept' && report.status === 'Pending Approval' && report.category_id) {
             fetchTosUsers(report.category_id)
@@ -159,6 +219,88 @@ const ReportDetail: React.FC = () => {
         }
     }
 
+    const handleAssignMaintainer = async (maintainerId: number) => {
+        if (!report) return
+        setAssigningMaintainer(true)
+        try {
+            const updatedReport = await reportAPI.assignReportToMaintainer(report.id, maintainerId)
+            setReport((prev) => prev ? { ...prev, maintainer_id: updatedReport.maintainer_id, maintainer: updatedReport.maintainer, status: updatedReport.status } : null)
+            setToast({ message: 'Maintainer assigned successfully', type: 'success' })
+            setShowMaintainerDropdown(false)
+        } catch (err) {
+            console.error('Error assigning maintainer:', err)
+            setToast({ message: 'Failed to assign maintainer', type: 'error' })
+        } finally {
+            setAssigningMaintainer(false)
+        }
+    }
+
+    const handleMaintainerStatusUpdate = async (newStatus: ReportStatus) => {
+        if (!report) return
+        setLoading(true)
+        try {
+            const updatedReport = await reportAPI.updateReportStatus(report.id, newStatus)
+            setReport((prev) => prev ? { ...prev, status: updatedReport.status } : null)
+            setToast({ message: `Status updated to ${newStatus}`, type: 'success' })
+        } catch (err) {
+            console.error(err)
+            setToast({ message: 'Failed to update status', type: 'error' })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const openCarouselAt = (index: number) => {
+        setCarouselIndex(index)
+        setIsCarouselOpen(true)
+    }
+
+    const closeCarousel = () => {
+        setIsCarouselOpen(false)
+    }
+
+    const showPrev = () => {
+        if (!report || !report.photos) return
+        setCarouselIndex((i) => (i - 1 + report.photos!.length) % report.photos!.length)
+    }
+
+    const showNext = () => {
+        if (!report || !report.photos) return
+        setCarouselIndex((i) => (i + 1) % report.photos!.length)
+    }
+
+    useEffect(() => {
+        if (!isCarouselOpen) return
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') showPrev()
+            if (e.key === 'ArrowRight') showNext()
+            if (e.key === 'Escape') closeCarousel()
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [isCarouselOpen, report])
+
+    const markerIcon = useMemo(() => {
+        if (!report || !report.status) return undefined
+        const color = getStatusColor(report.status || '')
+        const svg = `
+            <svg xmlns='http://www.w3.org/2000/svg' width='25' height='41' viewBox='0 0 25 41'>
+                <path d='M12.5 0C7.2 0 2.8 4.4 2.8 9.7 2.8 18.1 12.5 34 12.5 34S22.2 18.1 22.2 9.7C22.2 4.4 17.8 0 12.5 0z' fill='${color}'/>
+                <circle cx='12.5' cy='9.7' r='3.5' fill='#ffffff' />
+            </svg>
+        `
+
+        return L.icon({
+            iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+            shadowUrl: iconShadow as string,
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+            shadowAnchor: [12, 41],
+        })
+    }, [report?.status])
+
     if (error && !loading && !report) {
         return <div className="max-w-3xl mx-auto mt-8 text-red-600">{error}</div>
     }
@@ -167,8 +309,13 @@ const ReportDetail: React.FC = () => {
         return <div className="max-w-3xl mx-auto mt-8">{loading ? 'Loading...' : 'Report not found'}</div>
     }
 
+    const isPRO = user?.userRoles.some(r => r.role_type === 'publicRelations_officer')
+    const isTO = user?.userRoles.some(r => r.role_type === 'technical_officer')
+    const isMaintainer = user?.userRoles.some(r => r.role_type === 'external_maintainer')
+
     return (
-        <div className="max-w-4xl mx-auto mt-8">
+        <div className="max-w-4xl mx-auto mt-8 px-4">
+            <style>{`.leaflet-container{z-index:0 !important;} .leaflet-control{z-index:5 !important;} .leaflet-marker-icon{z-index:6 !important;} .leaflet-popup{z-index:6 !important;}`}</style>
             {toast && (
                 <Toast
                     message={toast.message}
@@ -178,42 +325,163 @@ const ReportDetail: React.FC = () => {
             )}
 
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold">{report.title}</h1>
                 <div className="flex items-center gap-3">
                     <div className="text-sm text-gray-600">Status: <span className="font-semibold">{report.status}</span></div>
+                    {(user?.userRoles.some((r) => r.role_type === 'technical_officer' || r.role_type === 'external_maintainer')) && (
+                        <Button 
+                          id="toggleComments"
+                          variant={showComments ? 'primary' : 'outline'} 
+                          onClick={() => setShowComments(!showComments)}
+                        >
+                          {showComments ? 'Hide Comments' : 'Comments'}
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
                 </div>
             </div>
 
-            <Card className="p-4">
+            {/* Comments Panel - Only for Tech Officer and Maintainer */}
+            {showComments && report?.id && (user?.userRoles.some((r) => r.role_type === 'technical_officer' || r.role_type === 'external_maintainer')) && (
                 <div className="mb-4">
-                    <p className="text-sm text-gray-700">{report.description}</p>
+                    <CommentsPanel 
+                        reportId={report.id}
+                        onClose={() => setShowComments(false)}
+                    />
                 </div>
+            )}
 
-                <div className="mb-4">
-                    <p className="text-sm text-gray-600">Category: {report.category?.name}</p>
-                    <p className="text-sm text-gray-600">Location: {report.location ? `${report.location.lat.toFixed(6)}, ${report.location.lng.toFixed(6)}` : '—'}</p>
-                    <p className="text-sm text-gray-600">Reporter: {!report.is_public ? 'Anonymous' : report.reporter.first_name + ' ' +  report.reporter.last_name + ' [' + report.reporter.username + ']'  || '—'}</p>
-                    {report.status === 'Rejected' && report.status_reason && (
-                        <p className="text-sm text-red-600">Rejection reason: {report.status_reason}</p>
-                    )}
-                    {report.status === 'Assigned' && (
-                        <p className="text-sm text-gray-600">
-                            Assigned To: {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name} [${report.assigned_to.username}]` : '—'}
-                        </p>
-                    )}
+            <Card className="p-4">
+ 
+
+                    <h1 className="text-2xl font-bold mb-4">{report.title}</h1>
+
+                    <div className="md:flex md:gap-6 md:items-stretch">
+                    <div className="w-full md:w-1/2 flex">
+                        <div className="border rounded p-4 bg-white flex-1 min-h-[24rem]">
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Category:</span> {report.category ? (
+                                        <span className="inline-flex items-center gap-2">
+                                            <span className="text-lg" aria-hidden>{report.category.icon}</span>
+                                            <span className="text-sm text-gray-700">{report.category.name}</span>
+                                        </span>
+                                    ) : '—'}</p>
+                                </div>
+
+                                {addressLoading ? (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> Resolving address…</p>
+                                    </div>
+                                ) : address ? (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> {address}</p>
+                                    </div>
+                                ) : (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base text-gray-700"><span className="font-semibold text-gray-900">Address:</span> Not available</p>
+                                    </div>
+                                )}
+
+                                {report.status === 'Rejected' && report.status_reason && (
+                                    <p className="text-sm text-red-600 mb-3">Rejection reason: {report.status_reason}</p>
+                                )}
+
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <h4 className="text-base font-medium mb-2 text-gray-900">Description</h4>
+                                    <p className="text-base text-gray-900 whitespace-pre-wrap">{report.description || '—'}</p>
+                                </div>
+
+                                <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                    <p className="text-base"><span className="font-semibold">Reporter:</span> {!report.is_public ? (
+                                        <span className="text-gray-600">Anonymous</span>
+                                    ) : (
+                                        <span style={{ color: '#8B4513' }} className="font-medium">
+                                            {report.reporter && typeof report.reporter === 'object' ?
+                                                `${report.reporter.first_name} ${report.reporter.last_name}` : String(report.reporter) || '—'}
+                                            {report.reporter && typeof report.reporter === 'object' && report.reporter.username ? (
+                                                <span className="text-sm text-gray-500 ml-2">[{report.reporter.username}]</span>
+                                            ) : null}
+                                        </span>
+                                    )}</p>
+                                </div>
+
+                                {(report.status === 'Assigned' || report.status === 'In Progress' || report.status === 'Resolved') && (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-base">
+                                            <span className="font-semibold">Technical Officer Responsible:</span>
+                                            <span style={{ color: '#c2410c' }} className="font-medium ml-2">
+                                                {report.assigned_to ? `${report.assigned_to.first_name} ${report.assigned_to.last_name}` : '—'}
+                                                {report.assigned_to && report.assigned_to.username ? (
+                                                    <span className="text-sm text-gray-500 ml-2">[{report.assigned_to.username}]</span>
+                                                ) : null}
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
+
+                                {report.maintainer_id && (
+                                    <div className="border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                        <p className="text-sm">
+                                            <span className="font-semibold">Assigned Maintainer:</span>
+                                            <span style={{ color: '#166534' }} className="font-medium ml-2">
+                                                {report.maintainer?.first_name} {report.maintainer?.last_name}
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
+                    <div className="w-full md:w-1/2 flex">
+                        {report.location ? (
+                            <div className="w-full rounded overflow-hidden flex-1 relative z-0">
+                                <MapContainer
+                                        center={[report.location.lat, report.location.lng]}
+                                        zoom={DETAIL_MAP_ZOOM}
+                                        scrollWheelZoom={true}
+                                        touchZoom={true}
+                                        className="w-full h-full min-h-[16rem] md:min-h-[24rem]"
+                                    >
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <Marker position={[report.location.lat, report.location.lng]} icon={markerIcon} />
+                                </MapContainer>
+                            </div>
+                        ) : (
+                            <div className="w-full bg-gray-50 rounded flex items-center justify-center text-sm text-gray-500 min-h-[24rem]">No location available</div>
+                        )}
+                    </div>
                 </div>
 
                 {report.photos && report.photos.length > 0 && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                        {report.photos.map((p, idx) => (
-                            <img key={idx} src={p.photo_public_url} alt={`photo-${idx}`} className="w-64 h-64 object-cover rounded" />
-                        ))}
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Photos</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {report.photos.map((p, idx) => (
+                                <button key={idx} onClick={() => openCarouselAt(idx)} className="block w-full h-40 overflow-hidden rounded shadow-sm focus:outline-none" aria-label={`Open photo ${idx + 1}`}>
+                                    <img src={p.photo_public_url} alt={`photo-${idx}`} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-200" />
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                {/* Only show action buttons for Pending Approval reports */}
-                {report.status === 'Pending Approval' && (
+                {isCarouselOpen && report && report.photos && (
+                        <div onClick={closeCarousel} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+                        <div onClick={(e) => e.stopPropagation()} className="relative max-w-full sm:max-w-2xl w-full mx-4">
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeCarousel(); }} aria-label="Close carousel" className="absolute top-2 right-2 z-50 text-white bg-gray-800 bg-opacity-40 rounded-full p-2 hover:bg-opacity-60">✕</button>
+                            <div className="bg-black rounded">
+                                <div className="relative">
+                                    <img src={report.photos[carouselIndex].photo_public_url} alt={`photo-${carouselIndex}`} className="w-full max-h-[70vh] object-contain mx-auto" />
+                                    <button onClick={(e) => { e.stopPropagation(); showPrev(); }} aria-label="Previous photo" className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-gray-800 bg-opacity-40 p-3 rounded-full hover:bg-opacity-60 z-40">◀</button>
+                                    <button onClick={(e) => { e.stopPropagation(); showNext(); }} aria-label="Next photo" className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-gray-800 bg-opacity-40 p-3 rounded-full hover:bg-opacity-60 z-40">▶</button>
+                                </div>
+                                <div className="text-center text-sm text-white py-2">
+                                    {carouselIndex + 1} / {report.photos.length}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isPRO && report.status === 'Pending Approval' && (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center space-x-2">
                             <Button
@@ -222,7 +490,7 @@ const ReportDetail: React.FC = () => {
                                 size="md"
                                 onClick={() => setSelectedAction('accept')}
                                 disabled={loading}
-                                style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { borderColor: '#16a34a', color: '#16a34a' }}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { borderColor: '#10b981', color: '#10b981' }}
                             >
                                 Accept & Assign
                             </Button>
@@ -276,10 +544,10 @@ const ReportDetail: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="mt-4 flex justify-end">
+                            <div className="mt-4 flex justify-end">
                             <Button
                                 id="submmitChoice"
-                                style={selectedAction === 'accept' ? { backgroundColor: '#16a34a' } : { backgroundColor: '#dc2626' }}
+                                style={selectedAction === 'accept' ? { backgroundColor: '#10b981' } : { backgroundColor: '#dc2626' }}
                                 disabled={
                                     loading ||
                                     (selectedAction === 'reject' && !reason.trim()) ||
@@ -292,6 +560,162 @@ const ReportDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {isTO && report.status === 'Assigned' && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                        {!report.maintainer_id ? (
+                            <>
+                                <p className="text-sm text-gray-600 mb-3">
+                                    Assign this report to a maintainer for execution.
+                                </p>
+                                <Button
+                                    id="assignMaintainerAction"
+                                    onClick={() => {
+                                        setShowMaintainerDropdown(true)
+                                        fetchMaintainers()
+                                    }}
+                                    variant="primary"
+                                    className="flex items-center gap-2"
+                                    style={{ backgroundColor: '#10b981' }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                    </svg>
+                                    Assign Maintainer
+                                </Button>
+                            </>
+                        ) : (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-green-800 mb-1">✓ Maintainer Assigned</p>
+                                    <p className="text-sm text-green-700">
+                                        {report.maintainer ? `${report.maintainer.first_name} ${report.maintainer.last_name}` : 'Maintainer'}
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        setShowMaintainerDropdown(true)
+                                        fetchMaintainers()
+                                    }}
+                                    variant="outline"
+                                    size="md"
+                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                >
+                                    Edit
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Maintainer Selection Dropdown */}
+                        {showMaintainerDropdown && (
+                            <div className="mt-4 p-4 border border-gray-300 rounded-lg bg-white">
+                                <div className="mb-4">
+                                    <label htmlFor="maintainer-dropdown" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Select Maintainer
+                                    </label>
+                                    {loadingMaintainers ? (
+                                        <p className="text-gray-500 text-sm">Loading maintainers...</p>
+                                    ) : maintainers.length === 0 ? (
+                                        <p className="text-red-500 text-sm">No maintainers available</p>
+                                    ) : (
+                                        <select
+                                            id="maintainer-dropdown"
+                                            value={selectedMaintainerId || ''}
+                                            onChange={(e) => setSelectedMaintainerId(Number(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                            disabled={assigningMaintainer}
+                                        >
+                                            {maintainers.map((maintainer) => (
+                                                <option key={maintainer.id} value={maintainer.id}>
+                                                    {maintainer.first_name} {maintainer.last_name} ({maintainer.username})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Button
+                                        onClick={() => setShowMaintainerDropdown(false)}
+                                        variant="outline"
+                                        size="md"
+                                        disabled={assigningMaintainer}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        id="assignMaintainer"
+                                        onClick={() => {
+                                            if (selectedMaintainerId) {
+                                                handleAssignMaintainer(selectedMaintainerId)
+                                            }
+                                        }}
+                                        variant="primary"
+                                        size="md"
+                                        style={{ backgroundColor: '#10b981' }}
+                                        disabled={
+                                            assigningMaintainer ||
+                                            loadingMaintainers ||
+                                            maintainers.length === 0 ||
+                                            !selectedMaintainerId
+                                        }
+                                    >
+                                        {assigningMaintainer ? 'Assigning...' : 'Assign'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {isMaintainer && (report.status === 'Assigned' || report.status  === 'Suspended' || report.status === 'In Progress' ) && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h4 className="font-semibold mb-3">Update Work Progress</h4>
+                        <div className="flex gap-3">
+                            {report.status === 'Assigned' && (
+                                <Button
+                                    onClick={() => handleMaintainerStatusUpdate('In Progress')}
+                                    style={{ backgroundColor: '#3B82F6' }}
+                                    disabled={loading}
+                                >
+                                    Start Work
+                                </Button>
+                            )}
+                            {report.status === 'Suspended' ? (
+                                <Button
+                                    id="markInProgress"
+                                    onClick={() => handleMaintainerStatusUpdate('In Progress')}
+                                    style={{ backgroundColor: '#3B82F6' }}
+                                    disabled={loading}
+                                >
+                                    Mark as In progress
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        id="markResolved"
+                                        onClick={() => handleMaintainerStatusUpdate('Resolved')}
+                                        style={{ backgroundColor: '#10B981' }}
+                                        disabled={loading}
+                                    >
+                                        Mark as Resolved
+                                    </Button>
+                                    
+                                    <Button
+                                        id="markSuspended"
+                                        onClick={() => handleMaintainerStatusUpdate('Suspended')}
+                                        style={{ backgroundColor: '#f59e0b' }}
+                                        disabled={loading}
+                                    >
+                                        Mark as In Suspended
+                                    </Button>
+                                </>
+                            )}
+                            
+                        </div>
+                    </div>
+                )}
+
             </Card>
         </div>
     )

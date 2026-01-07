@@ -1,5 +1,5 @@
 import db from "./db"
-import { Report, ReportPhoto, ReportStatus, ReportCategory } from "../components/report"
+import { Report, ReportPhoto, ReportStatus, ReportCategory, ReportComment } from "../components/report"
 import { User, UserRole } from "../components/user"
 import { PaginatedResult } from "../components/common";
 
@@ -63,6 +63,22 @@ class CommonDao {
         );
     }
 
+    /**
+     * Builds a ReportComment object from a database row
+     * @param dbRow Row Object containing the comment data
+     * @returns ReportComment object
+     */
+    mapDBrowToReportComment(dbRow: any): ReportComment  {
+        return new ReportComment(
+            dbRow.id,
+            dbRow.report_id,
+            dbRow.commenter_id,
+            dbRow.comment,
+            dbRow.createdAt,
+            dbRow.updatedAt
+        );
+    }
+
     async mapDBrowToReport(dbRow: any, getSubClasses: boolean = false): Promise<Report> {
         const report = new Report(
             dbRow.id,
@@ -78,8 +94,8 @@ class CommonDao {
             dbRow.updated_by,
             dbRow.description,
             dbRow.status_reason,
-            dbRow.created_at,
-            dbRow.updated_at
+            dbRow.createdAt,
+            dbRow.updatedAt
         );
 
         // Populate assignment target (technical officer) even if subclasses are not fetched

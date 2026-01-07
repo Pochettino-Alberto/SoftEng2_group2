@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Report, ReportStatus, ReportCategory } from '../types/report'
+import type { Report, ReportStatus, ReportCategory, ReportComment } from '../types/report'
 import type { User } from '../types/user'
 
 export const reportAPI = {
@@ -43,8 +43,9 @@ export const reportAPI = {
     return response.data;
   },
 
-  getExternalMaintainerReports: async (): Promise<void> => {
-    console.log('This API is yet to be implemented on the backend.');
+  getExternalMaintainerReports: async (): Promise<Report[]> => {
+    const response = await apiClient.get('/reports/assigned-to-maintainer');
+    return transformReports(response.data);
   },
 
   updateReportStatus: async (
@@ -71,6 +72,11 @@ export const reportAPI = {
     return response.data
   },
 
+  getAllMaintainers: async (): Promise<User[]> => {
+    const response = await apiClient.get('/reports/maintainer-users')
+    return response.data
+  },
+
   assignReportToUser: async (reportId: number, assignedToId: number): Promise<Report> => {
     const response = await apiClient.patch(`/reports/report/${reportId}/assign`, { assigned_to: assignedToId })
     return response.data
@@ -80,4 +86,61 @@ export const reportAPI = {
     const response = await apiClient.patch(`/reports/report/${reportId}/assign-maintainer`, { maintainer_id: maintainerId })
     return response.data
   },
+
+  getMapReports: async (statusArray?: string[]): Promise<Report[]> => {
+    try {
+      console.log('[getMapReports] Called with statusArray:', statusArray);
+      const response = await apiClient.get('/reports/get-map-reports')
+      
+      let reports = transformReports(response.data);
+      
+      if (statusArray && statusArray.length > 0) {
+        console.log('[getMapReports] Filtering frontend reports by statuses:', statusArray);
+        reports = reports.filter(r => statusArray.includes(r.status));
+      }
+      
+      console.log('[getMapReports] Returning', reports.length, 'filtered reports');
+      return reports
+    } catch (error) {
+      console.error('getMapReports error:', error)
+      return []
+    }
+  },
+
+  // Comment APIs
+  getCommentsByReportId: async (reportId: number): Promise<ReportComment[]> => {
+    const response = await apiClient.get(`/reports/${reportId}/comments`)
+    return response.data
+  },
+
+  addCommentToReport: async (reportId: number, comment: string): Promise<ReportComment> => {
+    const response = await apiClient.post(`/reports/${reportId}/comment`, { comment })
+    return response.data
+  },
+
+  editCommentOnReport: async (reportId: number, commentId: number, comment: string): Promise<ReportComment> => {
+    const response = await apiClient.patch(`/reports/${reportId}/comment`, { comment_id: commentId, comment })
+    return response.data
+  },
+
+  deleteCommentFromReport: async (reportId: number, commentId: number): Promise<void> => {
+    await apiClient.delete(`/reports/${reportId}/comment`, { data: { comment_id: commentId } })
+  },
+}
+
+function transformReports(data: any[]): Report[] {
+  if (!Array.isArray(data)) return []
+  
+  return data.map((report: any) => {
+    const lat = report.location?.lat || report.latitude || 0
+    const lng = report.location?.lng || report.longitude || 0
+    
+    return {
+      ...report,
+      location: {
+        lat: typeof lat === 'number' ? lat : parseFloat(lat) || 0,
+        lng: typeof lng === 'number' ? lng : parseFloat(lng) || 0
+      }
+    } as Report
+  })
 }

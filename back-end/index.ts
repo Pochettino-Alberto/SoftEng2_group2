@@ -1,11 +1,12 @@
+import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
 import initRoutes from "./src/routes";
 import { SERVER_CONFIG } from "./src/config";
-import dotenv from 'dotenv';
 
-dotenv.config();
+
+
 const app: express.Application = express();
 
 // middleware

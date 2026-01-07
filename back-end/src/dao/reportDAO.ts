@@ -1,8 +1,9 @@
 import db from "./db"
-import { Report, ReportCategory, ReportStatusType } from "../components/report"
+import { Report, ReportCategory, ReportComment, ReportStatusType } from "../components/report"
 import CommonDao from './commonDAO'
 import { Utility } from "../utilities";
-import {User} from "../components/user";
+import { User } from "../components/user";
+import { ReportCommentNotFoundError, ReportNotFoundError } from "../errors/reportError";
 
 /**
  * A class that implements the interaction with the database for all user-related operations.
@@ -15,7 +16,30 @@ class ReportDAO {
     }
 
     async getReportById(id: number): Promise<Report> {
-        return await this.commonDao.getById<Report>("reports", id, async (row) => await this.commonDao.mapDBrowToReport(row, true));
+        try {
+            return await this.commonDao.getById<Report>("reports", id, async (row) => await this.commonDao.mapDBrowToReport(row, true));
+        } catch (error: any) {
+            if (error.message && error.message.includes("not found")) {
+                throw new ReportNotFoundError();
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Get all comments for a specific report
+     * @param reportId - The ID of the report
+     * @returns Promise resolving to an array of ReportComment objects
+     */
+    async getCommentsByReportId(reportId: number): Promise<ReportComment[]> {
+        return new Promise<ReportComment[]>((resolve, reject) => {
+            const sql = `SELECT * FROM report_comments WHERE report_id = ? ORDER BY createdAt ASC`;
+            db.all(sql, [reportId], (err: Error | null, rows: any[]) => {
+                if (err) return reject(err);
+                const comments = rows.map(row => this.commonDao.mapDBrowToReportComment(row));
+                resolve(comments);
+            });
+        });
     }
 
     /**
@@ -175,7 +199,7 @@ class ReportDAO {
                 function (err) {
                     if (err) return reject(err);
                     if (this.changes === 0) {
-                        return reject(new Error(`Report with ID ${reportId} not found.`));
+                        return reject(new ReportNotFoundError());
                     }
                     resolve();
                 }
@@ -193,7 +217,7 @@ class ReportDAO {
             const sql = `SELECT * FROM report_categories WHERE active = 1`;
             db.all(sql, [], (err, rows) => {
                 if (err) return reject(err);
-            const categories = rows.map(row => this.commonDao.mapDBrowToReportCategoryObject(row));
+                const categories = rows.map(row => this.commonDao.mapDBrowToReportCategoryObject(row));
                 resolve(categories);
             });
         });
@@ -251,17 +275,44 @@ class ReportDAO {
         });
     }
 
+    async getMapReports(
+        status: Array<String> | null,
+    ): Promise<Report[]> {
+        return new Promise((resolve, reject) => {
+            try {
+                let baseSql = " SELECT * FROM reports WHERE 1=1 ";
+                const params: any[] = [];
+                if (status && status.length > 0) {
+                    const placeholders = status.map(() => '?').join(', ');
+                    baseSql += ` AND status IN (${placeholders})`;
+                    params.push(...status);
+                }
+                baseSql += " ORDER BY updatedAt DESC";
+                db.all(baseSql, params, async (err, rows: any[]) => {
+                    if (err) return reject(err);
+                    const reports: Report[] = [];
+                    for (const r of rows) {
+                        reports.push(await this.commonDao.mapDBrowToReport(r, true)); // include subclasses
+                    }
+                    resolve(reports);
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
     /**
      * Get all reports assigned to a specific technical officer.
-     * A report is considered assigned to the technical officer when its `status` is 'Assigned'
+     * A report is considered assigned to the technical officer when its `status` is 'Assigned' or 'In Progress'
      * and `assigned_to` equals the provided id.
      * @param assigned_to - id of the technical officer
      */
     async getReportsAssignedToTechOfficer(assigned_to: number): Promise<Report[]> {
         return new Promise((resolve, reject) => {
             try {
-                const sql = `SELECT * FROM reports WHERE status = ? AND assigned_to = ? ORDER BY updatedAt DESC`;
-                db.all(sql, ['Assigned', assigned_to], async (err, rows: any[]) => {
+                const sql = `SELECT * FROM reports WHERE (status = 'Assigned' OR status = 'In Progress') AND assigned_to = ? ORDER BY updatedAt DESC`;
+                db.all(sql, [assigned_to], async (err, rows: any[]) => {
                     if (err) { // debugging
                         console.error('SQL ERROR getReportsAssignedToTechOfficer', err, { assigned_to });
                         return reject(err);
@@ -269,7 +320,7 @@ class ReportDAO {
 
                     const reports: Report[] = [];
                     for (const r of rows) {
-                        
+
                         reports.push(await this.commonDao.mapDBrowToReport(r, true));
                     }
 
@@ -310,6 +361,30 @@ class ReportDAO {
     }
 
     /**
+     * Retrieves all users who have the 'external_maintainer' role.
+     * @returns A Promise that resolves to an array of User objects.
+     */
+    async getAllMaintainers(): Promise<User[]> {
+        return new Promise<User[]>((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT u.*
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_type = 'external_maintainer'
+            `;
+            db.all(sql, [], (err: Error | null, rows: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                // Map database rows to User objects
+                const userArray = rows.map((row: any) => this.commonDao.mapDBrowToUserObject(row));
+                resolve(userArray);
+            });
+        });
+    }
+
+    /**
      * Updates a report's status to ASSIGNED, sets the assigned_to user, and records who assigned it.
      * @param reportId - The ID of the report to update.
      * @param assignedToId - The ID of the technician to assign the report to.
@@ -324,10 +399,10 @@ class ReportDAO {
                 SET status = 'Assigned', assigned_to = ?, assigned_from_id = ?, updatedAt = ? 
                 WHERE id = ?
             `;
-            db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function(err) {
+            db.run(sql, [assignedToId, assignedFromId, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
-                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                    return reject(new ReportNotFoundError());
                 }
                 resolve();
             });
@@ -335,7 +410,7 @@ class ReportDAO {
     }
 
     /**
-     * Assigns a report to an external maintainer without changing the status.
+     * Assigns a report to an external maintainer and updates status to 'In Progress'.
      * Records the technical officer who performed the update in 'updated_by'.
      * @param reportId - The ID of the report.
      * @param maintainerId - The ID of the external maintainer.
@@ -347,19 +422,128 @@ class ReportDAO {
             const updatedAt = Utility.now();
             const sql = `
                 UPDATE reports
-                SET maintainer_id = ?, updated_by = ?, updatedAt = ?
+                SET maintainer_id = ?, updated_by = ?, updatedAt = ?, status = 'In Progress'
                 WHERE id = ?
             `;
-            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function(err) {
+            db.run(sql, [maintainerId, updatedBy, updatedAt, reportId], function (err) {
                 if (err) return reject(err);
                 if (this.changes === 0) {
-                    return reject(new Error(`Report with ID ${reportId} not found.`));
+                    return reject(new ReportNotFoundError());
                 }
                 resolve();
             });
         });
     }
 
+    /**
+     * Get all reports assigned to a specific maintainer.
+     * A report is considered assigned to the maintainer when its `status` is 'In Progress' or 'Suspended'
+     * and `maintainer_id` equals the provided id.
+     * @param maintainer_id - id of the maintainer
+     */
+    async getReportsAssignedToMaintainer(maintainer_id: number): Promise<Report[]> {
+        return new Promise((resolve, reject) => {
+            try {
+                const sql = `SELECT * FROM reports WHERE (status = 'In Progress' OR status = 'Suspended') AND maintainer_id = ? ORDER BY updatedAt DESC`;
+                db.all(sql, [maintainer_id], async (err, rows: any[]) => {
+                    if (err) {
+                        console.error('SQL ERROR getReportsAssignedToMaintainer', err, { maintainer_id });
+                        return reject(err);
+                    }
+
+                    const reports: Report[] = [];
+                    for (const r of rows) {
+                        reports.push(await this.commonDao.mapDBrowToReport(r, true));
+                    }
+
+                    resolve(reports);
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
+     * Adds a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the added ReportComment object.
+     */
+    async addCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        return new Promise<ReportComment>((resolve, reject) => {
+            const sql = `
+                INSERT INTO report_comments (
+                    report_id,
+                    commenter_id,
+                    comment,
+                    createdAt,
+                    updatedAt
+                ) VALUES (?, ?, ?, ?, ?)
+            `;
+            db.run(
+                sql,
+                [reportComment.report_id, reportComment.commenter_id, reportComment.comment, reportComment.createdAt, reportComment.updatedAt],
+                function (err) {
+                    if (err) return reject(err);
+
+                    if (this.changes === 0) {
+                        return reject(new ReportNotFoundError());
+                    }
+
+                    reportComment.id = this.lastID;
+                    // Note: the mapDBrowToReportComment is not necessary here since we already have the ReportComment object
+                    resolve(reportComment);
+                });
+        });
+    }
+
+    /**
+     * Edit a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the edited ReportComment object.
+     */
+    async editCommentToReport(reportComment: ReportComment): Promise<ReportComment> {
+        return new Promise<ReportComment>((resolve, reject) => {
+            const sql = `
+                UPDATE report_comments 
+                SET comment = ?, updatedAt = ? 
+                WHERE id = ? AND report_id = ? AND commenter_id = ?
+            `;
+            db.run(
+                sql,
+                [reportComment.comment, reportComment.updatedAt, reportComment.id, reportComment.report_id, reportComment.commenter_id],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new ReportCommentNotFoundError(reportComment.id, reportComment.report_id, reportComment.commenter_id));
+                    }
+                    resolve(reportComment);
+                }
+            );
+        });
+    }
+
+    /**
+     * Delete a comment to a report.
+     * @param reportComment - The ReportComment object containing comment details.
+     * @returns A Promise that resolves to the deleted ReportComment object.
+     */
+    async deleteCommentToReport(reportComment: ReportComment): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const sql = `DELETE FROM report_comments WHERE id = ? AND report_id = ? AND commenter_id = ?`;
+            db.run(
+                sql,
+                [reportComment.id, reportComment.report_id, reportComment.commenter_id],
+                function (err) {
+                    if (err) return reject(err);
+                    if (this.changes === 0) {
+                        return reject(new ReportCommentNotFoundError(reportComment.id, reportComment.report_id, reportComment.commenter_id));
+                    }
+                    resolve();
+                }
+            );
+        });
+    }
 }
 
 export default ReportDAO

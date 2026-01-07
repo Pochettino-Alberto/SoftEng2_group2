@@ -16,7 +16,6 @@ const CitizenDashboard: React.FC = () => {
           <p className="text-sm sm:text-base text-gray-600 mt-2">Manage your reports and track their progress</p>
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           
           <Link to="/citizen/report/new" className="sm:col-span-2 lg:col-span-1">
@@ -35,8 +34,6 @@ const CitizenDashboard: React.FC = () => {
             </Card>
           </Link>
 
-
-
           <Link to="/citizen/profile" className="sm:col-span-2 lg:col-span-1">
             <Card className="p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-shadow">
               <div className="flex items-center space-x-3 sm:space-x-4">
@@ -53,8 +50,6 @@ const CitizenDashboard: React.FC = () => {
             </Card>
           </Link>
         </div>
-
-        {/* 'Your Recent Reports' section removed as requested */}
       </div>
     </div>
   );

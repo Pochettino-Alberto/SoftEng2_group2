@@ -35,6 +35,8 @@ describe('Report component classes', () => {
       ReportStatus.PENDING_APPROVAL,
       true,
       12,
+      undefined,
+      undefined,
       34,
       'The light is out',
       'Awaiting parts'
@@ -56,5 +58,33 @@ describe('Report component classes', () => {
     expect(r.updatedAt).toBe(now)
     // photos is not initialised by constructor
     expect((r as any).photos).toBeUndefined()
+  })
+
+  it('Report constructor uses provided dates if passed', () => {
+    const created = '2023-01-01'
+    const updated = '2023-01-02'
+    const r = new Report(
+      0, 1, 'Title', 0, 0, ReportStatus.RESOLVED, false,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      created, updated
+    )
+    expect(r.createdAt).toBe(created)
+    expect(r.updatedAt).toBe(updated)
+  })
+
+  it('Report constructor handles minimal arguments', () => {
+    const r = new Report(
+      0, 1, 'Title', 10, 20, ReportStatus.ASSIGNED
+    )
+    expect(r.is_public).toBe(false) // default
+    expect(r.reporter_id).toBeUndefined()
+    expect(r.assigned_from_id).toBeUndefined()
+    expect(r.maintainer_id).toBeUndefined()
+    expect(r.updated_by).toBeUndefined()
+    expect(r.description).toBeUndefined()
+    expect(r.status_reason).toBeUndefined()
+    expect(r.createdAt).toBeDefined()
+    expect(r.updatedAt).toBeDefined()
   })
 })

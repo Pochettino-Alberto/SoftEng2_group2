@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading] = useState(false); // Always false - don't block rendering for public pages
+  const [loading, setLoading] = useState<boolean>(true); 
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -33,8 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentUser = await authAPI.getCurrentUser();
         setUser(currentUser);
       } catch (err) {
-        console.error( err);
+        console.error(err);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 

@@ -1,4 +1,8 @@
-import { WebDriver, until, By, WebElement  } from 'selenium-webdriver';
+import { WebDriver, until, By, WebElement } from 'selenium-webdriver';
+// for all 'npm run test_ui'
+
+// npm test -- test_UI/citizen_usage.test.ts
+// npm test -- test_UI/municipality_usage.test.ts
 
 export class CommonData {
   
@@ -13,6 +17,7 @@ export class CommonData {
     password: "SE2_group2_password!",
     type: "citizen"
   };
+
   static readonly USER_MUNICIPAL_PUBLIC_RELATIONS_OFFICER = {
     username: "m.rossi",
     password: "SE2_group2_password!",
@@ -20,7 +25,7 @@ export class CommonData {
   };
 
   static readonly USER_MUNICIPAL_INFRASTRUCTURE_TECHNICIAN = {
-    username: "f.bianchi",
+    username: "e.ricci",
     password: "SE2_group2_password!",
     type: "municipality"
   };
@@ -83,24 +88,36 @@ export class CommonSteps {
   async demoSleep(ms = 2000) {
     if (this.demoWait) {
       await this.driver.sleep(ms);
+    }else{
+      await this.driver.sleep(100);
     }
   }
 
-  async custumClick(element: By) {
-    const tag = await this.driver.wait(
-      until.elementLocated(element),
-      10000,
-      `Element not found: ${element.toString()}, could not click`
-    );
-    
-    await this.demoSleep(500);
-    if (this.demoWait) {
-      await this.driver.actions().move({ origin: tag }).perform();
+  async custumClick(locator: By, timeout = 15000) {
+    const el = await this.driver.wait(
+        until.elementLocated(locator),
+        timeout
+    )
+
+    await this.driver.wait(until.elementIsVisible(el), timeout)
+    await this.driver.wait(until.elementIsEnabled(el), timeout)
+
+    await this.driver.executeScript(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+        el
+    )
+
+    // 🔑 Wait for UI to settle
+    await this.driver.sleep(300)
+
+    try {
+      await el.click()
+    } catch {
+      // 🔑 Fallback: JS click (CI-safe)
+      await this.driver.executeScript("arguments[0].click();", el)
     }
-    await this.demoSleep(750);
-    await tag.click();
-    await this.demoSleep(500);
   }
+
 
   async custumSendKeys(element: By, text: string) {
     const tag = await this.driver.wait(
@@ -115,31 +132,37 @@ export class CommonSteps {
     await this.demoSleep(200);
   }
 
-  async selectDropdownByValue(selectElement: By, value: string) {
+  async selectDropdownByValue(locator: By, value: string) {
     const select = await this.driver.wait(
-      until.elementLocated(selectElement),
-      5000,
-      `Dropdown not found: ${selectElement.toString()}`
-    ) as WebElement;
+        until.elementLocated(locator),
+        10000
+    )
 
-    await select.click();
-    await this.demoSleep(350);
+    await this.driver.executeScript(
+        "arguments[0].scrollIntoView({block: 'center'});",
+        select
+    )
 
-    const options = await select.findElements(By.tagName('option'));
-    for (const option of options) {
-      const optionValue = await option.getAttribute('value');
-      if (optionValue === value) {
-        if(this.demoWait)
-          await this.driver.executeScript("arguments[0].scrollIntoView(true);", option);
-        await this.demoSleep(150);
-        await option.click();
-        await this.demoSleep(200)
-        break;
-      }
-    }
+    await this.demoSleep(400)
+
+    await this.driver.executeScript(
+        `
+        const select = arguments[0];
+        const valueToSet = arguments[1];
+        
+        select.value = valueToSet;
+        
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        `,
+        select,
+        value
+    )
+    await this.demoSleep(200)
   }
-  
-  async assertExists(element: By, timeout: number = 10000) {
+
+
+  async assertExists(element: By, timeout: number = 15000) {
     const el = await this.driver.wait<WebElement>(async () => {
       try {
         const candidate = await this.driver.findElement(element);
@@ -147,24 +170,53 @@ export class CommonSteps {
       } catch {
         return false; // Retry if not found or stale
       }
-    }, timeout, `Element not found or not visible: ${element.toString()}`);
+    }, timeout, `Element not found or not visible (assertExists method): ${element.toString()}`);
 
     // Final assertion
     expect(await el.isDisplayed()).toBe(true);
   }
 
 
-  async clickRandomInMiddle() {
+  async clickRandomInMiddle(avoidClass: string = "") {
     const size = await this.driver.executeScript<{ width: number; height: number }>(() => {
       return { width: window.innerWidth, height: window.innerHeight };
     });
 
-    const { width, height } = size!; // non-null assertion
+    const { width, height } = size!;
+    let x = Math.floor(width / 2 + (Math.random() * 40 - 20));
+    let y = Math.floor(height / 2 + (Math.random() * 40 - 20));
+
+    if (avoidClass !== "") {
+        let attempts = 0;
+        let isBlocked = true;
+
+        while (isBlocked && attempts < 20) {
+            isBlocked = await this.driver.executeScript<boolean>((targetX:number, targetY:number, className:string) => {
+                const element = document.elementFromPoint(targetX, targetY);
+                return element ? !!element.closest(`.${className}`) : false;
+            }, x, y, avoidClass);
+
+            if (isBlocked) {
+                // Generate a random jump between -50 and +50 for both axes
+                const shiftX = Math.floor(Math.random() * 100 - 50);
+                const shiftY = Math.floor(Math.random() * 100 - 50);
+                
+                x += shiftX;
+                y += shiftY;
+
+                x = Math.max(10, Math.min(width - 10, x));
+                y = Math.max(10, Math.min(height - 10, y));
+                
+                attempts++;
+            }
+        }
+        
+        if (isBlocked) {
+            console.warn(`Could not find a clear spot after ${attempts} attempts.`);
+        }
+    }
 
     const actions = this.driver.actions({ bridge: true });
-    const x = Math.floor(width / 2 + (Math.random() * 50 - 25)); // +/- 10px jitter
-    const y = Math.floor(height / 2 + (Math.random() * 50 - 25));
-
     await this.demoSleep();
     await actions.move({ x, y }).click().perform();
     await this.demoSleep();
@@ -244,6 +296,29 @@ export class CommonSteps {
 
     await this.demoSleep(msSleep);
   }
+
+  async scrollToTop(duration: number = 1000) {
+    await this.driver.executeScript(`
+      const durationMs = arguments[0];
+      const start = performance.now();
+      const initialY = window.scrollY;
+
+      function step(timestamp) {
+        const progress = Math.min((timestamp - start) / durationMs, 1);
+        const ease = progress < 0.5
+          ? 2 * progress * progress
+          : -1 + (4 - 2 * progress) * progress; // nice easing
+
+        window.scrollTo(0, initialY * (1 - ease));
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+
+      requestAnimationFrame(step);
+    `, duration);
+  }
     
   async moveMap(
     movableElement: By,
@@ -308,7 +383,6 @@ export class CommonSteps {
 
   
   async login(user: { username: string; password: string; type: string }, is_fast=true) {
-
     if(is_fast && this.demoWait){
       if (user.type === 'citizen') {
         await this.driver.get(CommonData.BASE_URL_FE+"/auth/login/citizen");

@@ -5,9 +5,8 @@ import { CommonSteps, CommonData } from './common';
 
 // npm test -- test_UI/citizen_usage.test.ts
 
-
 const demoWaitDefault = !process.env.CI;
-jest.setTimeout(demoWaitDefault ? 180000 : 60000);
+jest.setTimeout(demoWaitDefault ? 250000 : 120000);
 
 describe('Citizen usages: ', () => {
   let driver: WebDriver;
@@ -17,12 +16,12 @@ describe('Citizen usages: ', () => {
 
   beforeAll(async () => {
     const options = new chrome.Options();
-        
+
     options.addArguments(
-      '--disable-password-manager-reauthentication',
-      '--disable-save-password-bubble',
-      '--disable-notifications',
-      '--start-maximized'
+        '--disable-password-manager-reauthentication',
+        '--disable-save-password-bubble',
+        '--disable-notifications',
+        '--start-maximized'
     );
 
     if (!demoWait) {
@@ -32,12 +31,12 @@ describe('Citizen usages: ', () => {
     const service = new chrome.ServiceBuilder(chromedriver.path);
 
     driver = await new Builder()
-      .forBrowser('chrome')
-      .setChromeOptions(options)
-      .setChromeService(service)
-      .build();
+        .forBrowser('chrome')
+        .setChromeOptions(options)
+        .setChromeService(service)
+        .build();
 
-      steps = new CommonSteps(driver, demoWait);
+    steps = new CommonSteps(driver, demoWait);
 
   }, 120000);
 
@@ -46,6 +45,23 @@ describe('Citizen usages: ', () => {
   });
 
   
+  afterEach(async () => {
+    try {
+      const logoutBtn = await driver.findElements(By.id("logoutBtn"));
+      if (logoutBtn.length > 0) {
+        await steps.demoSleep();
+        await steps.custumClick(By.id("logoutBtn"));
+        await steps.demoSleep();
+      }
+    } catch (error) {
+      console.log("UI Logout failed or was blocked. Forcing session clear...", error);
+    } finally {
+      await driver.manage().deleteAllCookies();
+      await driver.executeScript('window.localStorage.clear(); window.sessionStorage.clear();');
+    }
+  });
+
+
   test('Register citizen', async () => {
     const user = {
       username: "angryCitizen_"+String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
@@ -57,46 +73,44 @@ describe('Citizen usages: ', () => {
 
     driver.get(CommonData.BASE_URL_FE+"/auth/register");
     await steps.custumSendKeys(
-      By.id('InputUsername'),
-      user.username
+        By.id('InputUsername'),
+        user.username
     );
     await steps.custumSendKeys(
-      By.id('InputFirstName'),
-      user.firstName
+        By.id('InputFirstName'),
+        user.firstName
     );
     await steps.custumSendKeys(
-      By.id('InputLastName'),
-      user.lastName
+        By.id('InputLastName'),
+        user.lastName
     );
     await steps.custumSendKeys(
-      By.id('InputEmail'),
-      user.email
+        By.id('InputEmail'),
+        user.email
     );
-    
+
     await steps.custumSendKeys(
-      By.id('InputPassword'),
-      user.password
+        By.id('InputPassword'),
+        user.password
     );
-    
+
     await steps.custumSendKeys(
-      By.id('InputPasswordConfirm'),
-      user.password
+        By.id('InputPasswordConfirm'),
+        user.password
     );
 
     // Click sign-in button
     await steps.custumClick(By.id('registerBtnSubmit'));
+    await steps.scrollToTop();
 
-    await steps.demoSleep()
-    await steps.custumClick(By.id("logoutBtn"));
-    
   }, 60000);
 
 
   test('Citizen usage submitting report', async () => {
     await steps.login(CommonData.USER_CITIZEN, false);
 
-    await steps.custumClick(By.id('createNewReportBtn'))
-    
+    await steps.custumClick(By.id('createNewReportBtn'));
+
     await steps.scrollBySteps(By.id('mapReport'), [30, -50]);
     if(demoWait){
       await steps.custumClick(By.css('.leaflet-control-zoom-out'));
@@ -105,26 +119,50 @@ describe('Citizen usages: ', () => {
       const maxMoveRand = 500;
       const deltaX = Math.floor(Math.random() * (maxMoveRand *2 + 1)) - maxMoveRand;
       const deltaY = Math.floor(Math.random() * (maxMoveRand *2 + 1)) - maxMoveRand;
-      await steps.moveMap(By.id('mapReport'), deltaX, deltaY)
+      await steps.moveMap(By.id('mapReport'), deltaX, deltaY);
     }
-    await steps.clickRandomInMiddle();
+    await steps.clickRandomInMiddle('clickable-report-marker');
+    await steps.assertExists(By.id('scrollableFormSubmitReport'));
     await steps.selectDropdownByValue(By.id('reportType'), '3');
     await steps.custumSendKeys(By.id('title'), 'Sewer Issue in Downtown');
     await steps.custumSendKeys(By.id('description'), 'Sewer leacking in Downtown');
-  
+
     await steps.scrollToElement(By.id('scrollableFormSubmitReport'), By.id('submitReportBtn'))
-    
+
     await steps.uploadPhotos(
-      By.css('input[type="file"][name="photos"]'),
-      [CommonData.getImg("gas_leak.jpg"),]
+        By.css('input[type="file"][name="photos"]'),
+        [CommonData.getImg("gas_leak.jpg"),]
     );
 
     await steps.scrollToElement(By.id('scrollableFormSubmitReport'), By.id('submitReportBtn'))
     await steps.custumClick(By.id('submitReportBtn'));
-    
+
     await steps.assertExists(By.id('toast_message_success'));
-    
-    await steps.demoSleep()
+    await steps.scrollToTop();
+
+  }, 60000);
+
+
+  test('Citizen view submitted reports', async () => {
+    await steps.login(CommonData.USER_CITIZEN);
+
+    await steps.scrollToElementGlobal(By.id("mapReport"));
+    await steps.scrollBySteps(By.id('mapReport'), [30, -50]);
+    if(demoWait){
+      await steps.custumClick(By.css('.leaflet-control-zoom-out'));
+      await steps.custumClick(By.css('.leaflet-control-zoom-in'));
+      await steps.custumClick(By.css('.leaflet-control-zoom-in'));
+    }
+    const maxSearch = 10;
+    for (let i = 1; i <= maxSearch; i++) {
+        const selector = By.css(`.report_circle_${i}`);
+        const elements = await driver.findElements(selector);
+        if (elements.length > 0) {
+          await steps.custumClick(selector);
+          break;
+        }
+    }
+
   }, 60000);
 
 

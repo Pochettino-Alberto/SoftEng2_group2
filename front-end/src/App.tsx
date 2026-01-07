@@ -1,10 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { UserType } from './types/user';
 import DynamicMeta from './components/DynamicMeta';
+
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -13,34 +15,50 @@ import Reports from './pages/Reports';
 import Statistics from './pages/Statistics';
 import CitizenDashboard from './pages/citizen/CitizenDashboard';
 import Profile from './pages/citizen/Profile';
-import MapPage from './pages/MapPage.tsx';
+import MapPage from './pages/MapPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import MunicipalityDashboard from './pages/municipality/MunicipalityDashboard';
 import ReportsPage from './pages/municipality/ReportsPage';
-import ReportDetail from './pages/municipality/ReportDetail.tsx';
-import AdminCreateMunicipalityUser from "./pages/admin/AdminCreateMunicipalityUser.tsx";
-import AdminAssignRoles from "./pages/admin/AdminAssignRoles.tsx";
+import ReportDetail from './pages/municipality/ReportDetail';
+import AdminCreateMunicipalityUser from './pages/admin/AdminCreateMunicipalityUser';
+import AdminAssignRoles from './pages/admin/AdminAssignRoles';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const isFirst = useRef(true);
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+  return null;
+}
 
 function App() {
-  
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <DynamicMeta />
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<Home />} />
+              <Route path="/map" element={<MapPage />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/auth/account" element={<Account />} />
               <Route path="/auth/login/:userType" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
 
-              {/* Protected Routes - Citizen */}
+
               <Route
                 path="/citizen/*"
                 element={
@@ -54,7 +72,6 @@ function App() {
                 }
               />
 
-              {/* Protected Routes - Municipality */}
               <Route
                 path="/municipality/*"
                 element={
@@ -82,15 +99,20 @@ function App() {
                 }
               />
 
-              {/* Fallback Route */}
               <Route path="*" element={<Home />} />
             </Routes>
           </main>
-          <Footer />
+          <ConditionalFooter />
         </div>
       </AuthProvider>
     </Router>
   );
+}
+
+function ConditionalFooter() {
+  const { pathname } = useLocation();
+  if (pathname === '/') return <Footer />;
+  return null;
 }
 
 export default App;

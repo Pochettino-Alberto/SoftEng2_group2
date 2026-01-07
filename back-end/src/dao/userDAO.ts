@@ -138,7 +138,7 @@ class UserDAO {
      * Delete a user in the database, given its id
      * @returns A Promise that resolves to true if the user is deleted or false if it does not exists
      */
-    deleteUserById(ID: number): Promise<Boolean> {
+    /*deleteUserById(ID: number): Promise<Boolean> {
         return new Promise<Boolean>((resolve, reject) => {
             const sql = 'DELETE FROM users WHERE id = ?';
             db.run(sql, [ID], function(err: Error | null) {
@@ -153,7 +153,7 @@ class UserDAO {
                 resolve(true);
             });
         });
-    }
+    }*/
 
     /**
      * Updates the personal information of one user. The user can only update their own information (except for the admin, which can also update other accounts).
@@ -325,71 +325,5 @@ class UserDAO {
             }
         });
     }
-
-
-    /**
-     * [Admin reserved function] Returns all users data from the database.
-     * @returns A Promise that resolves the information of the requested user
-     */
-    /*getUsers(): Promise<User[]> {
-        return new Promise<User[]>((resolve, reject) => {
-            const sql = 'SELECT * FROM users';
-            db.all(sql, [], (err: Error | null, rows: any) => {
-                if(err) {
-                    reject(err);
-                    return;
-                }
-                if(!rows) {
-                    reject(new UserNotFoundError());
-                    return;
-                }
-
-                let userArray = [...rows].map(row => this.commonDao.mapDBrowToUserObject(row));
-                resolve(userArray);
-            });
-        });
-    }*/
-
-    /**
-     * Delete a user in the database, given its username
-     * @returns A Promise that resolves to true if the user is deleted or false if it does not exists
-     */
-    /*deleteUser(username: string): Promise<Boolean> {
-        return new Promise<Boolean>((resolve, reject) => {
-            const sql = 'DELETE FROM users WHERE username=?';
-            db.run(sql, [username], function(err) {
-                if(err) {
-                    reject(err);
-                    return;
-                }
-                if(!this.changes) {
-                    resolve(false);
-                    return;
-                }
-                resolve(true);
-            });
-        });
-    }*/
-
-    /**
-     * Delete every non-admin users
-     * @returns A Promise that resolves to true if at least one user is deleted, otherwise resolves to false
-     */
-    /*deleteAll(): Promise<Boolean> {
-        return new Promise<Boolean>((resolve, reject) => {
-            const sql = "DELETE FROM users WHERE role != 'Admin'";
-            db.run(sql, [], function(err) {
-                if(err) {
-                    reject(err);
-                    return;
-                }
-                if(!this.changes) {
-                    resolve(false);
-                    return;
-                }
-                resolve(true);
-            });
-        });
-    }*/
 }
 export default UserDAO

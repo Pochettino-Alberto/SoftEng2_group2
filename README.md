@@ -16,6 +16,32 @@ code documentation:
 - [front-end - README_FE](./front-end/README_FE.md)
 - [docker - README_DOCKER](./README_DOCKER.md)
 
+## Setup and Running (VS Code)
+
+1. **Create a `.env` file**
+   Create a file named `.env` in `/back-end` directory and add your Supabase credentials:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_SERVICE_KEY=your_supabase_service_key
+   ```
+   *(Note: A `.env` file with valid credentials may have been provided to you separately)*
+
+2. **Start the application**
+   Open a terminal in `/front-end` directory and run:
+   ```bash
+   npm i
+   npm run dev
+   ```
+   Open another terminal in `/back-end` directory and run:
+   ```bash
+   npm i
+   npm run start
+   ```
+
+4. **Access the application**
+   Open http://localhost:5173 in your browser.
+
+
 ## Notes and quick developers tips
 
 ### Reset database data

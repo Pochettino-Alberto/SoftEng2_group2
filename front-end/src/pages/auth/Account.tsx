@@ -42,17 +42,17 @@ const Account: React.FC = () => {
 
           {/* Admin Option */}
           <Link to="/auth/login/admin" className="block">
-            <div id="SignIn_admin" className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-purple-400 rounded-lg shadow-md" style={{ backgroundColor: '#F3E8FF' }}>
+            <div id="SignIn_admin" className="p-4 sm:p-5 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-transparent hover:border-blue-300 rounded-lg shadow-md" style={{ backgroundColor: '#E6EDF5' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div style={{ backgroundColor: '#9333EA' }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div style={{ backgroundColor: '#6B83A1' }} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-purple-700">Admin / Municipality Staff</h3>
+                  <h3 className="text-base sm:text-lg font-bold" style={{ color: '#6B83A1' }}>Admin / Municipality Staff</h3>
                 </div>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#6B83A1' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
