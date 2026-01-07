@@ -149,22 +149,20 @@ JOIN roles r ON r.label IN (
 WHERE u.username = 'p.fontana';
 
 -- ===========================
--- REPORT 1 — bad_pavement
+-- REPORT 1 — Maintainance hole not properly aligned with sidewalk tiles
 -- ===========================
 INSERT INTO reports
 (category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to,
  title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
 (7, (SELECT id FROM users WHERE username='johndoe'), (SELECT id FROM users WHERE username='m.rossi'), NULL, NULL, (SELECT id FROM users WHERE username='e.ricci'),
- 'Damaged Pavement', 'The sidewalk pavement is cracked and poses a danger to pedestrians.',
+ 'Disalignment between the maintainance hole and the sidewalk tiles', 'This maintainance hole is not properly aligned with sidewalk tiles, creating a tripping hazard.',
  1, 45.070500, 7.689800, 'Assigned', NULL, '2025-12-04', '2025-12-05');
 
 INSERT INTO report_photos
 (report_id, position, photo_path, photo_public_url)
 VALUES
-((SELECT MAX(id) FROM reports), 1,
- '3/1/3d76371bd93a.jpg',
- 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+((SELECT MAX(id) FROM reports), 1, '7/1/98176d08f11b.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/1/98176d08f11b.jpg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), 
@@ -193,8 +191,8 @@ INSERT INTO report_photos
 (report_id, position, photo_path, photo_public_url)
 VALUES
 ((SELECT MAX(id) FROM reports), 1,
- '1/6/96a090b9c33f.jpg',
- 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/96a090b9c33f.jpg');
+ '7/34/b915b4283ef9.jpg',
+ 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/34/b915b4283ef9.jpg');
 
 
 -- ===========================
@@ -271,19 +269,19 @@ VALUES
 
 
 -- ===========================
--- REPORT 7 — sewer_system_overflowing
+-- REPORT 7 — sewer_system_issue
 -- ===========================
 INSERT INTO reports
 (category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
 (3, (SELECT id FROM users WHERE username='d.costa'), NULL, NULL, NULL, NULL,
- 'Sewer System Overflowing', 'A manhole near Corso Vittorio Emanuele has overflowed, spilling wastewater onto the street.',
+ 'Malodorous smell and steam from Corso Castelfidardo manhole', 'A manhole in Corso Castelfidardo emits malodorous smell and steam.',
  1, 45.072100, 7.689900, 'Pending Approval', NULL, '2025-12-06', '2025-12-06');
 
 INSERT INTO report_photos
 (report_id, position, photo_path, photo_public_url)
 VALUES
-((SELECT MAX(id) FROM reports), 1, '4/9/994ef438a4e0.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/9/994ef438a4e0.jpg');
+((SELECT MAX(id) FROM reports), 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
 
 
 INSERT INTO reports
@@ -295,7 +293,7 @@ VALUES
  1, 45.062200, 7.678900, 'Assigned', NULL, '2025-12-26', '2025-12-27');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '8/1/flood.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/8/1/flood.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '3/21/445309f65259.png', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/21/445309f65259.png');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='f.bianchi'), 
@@ -314,25 +312,25 @@ VALUES
  1, 45.075500, 7.691200, 'Assigned', NULL, '2025-12-07', '2025-12-08');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '1/6/f8028028444f.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/f8028028444f.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '8/22/cf219cb199c9.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/8/22/cf219cb199c9.jpg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='l.verdi'), 
  'I have inspected the site. We need to order a replacement part from the supplier.', '2025-12-08 09:00:00', '2025-12-08 09:00:00');
 
 -- ===========================
--- REPORT 9 — sidewalk_ramp_blocked (Architectural Barriers)
+-- REPORT 9 — sidewalk_ramp_broken (Architectural Barriers)
 -- ===========================
 INSERT INTO reports
 (category_id, reporter_id, assigned_from_id, maintainer_id, updated_by, assigned_to, 
  title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
 (2, (SELECT id FROM users WHERE username='l.russo'), (SELECT id FROM users WHERE username='m.rossi'), NULL, NULL, (SELECT id FROM users WHERE username='f.banfi'),
- 'Blocked Sidewalk Ramp', 'A large concrete block has been left in front of the wheelchair ramp.',
+ 'Broken Sidewalk Ramp', 'The sidewalk ramp has been broken for a long time. That makes it hard for wheelchair people to pass.',
  1, 45.066500, 7.685000, 'Assigned', NULL, '2025-12-09', '2025-12-09');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '2/23/d338bfae841e.webp', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/2/23/d338bfae841e.webp');
 
 -- ===========================
 -- REPORT 10 — graffiti_monument (Roads & Furnishings)
@@ -346,7 +344,7 @@ VALUES
  1, 45.070000, 7.687000, 'Resolved', 'Cleaned by internal spaces maintenance team.', '2025-12-10', '2025-12-12');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '4/7/60ab5f468a28.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/60ab5f468a28.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '7/24/70b487fd86e4.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/24/70b487fd86e4.jpg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='p.fontana'), 
@@ -364,7 +362,7 @@ VALUES
  1, 45.069900, 7.684500, 'In Progress', NULL, '2025-12-11', '2025-12-13');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '4/7/60ab5f468a28.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/60ab5f468a28.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '7/25/3aff9db4e732.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/25/3aff9db4e732.jpg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='f.bianchi'), 
@@ -383,7 +381,7 @@ VALUES
  1, 45.073500, 7.690100, 'Resolved', 'Drain cleared and inspected for structural damage.', '2025-11-15', '2025-11-18');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '4/9/994ef438a4e0.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/9/994ef438a4e0.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '3/26/19d04a7dfb5b.webp', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/26/19d04a7dfb5b.webp');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='s.gallo'), 
@@ -397,11 +395,11 @@ INSERT INTO reports
  title, description, is_public, latitude, longitude, status, status_reason, createdAt, updatedAt)
 VALUES
 (5, (SELECT id FROM users WHERE username='d.costa'), (SELECT id FROM users WHERE username='m.rossi'), NULL, (SELECT id FROM users WHERE username='l.verdi'), (SELECT id FROM users WHERE username='l.verdi'),
- 'Illegal Posters on Bridge', 'The bridge railings are covered in illegal advertising flyers.',
+ 'Illegal Posters on Bridge', 'The bridge railings are covered in illegal cardboard posters.',
  1, 45.065000, 7.695000, 'Resolved', 'Posters removed by the environmental cleaning team.', '2025-11-20', '2025-11-22');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '4/7/220520f56738.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/220520f56738.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '5/27/3de423adc8ce.jfif', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/5/27/3de423adc8ce.jfif');
 
 -- ===========================
 -- REPORT 14 — resolved_bench_repair (Green Areas)
@@ -415,7 +413,7 @@ VALUES
  1, 45.071200, 7.693300, 'Resolved', 'Slats replaced with treated cedar wood.', '2025-11-25', '2025-11-28');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '1/6/f8028028444f.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/f8028028444f.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '8/28/e06465d0c175.jpeg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/8/28/e06465d0c175.jpeg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='l.verdi'), 
@@ -433,7 +431,7 @@ VALUES
  1, 45.070000, 7.686000, 'Resolved', 'Gasket replaced and base resealed.', '2025-12-01', '2025-12-02');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '2/8/5ac7f8360ea7.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/2/8/5ac7f8360ea7.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '1/29/89bc69986d9b.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/29/89bc69986d9b.jpg');
 
 
 -- ===========================
@@ -453,7 +451,7 @@ VALUES
  1, 45.068000, 7.683000, 'Assigned', NULL, '2025-12-26', '2025-12-27');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '1/6/96a090b9c33f.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/96a090b9c33f.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '7/30/cf946f751085.png', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/30/cf946f751085.png');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='f.bianchi'), 
@@ -477,7 +475,7 @@ VALUES
  1, 45.074000, 7.694000, 'In Progress', NULL, '2025-12-28', '2025-12-28');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '1/6/f8028028444f.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/1/6/f8028028444f.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '8/31/5f9be0235fcb.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/8/31/5f9be0235fcb.jpg');
 
 INSERT INTO report_comments (report_id, commenter_id, comment, createdAt, updatedAt)
 VALUES ((SELECT MAX(id) FROM reports), (SELECT id FROM users WHERE username='l.verdi'), 
@@ -501,7 +499,7 @@ VALUES
  1, 45.065500, 7.689000, 'In Progress', NULL, '2025-12-25', '2025-12-27');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '3/1/3d76371bd93a.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/3/1/3d76371bd93a.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '7/32/4ffbd9442f82.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/7/32/4ffbd9442f82.jpg');
 
 
 -- ===========================
@@ -523,4 +521,4 @@ VALUES
  45.081200, 7.698500, 'Pending Approval', NULL, '2026-01-02', '2026-01-02');
 
 INSERT INTO report_photos (report_id, position, photo_path, photo_public_url)
-VALUES ((SELECT MAX(id) FROM reports), 1, '4/7/220520f56738.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/4/7/220520f56738.jpg');
+VALUES ((SELECT MAX(id) FROM reports), 1, '5/33/31b88bf8f2d3.jpg', 'https://rksihjpitwbqsydhlyeb.supabase.co/storage/v1/object/public/reports/5/33/31b88bf8f2d3.jpg');
