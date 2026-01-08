@@ -83,13 +83,13 @@ $$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 
 
 - What lessons did you learn (both positive and negative) in this sprint?
 
-  > Positive lesson:
+  > Positive lesson: 
   > Negative lesson:
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
-  >
+  >We allocated time to fix the eventual failing tests, due to the new code for this sprint, on a separate Technical Debt task
 - Which ones you were not able to achieve? Why?
-  >
+  >When we have edited the backend logic for bugfixing, we forgot to add a comment to the relative Test Backend task. That could have contributed to save time to the test developer.
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
