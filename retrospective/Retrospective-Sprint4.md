@@ -83,8 +83,8 @@ $$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 
 
 - What lessons did you learn (both positive and negative) in this sprint?
 
-  > Positive lesson: 
-  > Negative lesson:
+  > Positive lesson: we started and finished our tasks before ending days and it left us some time for reviewing. 
+  > Negative lesson: 
 
 - Which improvement goals set in the previous retrospective were you able to achieve?
   >We allocated time to fix the eventual failing tests, due to the new code for this sprint, on a separate Technical Debt task
@@ -93,7 +93,7 @@ $$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
-  >
+  > 
 
 - One thing you are proud of as a Team!!
   > We have improved a lot on task estimation: we got a low total-estimation-error of 3% and a quite low average-absolute-error-per-single-task 17%.
