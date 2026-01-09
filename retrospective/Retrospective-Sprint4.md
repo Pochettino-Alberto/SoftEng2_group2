@@ -93,7 +93,7 @@ $$\frac{1}{n}\sum_{i=1}^{n} \left| \frac{spent_{task_i}}{estimation_{task_i}}-1 
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
 
-  > since we have improved in management side of ourteam work we could try to do more story points in next sprint compared to this one.
+  > since we have improved in management side of ourteam work we could try to do more story points in next sprint compared to this one, always considering our time budget.
 
 - One thing you are proud of as a Team!!
   > We have improved a lot on task estimation: we got a low total-estimation-error of 3% and a quite low average-absolute-error-per-single-task 17%.
